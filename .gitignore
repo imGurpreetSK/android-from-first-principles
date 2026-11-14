@@ -25,8 +25,9 @@ npm-debug.log*
 # Vercel
 .vercel/
 
-# Claude Code local settings (.claude/commands/ stays tracked)
+# Claude Code local settings and agent worktrees (.claude/commands/ stays tracked)
 .claude/settings.local.json
+.claude/worktrees/
 
 # Beads stealth mode: local DB, syncs through git refs
 .beads/
