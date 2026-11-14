@@ -1,3 +1,4 @@
+import java.util.zip.ZipFile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // A rebuild module is a plain Kotlin/JVM module. JUnit runs its tests.
@@ -25,4 +26,27 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+// A rebuild module is a plain Kotlin/JVM module. This task fails the build if a classpath has Android classes or Robolectric.
+val checkNoAndroid = tasks.register("checkNoAndroid") {
+    val jars = files(configurations.compileClasspath, configurations.testCompileClasspath, configurations.testRuntimeClasspath)
+        .filter { it.name.endsWith(".jar") }
+    inputs.files(jars)
+    doLast {
+        val androidJars = jars.filter { jar ->
+            ZipFile(jar).use { zip ->
+                zip.entries().asSequence().any { it.name.startsWith("android/") || it.name.startsWith("org/robolectric/") }
+            }
+        }
+        if (!androidJars.isEmpty) {
+            throw GradleException(
+                "Rebuild modules must not use Android classes or Robolectric: " + androidJars.joinToString { it.name }
+            )
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(checkNoAndroid)
 }
