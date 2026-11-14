@@ -69,6 +69,11 @@ describe('chapter frontmatter', () => {
     },
   );
 
+  // CI removes the anchor from each citation, then needs an exact match with a source.
+  test('rejects a source with an anchor', () => {
+    expect(valid({ ...chapter, sources: [`${chapter.sources[0]}#42`] })).toBe(false);
+  });
+
   test('rejects drafted other than ai or human', () => {
     expect(valid({ ...chapter, drafted: 'robot' })).toBe(false);
   });

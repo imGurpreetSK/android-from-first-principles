@@ -18,7 +18,8 @@ const checked = z
 const chapter = {
   section: z.string().min(1),
   checked,
-  sources: z.array(z.httpUrl()).min(1),
+  // CI removes the anchor from each citation, then needs an exact match with a source.
+  sources: z.array(z.httpUrl().refine((url) => !url.includes('#'), 'A source has no anchor. Put the anchor in the citation.')).min(1),
   rebuild: z.boolean(),
   device: z.boolean(),
   drafted: z.enum(['ai', 'human']),
