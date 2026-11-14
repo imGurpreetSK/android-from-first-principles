@@ -17,7 +17,7 @@ This repo holds Android from First Principles, a free online series on the machi
    - Use the active voice. Use the passive voice only when you do not know who or what does the action.
    - Write instructions as commands: "Run the tests."
    - Put a condition before its instruction: "If the build fails, stop."
-   - Use one word for one meaning. Do not use synonyms. Use the terms in `CONTEXT.md`.
+   - Use each word with only one meaning. Do not use synonyms. Use the terms in `CONTEXT.md`.
    - Avoid "-ing" forms, except in technical names.
 5. Each doc gets two reviews. A different subagent does each review. The writer of the doc does not review it.
    1. Reviewer 1 compares each claim with its source. Reviewer 1 also makes sure that the doc obeys STE.
