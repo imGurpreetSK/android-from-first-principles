@@ -187,8 +187,8 @@ Two repo-level Claude commands run the steps, so all chapters go through the sam
 ## Contributing
 
 - Anyone can open a **"Challenge a claim"** issue (chapter, claim, counter-source) or send a fix PR.
-- Anyone can propose a new chapter (a new topic, or a split of an existing one) in an issue. If the maintainer adds it to the curriculum, the proposer is assigned and follows the pipeline above; the chapter appears on the site only once published. The maintainer unassigns a stalled proposal with a comment.
-- Contributions come in under the repo's licenses. No contributor license agreement.
+- Anyone can propose a new chapter in an issue: a new topic, or a split of a chapter. If the maintainer adds it to the curriculum, the maintainer assigns the proposer. The proposer follows the chapter pipeline. The site shows the chapter only after it is published. If a proposal stalls, the maintainer unassigns it with a comment.
+- All contributions come under the licenses of the repo. There is no contributor license agreement.
 
 ## License
 
