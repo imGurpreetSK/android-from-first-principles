@@ -161,28 +161,28 @@ Two repo-level Claude commands run the steps, so all chapters go through the sam
 
 ## Code samples
 
-- `samples/` is a Gradle project in this repo: one module per chapter with a rebuild, named by chapter slug, plus `samples/launch-app`. The site lives in `site/` alongside it.
-- Chapters import snippets directly from `samples/` files, so the text never shows code that doesn't compile.
-  - Shown lines sit between `// region <name>` and `// endregion` comments in the sample.
-  - A chapter shows them with `<Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="loop" />`, rendered by Starlight's built-in code blocks. `file` is a full path under `samples/`, so "Where it breaks" can show test files the same way.
-  - A missing file or region fails the build.
-- Rebuilds are plain Kotlin (JVM) modules tested with JUnit. `samples/launch-app` is the only Android module.
-- Rebuilds never import `android.*`. Where the mechanism touches an Android type, the rebuild uses a small Kotlin stand-in (a `Map` for `Bundle`, a data class for `MotionEvent`). Real platform behavior is shown with device prompts, not in rebuilds. No Robolectric.
-- A breaking test passes when the rebuild shows its flaw (e.g. asserts the lost update happened). Its name says what it shows: `naiveLoop_losesUpdate_whenTwoThreadsWrite`.
-- Breaking tests are deterministic: fake clocks, scripted thread order, counters. No real sleeps, wall-clock timing or racing threads. A rebuild may take a pluggable clock or scheduler so the test can control it.
-- The real fix is not rebuilt; "The real thing" points to the platform code.
-- `samples/launch-app` is one tiny Android app whose cold start Section 1 follows: a platform `android.app.Activity` showing one `TextView`, no dependencies, so the cold start is the bare platform path. Chapter 06 notes that Compose's `AndroidComposeView` is a View on the same path. It is the series' only Android app: every chapter with `device: true` runs its device prompts on it in an emulator (`adb shell ps`, logcat, `Looper.setMessageLogging`, `dumpsys deviceidle`, Perfetto). Never a second Android module. Instead:
-  - The default flavor is the Section 1 app. Its code is frozen once Section 1 ships, and it pins `targetSdk = 37`, so captured cold-start output stays true. Its name is `launchPath`, and it sets `isDefault = true`. All six Section 1 chapters share it, so its name comes from the section (`launch-path`), not from a chapter slug. Section 1 device prompts run `./gradlew :launch-app:installLaunchPathDebug`.
-  - The toolchain (AGP, Kotlin, compileSdk) is shared across `samples/` and upgrades project-wide whenever needed; readers open it in current Android Studio, which refuses old AGP.
-  - A later chapter that needs more adds a product flavor named by its slug (`launch-app/src/doze/`, `dozeImplementation(...)`). Its prompts run that flavor (`./gradlew :launch-app:installDozeDebug`), which no other chapter touches.
-  - A chapter flavor pins `targetSdk` to its chapter's baseline API level, so `targetSdk`-gated behavior in its output matches the baseline. It moves only when the chapter's baseline moves.
-  - CI only builds it.
-- Every device prompt shows the output the reader should see. The chapter's `edited_by` captures it on an emulator matching the `checked` stamp; it counts as a verified claim. On a contributor's chapter the maintainer re-runs the prompts before merging. Values that vary by run or toolchain (PIDs, timestamps, sizes, hashes) are shown as `…`, so a toolchain upgrade doesn't force re-capture.
+- `samples/` is a Gradle project in this repo. It has one module for each chapter with a rebuild, named by chapter slug, and `samples/launch-app`. The site is in `site/`, next to `samples/`.
+- Chapters import snippets directly from `samples/` files, so the text never shows code that does not compile.
+  - In the sample file, `// region <name>` and `// endregion` comments mark the lines to show.
+  - A chapter shows the lines with `<Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="loop" />`. The built-in code blocks of Starlight render them. `file` is a full path under `samples/`, so "Where it breaks" can show test files the same way.
+  - If the file or the region does not exist, the build fails.
+- Rebuilds are plain Kotlin (JVM) modules with JUnit tests. `samples/launch-app` is the only Android module.
+- Rebuilds never import `android.*`. If the mechanism involves an Android type, the rebuild uses a small Kotlin stand-in, for example a `Map` for `Bundle` or a data class for `MotionEvent`. Device prompts, not rebuilds, show real platform behavior. The samples use no Robolectric.
+- A breaking test passes when the rebuild shows its flaw. For example, the test asserts that the lost update happened. Its name tells what it shows: `naiveLoop_losesUpdate_whenTwoThreadsWrite`.
+- Breaking tests are deterministic. They use fake clocks, a scripted thread order and counters. They use no real sleeps, no wall-clock time and no threads that race. A rebuild can take a pluggable clock or scheduler, so that the test can control it.
+- The samples do not rebuild the real fix. "The real thing" points to the platform code.
+- `samples/launch-app` is the launch app: one tiny Android app with a platform `android.app.Activity` that shows one `TextView`. It has no dependencies, so its cold start is the bare platform path. Section 1 follows this cold start. Chapter 06 notes that the `AndroidComposeView` of Compose is a View on the same path. The launch app is the only Android app of the series. Each chapter with `device: true` runs its device prompts on it in an emulator (`adb shell ps`, logcat, `Looper.setMessageLogging`, `dumpsys deviceidle`, Perfetto). There is never a second Android module. Instead:
+  - The default flavor is the Section 1 app. After Section 1 ships, its code is frozen. It pins `targetSdk = 37`. These two rules keep the captured cold-start output true. Its name is `launchPath`. It sets `isDefault = true`. All six Section 1 chapters share it, so its name comes from the section (`launch-path`), not from a chapter slug. Section 1 device prompts run `./gradlew :launch-app:installLaunchPathDebug`.
+  - All of `samples/` shares one toolchain (AGP, Kotlin, compileSdk). If the toolchain needs an upgrade, the upgrade applies to all of `samples/`. Readers open `samples/` in the current Android Studio, and it refuses old AGP versions.
+  - If a later chapter needs more, it adds a product flavor named by its slug (`launch-app/src/doze/`, `dozeImplementation(...)`). Its device prompts run that flavor (`./gradlew :launch-app:installDozeDebug`). No other chapter uses or changes that flavor.
+  - A chapter flavor pins `targetSdk` to the API level of the chapter baseline, so its output shows the `targetSdk`-gated behavior of the baseline. The pin changes only if the baseline of the chapter moves.
+  - CI only builds the launch app.
+- Each device prompt shows the output that the reader should see. The editor captures the output on an emulator that matches the `checked` stamp. The output counts as a checked claim. On a contributor's chapter, the maintainer runs the prompts again before the merge. Values that change between runs or toolchains (PIDs, timestamps, sizes, hashes) show as `…`, so a toolchain upgrade does not force a new capture.
 - CI (GitHub Actions) builds the site, builds `samples/`, runs all tests and checks source links.
-- Link checks fetch each `sources` entry once (citations are a source plus an anchor, so they aren't fetched):
-  - On PRs: only changed chapters' sources, with retry on rate limits. Blocking.
-  - Weekly scheduled run: all chapters' sources. Opens an issue on dead links. Non-blocking.
-  - Line numbers and anchors aren't checked; that's `edited_by`'s job in the edit step.
+- The link check fetches each `sources` entry one time. It does not fetch citations, because a citation is a source plus an anchor:
+  - On PRs: only the sources of changed chapters, with a retry on rate limits. A failure blocks the PR.
+  - A weekly scheduled run: the sources of all chapters. If a link is dead, the run opens an issue. A failure does not block PRs.
+  - The link check does not check line numbers and anchors. The editor checks them at the Edit step.
 
 ## Contributing
 
