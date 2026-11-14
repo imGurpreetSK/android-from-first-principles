@@ -8,6 +8,10 @@ describe('snippet', () => {
     expect(snippet(samples, 'Sample.kt', 'loop')).toBe('fun loop() {\n    while (true) println("loop")\n}');
   });
 
+  test('removes the indent that all lines of the region share', () => {
+    expect(snippet(samples, 'Sample.kt', 'test')).toBe('fun loopRuns() {\n    loop()\n}');
+  });
+
   test('fails on a file that does not exist', () => {
     expect(() => snippet(samples, 'Missing.kt', 'loop')).toThrow(/ENOENT.*Missing\.kt/);
   });
