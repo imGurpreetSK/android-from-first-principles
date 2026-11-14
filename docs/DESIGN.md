@@ -193,7 +193,7 @@ Three repo-level Claude commands run the steps, so all chapters go through the s
   - A weekly scheduled run: the sources of all chapters. If a link is dead, the run opens an issue. A failure does not block PRs.
   - The link check does not check line numbers and anchors. The editor checks them at the Edit step.
 
-## Contributing
+## Contributions
 
 - Anyone can open a **"Challenge a claim"** issue (chapter, claim, counter-source) or send a fix PR.
 - Anyone can propose a new chapter in an issue: a new topic, or a split of a chapter. If the maintainer adds it to the curriculum, the maintainer assigns the proposer. The proposer follows the chapter pipeline. The site shows the chapter only after it is published. If a proposal stalls, the maintainer unassigns it with a comment.
