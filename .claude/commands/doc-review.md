@@ -56,7 +56,10 @@ A reviewer returns findings. Give each reviewer this finding form:
    > Make sure that a mid-level reader (docs/DESIGN.md, "Reader") can skip each Go deeper box and still follow the chapter. Make sure that the breaking tests of the chapter, in `samples/<chapter slug>/`, obey docs/DESIGN.md, "Code samples".
 
 5. Do steps 2 and 3 again for the findings of the staff reviewer.
-6. Add each mistake in your list to the top of the log in docs/learnings.md. Use the entry format of that file. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`.
+6. Start a new subagent and give it your list of mistakes. Brief:
+
+   > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`.
+
 7. Give a short report:
    - For each reviewer: each finding, and if you accepted it, rejected it or left it for the maintainer.
    - The fixes that the fixer applied, with the commit hashes.
