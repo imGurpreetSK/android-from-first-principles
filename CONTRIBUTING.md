@@ -44,3 +44,13 @@ These are the steps of the [chapter pipeline](docs/DESIGN.md#chapter-pipeline) f
 5. **Staff review.** The staff reviewer, a staff Android engineer with 10 years of experience, makes sure that the chapter and its citations are correct.
 6. **Edit.** You are the editor. Put your name in `edited_by`. Check each claim against its source, with line numbers and anchors. Edit on the branch and read the Vercel preview of the PR. If the chapter has device prompts, capture their output on an emulator with the system image that the `checked` stamp names.
 7. **Merge.** The maintainer checks the PR. If the chapter has device prompts, the maintainer runs them again. Then the maintainer merges the PR.
+
+## Commits, tests and docs
+
+Obey the rules in [AGENTS.md](AGENTS.md). The main rules are:
+
+- Do not add a co-author, co-committer or AI attribution to commits or PRs (rule 1).
+- Make micro commits. Each commit has one change. Each commit builds and passes all tests. You can revert each commit alone (rule 2).
+- Write tests for all code that has logic. Put tests in the same commit as the code that they test. If you skip tests, write the reason in the commit message (rule 3).
+- Write all docs, chapters included, in Simplified Technical English (STE). AGENTS.md rule 4 gives the STE rules. Use the terms in CONTEXT.md.
+- Run `git status` before each commit (rule 8).
