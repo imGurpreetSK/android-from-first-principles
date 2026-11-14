@@ -9,7 +9,7 @@ const entry = (id: string, section?: string, filePath = `src/content/docs/${id}.
 });
 
 describe('checkChapters', () => {
-  test('accepts chapters at /<section slug>/<chapter slug>/ and pages without a section', () => {
+  test('accepts chapters at /<section-slug>/<chapter-slug>/ and pages without a section', () => {
     expect(() =>
       checkChapters([entry('index'), entry('launch-path/main-thread', 'The Launch Path'), entry('concurrency/flow', 'Concurrency')]),
     ).not.toThrow();
