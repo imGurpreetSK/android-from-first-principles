@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A subagent guessed page paths on asd-ste100.org, for example `/faq` and `/rules`. Each path gave HTTP 404. Rule: Get page links from the home page. The pages are files, for example `STE_faq.html` and `about_STE.html`.
+
 2026-11-14: `bd ... --json` output does not include empty fields. Code that read the `dependencies` key failed. An agent saw no `notes` key in some rows and almost missed the notes. Rule: Read optional fields in `bd ... --json` output with a default value.
 
 2026-11-14: An output compressor dropped many near-identical output lines, so a step ran two times. Rule: Before you print repeated lines, group them into a count and a pattern. If output says that lines were elided, read the full text with a file read tool. For command output, write it to a file first.
