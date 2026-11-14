@@ -10,7 +10,7 @@ export const sections = [
   { label: 'Beyond One Platform', slug: 'beyond-one-platform' },
 ] as const;
 
-// The id of a docs entry is its URL without the slashes at the start and the end. The path of the file sets the id, if the frontmatter has no slug field.
+// The id of a chapter is its URL without the slashes at the start and the end. The path of the file sets the id, if the frontmatter has no slug field.
 // A chapter is an entry with a section. Its URL must be /<section slug>/<chapter slug>/.
 // The chapter slug must be unique across the series, because the progress key and the samples/ module use it.
 export function checkChapters(entries: { id: string; data: Record<string, unknown>; filePath?: string }[]) {
