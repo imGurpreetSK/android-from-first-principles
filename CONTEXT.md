@@ -78,6 +78,14 @@ _Avoid_: owner, admin, reviewer
 The one person who checks each claim in a chapter against its sources, at the baseline of the chapter. The chapter credits the editor. Later fixes do not change the editor. Only a baseline move does.
 _Avoid_: reviewer, author
 
+**Fact checker**:
+The first of the two reviewers of each doc. The fact checker compares each claim with its source. The fact checker also makes sure that the doc obeys Simplified Technical English (STE).
+_Avoid_: editor, verifier
+
+**Staff reviewer**:
+The second of the two reviewers of each doc: a staff Android engineer with 10 years of experience. The staff reviewer makes sure that the doc and its citations are correct.
+_Avoid_: maintainer, expert reviewer
+
 **Chapter plan**:
 The source list of a chapter, and whether the chapter has a rebuild and device prompts. The maintainer approves the plan before the draft starts.
 _Avoid_: outline, brief
