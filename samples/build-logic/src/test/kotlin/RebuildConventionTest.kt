@@ -13,12 +13,13 @@ class RebuildConventionTest {
 
     @BeforeEach
     fun writeRebuildModule() {
-        val catalog = System.getProperty("afp.catalog")
+        // Gradle imports gradle/libs.versions.toml as the libs catalog.
+        projectDir.resolve("gradle").mkdirs()
+        projectDir.resolve("gradle/libs.versions.toml").writeText(javaClass.getResource("/libs.versions.toml")!!.readText())
         projectDir.resolve("settings.gradle.kts").writeText(
             """
             dependencyResolutionManagement {
                 repositories { mavenCentral() }
-                versionCatalogs { create("libs") { from(files("$catalog")) } }
             }
             """.trimIndent()
         )
