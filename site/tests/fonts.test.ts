@@ -47,3 +47,13 @@ test.each(['Roboto', 'Roboto Mono'])('the built CSS has @font-face rules for %s 
     for (const url of urls) expect(url.startsWith('data:') || existsSync(join(outDir, url)), url.slice(0, 80)).toBe(true);
   }
 });
+
+test('a printed page gets the light accent color in each theme', () => {
+  // The CSS files in the order that the page links them. Of the unlayered :root rules, the last one wins.
+  const page = files.find(({ name }) => name === '404.html')!.text;
+  const css = [...page.matchAll(/<link rel="stylesheet" href="\/([^"]+)"/g)]
+    .map(([, href]) => files.find(({ name }) => name === href)!.text)
+    .join('\n');
+  const accents = [...css.matchAll(/(?:^|\})(@media print\{)?:root\{[^}]*--sl-color-accent:([^;}]+)/g)];
+  expect(accents.at(-1)?.slice(1)).toEqual(['@media print{', '#00753b']);
+});

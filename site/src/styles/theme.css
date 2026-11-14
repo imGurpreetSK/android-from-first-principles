@@ -17,3 +17,12 @@
   --sl-color-accent: #00753b;
   --sl-color-accent-high: #004d26;
 }
+
+/* Print. Starlight prints with light colors, so a printed page gets the light accent in each theme. */
+@media print {
+  :root {
+    --sl-color-accent-low: #c8f2d9;
+    --sl-color-accent: #00753b;
+    --sl-color-accent-high: #004d26;
+  }
+}
