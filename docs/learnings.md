@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A fixer inserted a sentence. Then the pronoun "It" in the next sentence pointed to the wrong noun. Rule: After you insert a sentence, read the next sentence again. Check each pronoun.
+
 2026-11-14: A test assumed that each font URL in the built CSS is a file. Vite puts small fonts inline as data URLs. Rule: Before you assert on build output, read the build output.
 
 2026-11-14: A reviewer read a file in parallel with the command that wrote it. Rule: Read a file only after the command that writes it ends.
