@@ -14,7 +14,7 @@ android {
         minSdk = 29
     }
 
-    // Each flavor is the app of one chapter. launchPath is the app of all Section 1 chapters.
+    // launchPath is the app of all Section 1 chapters. Each other flavor is the app of one chapter.
     flavorDimensions += "chapter"
     productFlavors {
         create("launchPath") {
