@@ -198,7 +198,7 @@ Two repo-level Claude commands run the steps, so all chapters go through the sam
 
 ## Credit
 
-The README and site footer carry one line: "Format inspired by Backend from First Principles", with a link.
+The README and the site footer each have one line with a link: "Format inspired by Backend from First Principles".
 
 ## AI disclosure
 
