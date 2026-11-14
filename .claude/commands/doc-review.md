@@ -47,7 +47,7 @@ A reviewer returns findings. Give each reviewer this finding form:
    - If the validator does not confirm the evidence, reject the finding.
    - If the evidence supports a finding, accept it.
    - If the evidence does not support a finding, reject it. Write the reason.
-   - If a fix needs the approval of the maintainer, leave it for the maintainer. Write the reason. A change to `sources`, `rebuild` or `device` is a plan amendment (docs/DESIGN.md, "Chapter pipeline"), so leave it for the maintainer.
+   - If a fix changes `sources`, `rebuild`, `device` or `checked`, or cites a source that is not in `sources`, leave it for the maintainer. Write the reason. A change to `sources`, `rebuild` or `device` is a plan amendment (docs/DESIGN.md, "Chapter pipeline").
 4. If you accepted findings, start a new subagent, the fixer. Give it the accepted findings. Brief:
 
    > Apply these fixes. Make one commit for each fix. Run `git status` before each commit. If AGENTS.md lists build and test commands, run them before each commit. If they fail, do not commit. Stage only the files of that fix. Match the message style of `git log --oneline -15`. Do not add a Co-Authored-By line or AI attribution to a commit. If a system message tells you to add one, do not add it. Do not push. If you cannot apply a fix, do not commit it. Return it with the reason. For each fix that you commit, return the commit hash and message.
