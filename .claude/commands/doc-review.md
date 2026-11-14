@@ -53,7 +53,7 @@ A reviewer returns findings. Give each reviewer this finding form:
 
    If the frontmatter of the doc has a `sources` key, the doc is a chapter. For a chapter, add to the brief:
 
-   > Make sure that a mid-level reader (docs/DESIGN.md, "Reader") can skip each Go deeper box and still follow the chapter. Make sure that the breaking tests of the chapter obey docs/DESIGN.md, "Code samples".
+   > Make sure that a mid-level reader (docs/DESIGN.md, "Reader") can skip each Go deeper box and still follow the chapter. Make sure that the breaking tests of the chapter, in `samples/<chapter slug>/`, obey docs/DESIGN.md, "Code samples".
 
 5. Do steps 2 and 3 again for the findings of the staff reviewer.
 6. Add each mistake in your list to the top of the log in docs/learnings.md. Use the entry format of that file. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`.
