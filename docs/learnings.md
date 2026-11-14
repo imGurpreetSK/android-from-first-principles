@@ -65,11 +65,9 @@ Entry format, one or two lines:
 
 2026-11-14: The parent agent gave the fix text `curl -sL '<url>?format=TEXT'` for Gitiles. The URL had a `#<line>` anchor, so curl sent no query and got HTML. Rule: Before you add `?format=TEXT` to a Gitiles URL, remove the `#` anchor.
 
-2026-11-14: Several agents ran many commands in one shell call. The output was mixed, or the output compressor cut it. One search printed 43 KB. Expected failures of a whole-page assertion printed the full HTML page (about 5,000 tokens) three times. Rule: Run one command for each output that you need. Limit each output to the lines that you need. If you expect an assertion on a large value to fail, run only that test, and cut the output to the error line.
+2026-11-14: Several agents ran many commands in one shell call. The output was mixed, or the output compressor cut it. One search printed 43 KB. Expected failures of a whole-page assertion printed the full HTML page (about 5,000 tokens) three times. In an isolated git worktree, a guard refused long compound shell commands, for example `cd`, a heredoc and `gradle` in one command. A hook refused `git add` and `git commit` in one call. Two subagents had these refusals. Rule: Run one command in each Bash call. In a worktree, use absolute paths. Write files with the Write tool. Limit each output to the lines that you need. If you expect an assertion on a large value to fail, run only that test, and cut the output to the error line.
 
 2026-11-14: A fixer used `grep` in Bash to search one small file. A hook changed the command. Rule: To search one small file, use the Read tool.
-
-2026-11-14: In an isolated git worktree, a guard refused long compound shell commands, for example `cd`, a heredoc and `gradle` in one command. A hook refused `git add` and `git commit` in one call. Two subagents had these refusals. Rule: In a worktree, run each shell command alone with absolute paths. Write files with the Write tool. Send each git command in its own call.
 
 2026-11-14: The parent agent and a fact checker parsed the output of `npm view <pkg> time --json` as a JSON object. npm 12 printed a list, so the parse failed. Rule: Before you parse `npm view --json` output, check if it is a list.
 
