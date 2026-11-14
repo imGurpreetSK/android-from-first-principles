@@ -131,7 +131,7 @@ The chapter slug identifies a chapter. The slug is a topic name, unique across t
 
 Launch is the announcement of the series. It happens when all 35 chapters are published. Each chapter goes through the full chapter pipeline. If a chapter has a rebuild, its samples have tests.
 
-- Before launch, the site deploys from `main` as normal. The site is on the free subdomain, with no links to it and no announcement. The maintainer merges each chapter when its review passes. There is no launch branch.
+- Before launch, the site deploys from `main` as normal. The site is on the free subdomain, with no links to it and no announcement. The maintainer merges each chapter at its Merge step. There is no launch branch.
 - Before and after launch, the site shows only published chapters. It has no "coming soon" pages.
 
 ## Chapter pipeline
@@ -140,10 +140,10 @@ Launch is the announcement of the series. It happens when all 35 chapters are pu
 2. **Draft.** AI, or a contributor by hand, drafts the chapter. If the plan has a rebuild, the draft also has the rebuild in `samples/` and its breaking tests. The draft cites only sources from the source list.
    - The Draft step never changes `sources`, `rebuild` or `device`. A change to them is a **plan amendment**. A plan amendment is a separate commit that changes only the frontmatter. Before the draft continues, the maintainer approves the amendment with a new "plan approved" comment.
    - If `/chapter-draft` needs a source that is not in the source list, it stops and names the source.
-   - CI does not enforce the plan amendment rule. The maintainer sees the plan commits in the PR diff at the Review step.
+   - CI does not enforce the plan amendment rule. The maintainer sees the plan commits in the PR diff at the Merge step.
 3. **Check.** CI checks that links resolve, that each citation points to a listed source and that code links are pinned. CI also checks that samples build and tests pass.
 4. **Edit.** The editor, named in `edited_by`, checks each claim against its source, with line numbers and anchors. The editor edits on the branch and reads the Vercel preview of the PR.
-5. **Review.** The maintainer reviews the PR. If the chapter has device prompts, the maintainer runs them again. Then the maintainer merges the PR. On a chapter by the maintainer, the Edit and Review steps are one pass.
+5. **Merge.** The maintainer checks the PR. If the chapter has device prompts, the maintainer runs them again. Then the maintainer merges the PR. On a chapter by the maintainer, the Edit and Merge steps are one pass.
 
 Two repo-level Claude commands run the steps, so all chapters go through the same steps. The commands split at the plan approval:
 
@@ -211,8 +211,8 @@ The README and the site footer each have one line with a link: "Format inspired 
   - Then a human edits and checks each chapter.
   - Each claim links to its source.
   - If you find an error, challenge the claim.
-- `edited_by` names the editor: the person who checked each claim against its sources. On a contributor's chapter, the editor is the contributor. The maintainer's review is the merge, and it gets no credit.
-- `edited_by` means that the editor checked the chapter at its baseline. The review of its own PR checks each later fix and each "Since Android N…" note. Git history keeps them. They do not change `edited_by`. Only a baseline move resets it.
+- `edited_by` names the editor: the person who checked each claim against its sources. On a contributor's chapter, the editor is the contributor. The maintainer gets no credit for the Merge step.
+- `edited_by` means that the editor checked the chapter at its baseline. The maintainer checks each later fix and each "Since Android N…" note in its own PR. Git history keeps them. They do not change `edited_by`. Only a baseline move resets it.
 - Each chapter footer shows its kind from `drafted`: "Drafted with AI, edited by <name>" or "Written by <name>".
 
 ## Open items
