@@ -3,3 +3,17 @@
   --sl-font: 'Roboto';
   --sl-font-mono: 'Roboto Mono';
 }
+
+/* Dark mode. #3ddc84 is the Android green of the Android brand guidelines. Link text (accent-high) on the page background: 9.9:1. */
+:root {
+  --sl-color-accent-low: #0d3d22;
+  --sl-color-accent: #2bb86a;
+  --sl-color-accent-high: #3ddc84;
+}
+
+/* Light mode. Link text (accent) on the page background: 5.8:1. WCAG AA needs 4.5:1 for normal text. */
+:root[data-theme='light'] {
+  --sl-color-accent-low: #c8f2d9;
+  --sl-color-accent: #00753b;
+  --sl-color-accent-high: #004d26;
+}
