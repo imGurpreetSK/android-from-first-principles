@@ -125,10 +125,10 @@ The chapter slug identifies a chapter. The slug is a topic name, unique across t
 
 ## Launch scope
 
-Launch is the announcement, made when all 35 chapters are published: each through the full pipeline (plan, draft, edit, review), with tested samples wherever a chapter has a rebuild.
+Launch is the announcement of the series. It happens when all 35 chapters are published. Each chapter goes through the full chapter pipeline. If a chapter has a rebuild, its samples have tests.
 
-- Before launch, the site deploys from `main` as normal: live on the free subdomain, unlinked and unannounced. Each chapter merges when its review passes; no launch branch.
-- The site only ever shows published chapters. There are no coming-soon pages, before or after launch.
+- Before launch, the site deploys from `main` as normal. The site is on the free subdomain, with no links to it and no announcement. The maintainer merges each chapter when its review passes. There is no launch branch.
+- Before and after launch, the site shows only published chapters. It has no "coming soon" pages.
 
 ## Chapter pipeline
 
