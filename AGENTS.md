@@ -9,7 +9,7 @@ This repo holds Android from First Principles, a free online series on the machi
 
 ## Rules
 
-1. Commits and PRs have no co-author, co-committer or AI attribution. The configured git user is the only author.
+1. Do not add a co-author, co-committer or AI attribution to commits or PRs. The configured git user is the only author.
 2. Make micro commits. Each commit has one change. Each commit builds and passes all tests. You can revert each commit alone.
 3. Tests are first-class. Put tests in the same commit as the code that they test. Code with no logic can skip tests. If you skip tests, write the reason in the commit message.
 4. Write all docs in Simplified Technical English ([ASD-STE100](https://www.asd-ste100.org/)). Use the fewest words that give the full information. Key rules:
