@@ -10,7 +10,8 @@ export default defineConfig({
       },
       customCss: [
         // Only the font files that the site uses: 400 and 400 italic for text, 600 for headings and labels, 700 for bold text.
-        // The code theme uses italic and bold only for Markdown and C# code, so Roboto Mono gets only 400.
+        // The Night Owl code themes use italic only for the italic and Markdown italic scopes.
+        // They use bold only for the bold, Markdown bold and C# region scopes. So code blocks need no Roboto Mono italic or bold.
         '@fontsource/roboto/400.css',
         '@fontsource/roboto/400-italic.css',
         '@fontsource/roboto/600.css',
