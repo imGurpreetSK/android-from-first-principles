@@ -21,3 +21,12 @@ A chapter changes only if a "Challenge a claim" issue or a behavior change in th
 Each fix and each "Since Android <version>…" note has its own PR. That PR goes through the Fact check, Staff review and Merge steps of the chapter pipeline. It does not change `edited_by`.
 
 The maintainer moves a baseline only if the chapter is too far out of date. A baseline move runs the full chapter pipeline again. Only a baseline move resets `edited_by`.
+
+## Propose a chapter
+
+Anyone can propose a new chapter in a "Chapter proposal" issue. A proposal is a new topic or a split of a chapter.
+
+- If the maintainer adds the chapter to the [curriculum](docs/DESIGN.md#curriculum), the maintainer assigns the proposer. Then the proposer follows the chapter pipeline.
+- If a proposal stalls, the maintainer unassigns it with a comment.
+
+The site shows the chapter only after it is published.
