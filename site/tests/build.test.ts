@@ -13,6 +13,7 @@ const goDeeper = fileURLToPath(new URL('./fixtures/go-deeper', import.meta.url))
 const goDeeperNoTitle = fileURLToPath(new URL('./fixtures/go-deeper-no-title', import.meta.url));
 // The Astro root of this fixture is next to its samples/, as site/ is next to samples/ in the repo.
 const snippetFixture = new URL('./fixtures/snippet/site/', import.meta.url);
+const duplicateSlug = fileURLToPath(new URL('./fixtures/duplicate-slug', import.meta.url));
 
 test('astro build makes a home page with the page title, the hero title and the tagline', () => {
   const { status, stderr } = spawnSync(astro, ['build', '--root', site], { encoding: 'utf8', timeout: 60_000 });
@@ -80,4 +81,10 @@ test('astro build shows the region of a Snippet in a code block, without the mar
   // Expressive Code puts each code line in a div of the class ec-line.
   const lines = pre.split('<div class="ec-line">').slice(1).map((line) => line.replace(/<[^>]+>/g, ''));
   expect(lines).toEqual(['fun loop() {', '    while (true) println("loop")', '}']);
+}, 60_000);
+
+test('astro build fails on two chapters with the same chapter slug in different sections', () => {
+  const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', duplicateSlug, '--force'], { encoding: 'utf8', timeout: 60_000 });
+  expect(status).not.toBe(0);
+  expect(stdout + stderr).toContain('same chapter slug "main-thread"');
 }, 60_000);

@@ -21,7 +21,7 @@ beforeAll(() => {
   // spawnSync blocks the thread, so the hook timeout cannot stop a stuck build. The spawnSync timeout stops it.
   const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', fixture, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
   expect(status, stdout + stderr).toBe(0);
-  chapter = read('chapter/index.html');
+  chapter = read('launch-path/chapter/index.html');
   notChapter = read('404.html');
 }, 60_000);
 
@@ -41,7 +41,7 @@ test('a chapter shows the checked stamp at the top of its content', () => {
 });
 
 test('a chapter without optional checked fields shows only the Android line in its stamp', () => {
-  const stamp = read('human/index.html').match(/<div class="checked-stamp">([\s\S]*?)<\/div>/)?.[1] ?? '';
+  const stamp = read('launch-path/human/index.html').match(/<div class="checked-stamp">([\s\S]*?)<\/div>/)?.[1] ?? '';
   expect(stamp.match(/<li>/g)).toEqual(['<li>']);
 });
 
@@ -65,8 +65,8 @@ test('a page without chapter fields lists no sources', () => {
 });
 
 test.each([
-  ['ai', 'chapter/index.html', 'Drafted with AI, edited by Gurpreet Singh'],
-  ['human', 'human/index.html', 'Written by Jane Doe'],
+  ['ai', 'launch-path/chapter/index.html', 'Drafted with AI, edited by Gurpreet Singh'],
+  ['human', 'launch-path/human/index.html', 'Written by Jane Doe'],
 ])('a chapter with drafted: %s shows its line in the page footer', (_, page, line) => {
   expect(new RegExp(`<div class="meta[ "][^>]*>(?:(?!</div>)[\\s\\S])*<p>${line}</p></div>`).test(read(page)), line).toBe(true);
 });
@@ -77,7 +77,7 @@ test('a page without chapter fields shows no drafted line', () => {
 
 test('each page shows the license line and the credit line', () => {
   const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' }).filter((name) => name.endsWith('.html'));
-  expect(pages.sort()).toEqual(['404.html', 'chapter/index.html', 'human/index.html']);
+  expect(pages.sort()).toEqual(['404.html', 'launch-path/chapter/index.html', 'launch-path/human/index.html']);
   for (const page of pages) {
     const html = read(page);
     const text = html.replace(/<[^>]*>/g, '');
