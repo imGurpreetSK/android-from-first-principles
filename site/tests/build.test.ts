@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,7 @@ const goDeeperNoTitle = fileURLToPath(new URL('./fixtures/go-deeper-no-title', i
 // The Astro root of this fixture is next to its samples/, as site/ is next to samples/ in the repo.
 const snippetFixture = new URL('./fixtures/snippet/site/', import.meta.url);
 const duplicateSlug = fileURLToPath(new URL('./fixtures/duplicate-slug', import.meta.url));
+const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
 
 test('astro build makes a home page with the page title, the hero title and the tagline', () => {
   const { status, stderr } = spawnSync(astro, ['build', '--root', site], { encoding: 'utf8', timeout: 60_000 });
@@ -87,4 +88,20 @@ test('astro build fails on two chapters with the same chapter slug in different 
   const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', duplicateSlug, '--force'], { encoding: 'utf8', timeout: 60_000 });
   expect(status).not.toBe(0);
   expect(stdout + stderr).toContain('same chapter slug "main-thread"');
+}, 60_000);
+
+test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the sidebar shows only the sections with a chapter', () => {
+  // An output directory outside site/, so astro check does not check the built JS files.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-sidebar-'));
+  try {
+    const { status, stderr } = spawnSync(astro, ['build', '--root', sidebar, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    expect(status, stderr).toBe(0);
+    expect(existsSync(join(outDir, 'concurrency/flow/index.html'))).toBe(true);
+    const html = readFileSync(join(outDir, 'launch-path/main-thread/index.html'), 'utf8');
+    // Starlight gives the label of each top-level sidebar group the class "large". The fixture has no chapter in "State & Survival", the second section.
+    const groups = [...html.matchAll(/<span class="large[ "][^>]*>([^<]*)<\/span>/g)].map((m) => m[1]);
+    expect(groups).toEqual(['The Launch Path', 'Concurrency']);
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
 }, 60_000);
