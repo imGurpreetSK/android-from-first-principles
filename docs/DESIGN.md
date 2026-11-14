@@ -11,7 +11,7 @@ Most Android material teaches a framework. This series teaches the machinery und
 
 ## Chapter shape
 
-Chapters share one skeleton. Some parts are required; the rest are optional:
+All chapters have one skeleton. Some parts are required. The other parts are optional:
 
 ```
 ---
@@ -25,21 +25,21 @@ drafted: ai | human
 edited_by: <name>
 ---
 
-1. The problem      required   why this exists; what breaks without it
-2. Build it naive   optional   rebuild from scratch (snippet imported from samples/)
-3. Where it breaks  optional   the naive version's failure, shown by a test
-4. The real thing   required   map to the AOSP/Jetpack code, cited inline
-5. Mental model     required   one paragraph + one Mermaid diagram to keep
-6. Try it           optional   modify the rebuild and/or run device prompts, 2–3 prompts
+1. The problem      required   why this exists and what breaks without it
+2. Build it naive   optional   the rebuild, from scratch (snippets imported from samples/)
+3. Where it breaks  optional   a breaking test shows the flaw of the rebuild
+4. The real thing   required   maps the mechanism to the AOSP/Jetpack code, with citations
+5. Mental model     required   one paragraph and one Mermaid diagram for the reader to keep
+6. Try it           optional   2–3 prompts: change the rebuild, run device prompts, or both
 
 <Go deeper> boxes anywhere: platform internals
 Sources             required   auto-listed from frontmatter
 ```
 
-- "Build it naive" and "Where it breaks" come as a pair: a chapter with a rebuild always has a test that shows where it breaks.
+- "Build it naive" and "Where it breaks" are a pair. Each chapter with a rebuild has a breaking test.
 - A chapter without a rebuild has no `samples/` module.
-- "Try it" follows from the plan: `rebuild` gives prompts to modify the rebuild, `device` gives device prompts on the launch app, neither means no "Try it".
-- Each chapter's shape is set in its chapter plan (pipeline step 1), not chosen while drafting.
+- The chapter plan sets "Try it". If `rebuild` is true, "Try it" has prompts that change the rebuild. If `device` is true, it has device prompts. If both are false, the chapter has no "Try it".
+- The chapter plan sets the shape of the chapter at the Plan step. The Draft step does not change the shape.
 
 ## Sourcing rules
 
