@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: The writer of /doc-review stated one logged event as a general tool limit: "A subagent cannot start its own subagents." The Claude Code docs say that a subagent can start subagents, up to three layers below the main conversation ([sub-agents](https://code.claude.com/docs/en/sub-agents)). Rule: Before you state a tool limit as a rule, check the limit in the tool docs.
+
 2026-11-14: A subagent downloaded the STE Issue 9 PDF from Zenodo and did not keep it. The parent agent downloaded it again. Zenodo gave HTTP 403 ("unusual traffic"), so the parent agent could not check the quotes. Rule: Save each file that you download in the session scratch directory. Report its path. If a saved copy exists, do not download the file again.
 
 2026-11-14: In this shell, `grep` is `ugrep`. A pattern with the bounded repeat `[^<]{0,80}` failed with "exceeds complexity limits". Rule: For a complex pattern, use Python `re`.
