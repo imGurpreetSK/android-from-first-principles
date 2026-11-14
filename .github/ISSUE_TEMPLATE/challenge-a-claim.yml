@@ -30,7 +30,7 @@ body:
     id: counter-source
     attributes:
       label: Counter-source
-      description: "The URL of a source that shows that the claim is wrong. Code: a file and a line at a tag or a full SHA. Doc: an official doc page, not an archive snapshot. Talk: the URL and a timestamp."
+      description: "Give one URL. Code: a file and a line at a pinned ref, never a branch. On Gitiles, use `+/refs/tags/<tag>/` or a full 40-character SHA. On GitHub, use a full SHA or a tag. Do not use cs.android.com. Doc page: its URL, not an archive snapshot. Talk: its URL and a timestamp. If you challenge the output of a device prompt, write 'Device output'."
     validations:
       required: true
   - type: textarea
