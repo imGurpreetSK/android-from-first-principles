@@ -8,4 +8,4 @@ hero:
   tagline: The machinery under Android app development.
 ---
 
-In this free online series, each non-obvious claim has a citation.
+The series is for Android developers who use Compose, ViewModel and coroutines each day. It shows what runs under them. In this free online series, each non-obvious claim has a citation.
