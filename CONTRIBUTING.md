@@ -59,8 +59,8 @@ Obey the rules in [AGENTS.md](AGENTS.md). The main rules are:
 
 Before each commit, run these commands. If a command fails, do not commit.
 
-- Site: Run `npm ci`, `npm run build`, `npm test` and `npm run check` in `site/`.
-- Samples: Run `samples/gradlew -p samples build` from the repo root. It builds `samples/` and runs all its tests. It needs JDK 17 or later.
+- Site: Run `npm ci`, `npm run build`, `npm test` and `npm run check` in `site/`. It needs Node 24.
+- Samples: Run `samples/gradlew -p samples build` from the repo root. It builds `samples/` and runs all its tests. It needs JDK 17 or later and the Android SDK. Before you run it, set the `ANDROID_HOME` environment variable to the Android SDK directory.
 
 ## Licenses
 
