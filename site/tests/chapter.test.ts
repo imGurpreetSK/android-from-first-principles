@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -62,9 +62,31 @@ test.each([
   ['ai', 'chapter/index.html', 'Drafted with AI, edited by Gurpreet Singh'],
   ['human', 'human/index.html', 'Written by Jane Doe'],
 ])('a chapter with drafted: %s shows its line before the page footer', (_, page, line) => {
-  expect(read(page).includes(`<p>${line}</p><footer`), line).toBe(true);
+  expect(new RegExp(`<p[^>]*>${line}</p><footer`).test(read(page)), line).toBe(true);
 });
 
 test('a page without chapter fields shows no drafted line', () => {
   expect(/Drafted with AI|Written by/.test(notChapter)).toBe(false);
+});
+
+test('each page shows the license line and the credit line', () => {
+  const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' }).filter((name) => name.endsWith('.html'));
+  expect(pages.sort()).toEqual(['404.html', 'chapter/index.html', 'human/index.html']);
+  for (const page of pages) {
+    const html = read(page);
+    const text = html.replace(/<[^>]*>/g, '');
+    const lines = [
+      'The text and the site code have the CC BY-SA 4.0 license. The sample code has the MIT license. Quoted third-party code keeps its own license.',
+      'Format inspired by Backend from First Principles',
+    ];
+    for (const line of lines) expect(text.includes(line), `${page}: ${line}`).toBe(true);
+    const links = [...html.matchAll(/<a href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map(([, href, label]) => `${label} ${href}`);
+    expect(links, page).toEqual(
+      expect.arrayContaining([
+        'CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/',
+        'MIT https://github.com/imGurpreetSK/android-from-first-principles/blob/main/samples/LICENSE',
+        'Backend from First Principles https://github.com/DsThakurRawat/Backend-from-first-Principle',
+      ]),
+    );
+  }
 });

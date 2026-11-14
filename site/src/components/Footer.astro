@@ -7,3 +7,18 @@ const { drafted, edited_by } = Astro.locals.starlightRoute.entry.data;
 
 {drafted && <p>{drafted === 'ai' ? `Drafted with AI, edited by ${edited_by}` : `Written by ${edited_by}`}</p>}
 <Default />
+<div class="site-footer">
+  <p>
+    The text and the site code have the <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> license.
+    The sample code has the <a href="https://github.com/imGurpreetSK/android-from-first-principles/blob/main/samples/LICENSE">MIT</a> license.
+    Quoted third-party code keeps its own license.
+  </p>
+  <p>Format inspired by <a href="https://github.com/DsThakurRawat/Backend-from-first-Principle">Backend from First Principles</a></p>
+</div>
+
+<style>
+  .site-footer {
+    font-size: var(--sl-text-xs);
+    color: var(--sl-color-gray-3);
+  }
+</style>
