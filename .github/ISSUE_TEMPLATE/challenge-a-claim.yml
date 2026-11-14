@@ -30,7 +30,7 @@ body:
     id: counter-source
     attributes:
       label: Counter-source
-      description: "Give one URL. Code: a file and a line at a pinned ref, never a branch. On Gitiles, use `+/refs/tags/<tag>/` or a full 40-character SHA. On GitHub, use a full SHA or a tag. Do not use cs.android.com. Doc page: its URL, not an archive snapshot. Talk: its URL and a timestamp. If you challenge the output of a device prompt, write 'Device output'."
+      description: "Give one URL. Code: a file and a line at a pinned ref, never a branch. On Gitiles, use `+/refs/tags/<tag>/` or a full 40-character SHA. On GitHub, use a full SHA or a tag. Do not use cs.android.com. Doc page: its URL, not an archive snapshot. Talk: its URL and a timestamp. If you challenge the output of a device prompt, write 'Device output'. Chapters describe AOSP behavior. The behavior of one OEM device does not show that a claim is wrong. Give AOSP code or the Compatibility Definition Document (CDD)."
     validations:
       required: true
   - type: textarea
