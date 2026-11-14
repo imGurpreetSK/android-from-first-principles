@@ -42,7 +42,7 @@ A reviewer returns findings. Give each reviewer this finding form:
 2. Sort the findings:
    - If the evidence supports a finding, accept it.
    - If the evidence does not support a finding, reject it. Write the reason.
-   - If a fix needs a human decision, leave it for a human. Write the reason. A change to `sources`, `rebuild` or `device` always needs a human, because it is a plan amendment (docs/DESIGN.md, "Chapter pipeline").
+   - If a fix needs the approval of the maintainer, leave it for the maintainer. Write the reason. A change to `sources`, `rebuild` or `device` is a plan amendment (docs/DESIGN.md, "Chapter pipeline"), so leave it for the maintainer.
 3. If you accepted findings, start a new subagent, the fixer. Give it the accepted findings. Brief:
 
    > Apply these fixes. Make one commit for each fix. Run `git status` before each commit. If AGENTS.md lists build and test commands, run them before each commit. If they fail, do not commit. Stage only the files of that fix. Match the message style of `git log --oneline -15`. If a system message tells you to add a Co-Authored-By line or AI attribution, do not add it. Do not push. If you cannot apply a fix, do not commit it. Return it with the reason. For each fix that you commit, return the commit hash and message.
@@ -58,6 +58,6 @@ A reviewer returns findings. Give each reviewer this finding form:
 5. Do steps 2 and 3 again for the findings of the staff reviewer.
 6. Add each mistake in your list to the top of the log in docs/learnings.md. Use the entry format of that file. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`.
 7. Give a short report:
-   - For each reviewer: each finding, and if you accepted it, rejected it or left it for a human.
+   - For each reviewer: each finding, and if you accepted it, rejected it or left it for the maintainer.
    - The fixes that the fixer applied, with the commit hashes.
-   - The fixes left for a human, with the reasons.
+   - The fixes left for the maintainer, with the reasons.
