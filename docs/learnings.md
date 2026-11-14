@@ -21,7 +21,7 @@ Entry format, one or two lines:
 
 2026-11-14: A test assumed that each font URL in the built CSS is a file. Vite puts small fonts inline as data URLs. Rule: Before you assert on build output, read the build output.
 
-2026-11-14: A reviewer read a file in parallel with the command that wrote it. A subagent ran a pypdf script in parallel with the check for pypdf. The script failed. Rule: Start a call only after each call whose result it needs ends. On this machine, `gs -sDEVICE=txtwrite` extracts text from a PDF.
+2026-11-14: A reviewer read a file in parallel with the command that wrote it. A subagent ran a pypdf script in parallel with the check for pypdf. The script failed. An agent ran `npm test` in parallel with `npm run check`. Rule: Start a call only after each call whose result it needs ends. Run the "Build and test" commands one after the other. They share `node_modules` and the build caches. On this machine, `gs -sDEVICE=txtwrite` extracts text from a PDF.
 
 2026-11-14: Agents parsed a JS theme file as JSON. Agents parsed the list output of `npm view --json` as an object. A script dropped a column of an HTML table. Rule: Before you parse or search a file or a command output, print its first lines and check its format. After you convert an HTML table to text, make sure that each column has values.
 
