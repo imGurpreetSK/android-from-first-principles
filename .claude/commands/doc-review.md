@@ -1,6 +1,7 @@
 ---
 description: Review one doc with a fact checker and a staff reviewer. A fixer applies the fixes in micro commits.
 argument-hint: <path of the doc>
+disable-model-invocation: true
 ---
 
 Review the doc `$ARGUMENTS`. This command does the two reviews of AGENTS.md rule 5.
