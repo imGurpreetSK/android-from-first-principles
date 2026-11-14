@@ -87,9 +87,7 @@ Entry format, one or two lines:
 
 2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Agents passed flags that a tool does not have: the GNU `find` flag `-fprint` on macOS, `--output=/dev/null` to `gradlew`, and guessed `bd` flags. Rule: Before you probe a binary, read its `--help`. Before you pass a flag that you have not used in this repo, read the `--help` of the tool. If you must search a binary, use fixed-string `grep -F`. A jar is compressed. `grep` does not find text in its classes. Set a timeout on the Bash call. macOS has no `timeout` command.
 
-2026-11-14: `bd init` without `--stealth` wrote a block into AGENTS.md, tool files (`.claude/settings.json`, `.codex/`, `.cursor/`, `.agents/`) and extra lines into `.gitignore`. In this repo, `bd init --stealth` wrote only lines into `.git/info/exclude`. Rule: This repo uses beads stealth mode. Prefer `bd init --stealth` to `bd init`. Run `git status` before and after init. Revert each file that init changed. Delete each file that init added.
-
-2026-11-14: Each `bd create` failed because the beads database was only half initialized. Rule: Before the first `bd create` in a workspace, run `bd info` and `bd config get issue_prefix`. If the prefix is not set, do not run `bd create`.
+2026-11-14: `bd init` without `--stealth` wrote into AGENTS.md, tool files and `.gitignore`. Each `bd create` failed, because the beads database was only half initialized. Rule: This repo uses beads stealth mode. Prefer `bd init --stealth` to `bd init`. Run `git status` before and after init. Revert each file that init changed. Delete each file that init added. Before the first `bd create` in a workspace, run `bd info` and `bd config get issue_prefix`. If the prefix is not set, do not run `bd create`.
 
 2026-11-14: In zsh, `echo ======` failed two times, one time in the parent agent. Zsh reads a word that starts with `=` as a command name. Two fixers passed unquoted arguments with glob characters, for example `--include=*.js` and `--format=...[...]`. Zsh failed. Rule: In zsh, quote each argument that starts with `=` or that has `[`, `]`, `*` or `?`.
 
