@@ -30,3 +30,9 @@ body:
     attributes:
       label: Sources
       description: "Give one to three sources that the chapter can cite: AOSP or library code, doc pages or talks."
+  - type: checkboxes
+    id: author
+    attributes:
+      label: Author
+      options:
+        - label: If the maintainer adds this chapter to the curriculum, I will write it.
