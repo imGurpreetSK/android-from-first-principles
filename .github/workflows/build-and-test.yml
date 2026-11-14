@@ -1,0 +1,50 @@
+name: Build and test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  site:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # setup-node reads the Node version from engines.node.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: site/package.json
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm run check
+
+  samples:
+    # The ubuntu-24.04 image has the Android SDK, the platform and the build tools that samples/ needs. It also sets ANDROID_HOME.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # JDK 17 is the oldest JDK that samples/ supports.
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          # The default cache key does not include samples/gradle/libs.versions.toml. That file has the plugin and library versions.
+          cache-dependency-path: |
+            samples/**/*.gradle*
+            samples/**/gradle-wrapper.properties
+            samples/gradle/libs.versions.toml
+      - run: samples/gradlew -p samples build
