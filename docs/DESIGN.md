@@ -6,8 +6,8 @@ Most Android material teaches a framework. This series teaches the machinery und
 
 ## Reader
 
-- **Default reader:** mid-level Android dev (1–4 years). Uses Compose, ViewModel and coroutines daily; doesn't know what runs underneath.
-- **Platform depth** (Binder, Zygote, ART, SurfaceFlinger, …) lives only in collapsible **Go deeper** boxes inside a chapter. No separate deep-dive pages. A mid-level reader must be able to skip every box and still follow the chapter.
+- **Default reader:** a mid-level Android developer with 1–4 years of experience. The reader uses Compose, ViewModel and coroutines each day. The reader does not know what runs under them.
+- **Platform depth** (Binder, Zygote, ART, SurfaceFlinger, …) is only in collapsible **Go deeper** boxes inside a chapter. There are no separate pages for platform depth. A mid-level reader must be able to skip each box and still follow the chapter.
 
 ## Chapter shape
 
