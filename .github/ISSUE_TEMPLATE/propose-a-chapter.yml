@@ -21,7 +21,7 @@ body:
     id: question
     attributes:
       label: Question
-      description: The question that the chapter answers.
+      description: Give the question that the chapter answers.
       placeholder: Why does a ViewModel survive rotation?
     validations:
       required: true
