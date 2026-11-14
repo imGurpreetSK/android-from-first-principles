@@ -10,6 +10,7 @@ const site = fileURLToPath(new URL('..', import.meta.url));
 // Each fixture is a separate Astro root, so the built site does not get a page for a fixture.
 const fixture = fileURLToPath(new URL('./fixtures/invalid-chapter', import.meta.url));
 const goDeeper = fileURLToPath(new URL('./fixtures/go-deeper', import.meta.url));
+const goDeeperNoTitle = fileURLToPath(new URL('./fixtures/go-deeper-no-title', import.meta.url));
 
 test('astro build makes a home page with the page title, the hero title and the tagline', () => {
   const { status, stderr } = spawnSync(astro, ['build', '--root', site], { encoding: 'utf8', timeout: 60_000 });
@@ -52,6 +53,18 @@ test('a Go deeper box is a closed <details> element that starts with its <summar
     // It also tells browsers to let the keyboard activate that <summary>, as a click does: https://html.spec.whatwg.org/multipage/interaction.html#activation
     // The page also has the <details> element of the Starlight mobile table of contents.
     expect(html.match(/<details[^>]*><summary[^>]*>Go deeper:[\s\S]*?<\/details>/g)).toEqual(['<details><summary>Go deeper: Binder</summary><p>The box text.</p></details>']);
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build fails on a Go deeper box without a title', () => {
+  // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-go-deeper-no-title-'));
+  try {
+    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', goDeeperNoTitle, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    expect(status).not.toBe(0);
+    expect(stdout + stderr).toContain('<GoDeeper> needs a title.');
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }

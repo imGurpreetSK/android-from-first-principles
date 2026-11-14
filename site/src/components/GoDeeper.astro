@@ -6,6 +6,8 @@ interface Props {
 }
 
 const { title } = Astro.props;
+// MDX does not check props, so a box without a title fails the build here.
+if (!title) throw new Error('<GoDeeper> needs a title.');
 ---
 
 <details>
