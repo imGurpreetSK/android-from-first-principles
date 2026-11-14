@@ -1,7 +1,9 @@
 ---
 title: Invalid chapter
 section: The Launch Path
-checked: Android 17 (AOSP android-17.0.0_r1)
+checked:
+  android: 17
+  aosp: android-17.0.0_r1
 sources:
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java
 rebuild: true

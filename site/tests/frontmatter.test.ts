@@ -9,7 +9,7 @@ const schema = docsSchema({ extend: frontmatter })({ image: () => z.string() } a
 const chapter = {
   title: 'The main thread: Looper, Handler, MessageQueue',
   section: 'The Launch Path',
-  checked: 'Android 17 (AOSP android-17.0.0_r1)',
+  checked: { android: 17, aosp: 'android-17.0.0_r1' },
   sources: ['https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java'],
   rebuild: true,
   device: false,
@@ -17,9 +17,11 @@ const chapter = {
   edited_by: 'Gurpreet Singh',
 };
 
-const emulator = 'system-images;android-37.0;google_apis;arm64-v8a, revision 8';
+const emulator = { image: 'system-images;android-37.0;google_apis;arm64-v8a', revision: 8 };
 
 const valid = (data: object) => schema.safeParse(data).success;
+// The chapter with these fields changed in checked.
+const checked = (fields: object) => ({ ...chapter, checked: { ...chapter.checked, ...fields } });
 
 describe('chapter frontmatter', () => {
   test('accepts a chapter', () => {
@@ -27,7 +29,11 @@ describe('chapter frontmatter', () => {
   });
 
   test('accepts a chapter with device prompts and the emulator in checked', () => {
-    expect(valid({ ...chapter, device: true, checked: `${chapter.checked}, ${emulator}` })).toBe(true);
+    expect(valid({ ...checked({ emulator }), device: true })).toBe(true);
+  });
+
+  test('accepts library versions and a Play services version in checked', () => {
+    expect(valid(checked({ libraries: { 'androidx.lifecycle': '2.10.0' }, play_services: '25.10.31' }))).toBe(true);
   });
 
   test.each(Object.keys(chapter))('rejects a chapter without %s', (field) => {
@@ -35,8 +41,21 @@ describe('chapter frontmatter', () => {
     expect(valid(rest)).toBe(false);
   });
 
-  test('rejects checked without the baseline release and AOSP tag', () => {
-    expect(valid({ ...chapter, checked: 'Android 17' })).toBe(false);
+  test('rejects an AOSP tag of a different release', () => {
+    expect(valid(checked({ aosp: 'android-16.0.0_r1' }))).toBe(false);
+  });
+
+  test('rejects a release that is not a number', () => {
+    expect(valid(checked({ android: '17' }))).toBe(false);
+  });
+
+  test.each(['android-17', 'android-17.0.0', 'refs/tags/android-17.0.0_r1'])('rejects the AOSP tag %s', (aosp) => {
+    expect(valid(checked({ aosp }))).toBe(false);
+  });
+
+  // YAML reads an unquoted 2.10 as the number 2.1.
+  test('rejects a library version that is a number', () => {
+    expect(valid(checked({ libraries: { 'androidx.lifecycle': 2.1 } }))).toBe(false);
   });
 
   test('rejects an empty sources list', () => {
@@ -58,16 +77,16 @@ describe('chapter frontmatter', () => {
     expect(valid({ ...chapter, [field]: 'yes' })).toBe(false);
   });
 
-  test('rejects device true without the emulator system image in checked', () => {
+  test('rejects device true without the emulator in checked', () => {
     expect(valid({ ...chapter, device: true })).toBe(false);
   });
 
-  test('rejects device true with the emulator system image but no revision', () => {
-    expect(valid({ ...chapter, device: true, checked: `${chapter.checked}, system-images;android-37.0;google_apis;arm64-v8a` })).toBe(false);
+  test('rejects an emulator without a revision', () => {
+    expect(valid({ ...checked({ emulator: { image: emulator.image } }), device: true })).toBe(false);
   });
 
-  test('rejects device false with an emulator system image in checked', () => {
-    expect(valid({ ...chapter, checked: `${chapter.checked}, ${emulator}` })).toBe(false);
+  test('rejects device false with the emulator in checked', () => {
+    expect(valid(checked({ emulator }))).toBe(false);
   });
 });
 
