@@ -67,11 +67,21 @@ class RebuildConventionTest {
         assertTrue(projectDir.resolve("build/test-results/test/TEST-SmokeTest.xml").isFile)
     }
 
-    private fun runGradle(task: String): String =
+    @Test
+    fun compileKotlin_rejectsJdk21Api() {
+        projectDir.resolve("src/main/kotlin").mkdirs()
+        projectDir.resolve("src/main/kotlin/Virtual.kt").writeText(
+            "fun virtualThread() = Thread.ofVirtual()"
+        )
+        val output = gradle("compileKotlin").buildAndFail().output
+        assertTrue(output.contains("Unresolved reference 'ofVirtual'"), output)
+    }
+
+    private fun runGradle(task: String): String = gradle(task).build().output
+
+    private fun gradle(task: String): GradleRunner =
         GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
             .withArguments(task)
-            .build()
-            .output
 }
