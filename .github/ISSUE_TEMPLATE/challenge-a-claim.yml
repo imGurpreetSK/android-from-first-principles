@@ -1,5 +1,5 @@
 name: Challenge a claim
-description: Show with a source that a claim in a chapter is wrong.
+description: Show with a counter-source that a claim in a chapter is wrong, or that its cited doc page no longer supports it.
 body:
   - type: input
     id: chapter
