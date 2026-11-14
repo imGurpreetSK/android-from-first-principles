@@ -23,7 +23,7 @@ A chapter that is fully edited and sourced, and that is on the site.
 _Avoid_: done, released, live
 
 **Rebuild**:
-A small toy version of a mechanism, written from scratch in Kotlin. A chapter shows the rebuild before the real code. A rebuild is optional. Each rebuild has a breaking test that shows where it breaks.
+A small toy version of a mechanism, written from scratch in Kotlin. A chapter builds the rebuild before it shows the real code. A rebuild is optional. Each rebuild has a breaking test that shows where it breaks.
 _Avoid_: naive implementation, demo, example
 
 **Breaking test**:
