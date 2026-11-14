@@ -2,6 +2,9 @@
   "name": "android-from-first-principles-site",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "build": "astro build",
     "test": "vitest run",
