@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: An agent designed a bead tree with four levels and only noted the depth limit as a risk. The bd setting `hierarchy.max-depth` is 3, so the design lost its top epic. Rule: Before you design a structure that depends on a tool, confirm the hard limits of the tool.
+
 2026-11-14: A list of instructions put a condition and its action in different bullets. Some bullets were not commands. Rule: In a list of instructions, keep each condition and its action in the same bullet. Write every bullet as a command.
 
 2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Rule: Before you probe a binary, read its `--help`. If you must search a binary, use fixed-string `grep -F` with a timeout.
