@@ -9,3 +9,9 @@ AI drafts most chapters from a source list that the maintainer approves. Then a 
 ## Challenge a claim
 
 Anyone can challenge a claim. Open a "Challenge a claim" issue. In the issue, give the chapter, the claim and a counter-source. You can also send a fix PR. [CONTRIBUTING.md](CONTRIBUTING.md) gives the details.
+
+## License
+
+- Text: [CC BY-SA 4.0](LICENSE)
+- Code in `samples/`: [MIT](samples/LICENSE)
+- Quoted third-party code (AOSP, AndroidX, libraries) keeps its own license. Each excerpt links to its pinned source file.
