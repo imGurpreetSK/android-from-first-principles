@@ -79,11 +79,11 @@ The one person who checks each claim in a chapter against its sources, at the ba
 _Avoid_: reviewer, author
 
 **Fact checker**:
-The first of the two reviewers of each doc. The fact checker compares each claim with its source. The fact checker also makes sure that the doc obeys Simplified Technical English (STE).
+The first of the two reviewers of each doc: an AI subagent. The fact checker compares each claim with its source. The fact checker also makes sure that the doc obeys Simplified Technical English (STE).
 _Avoid_: editor, verifier
 
 **Staff reviewer**:
-The second of the two reviewers of each doc: a staff Android engineer with 10 years of experience. The staff reviewer makes sure that the doc and its citations are correct.
+The second of the two reviewers of each doc: an AI subagent that acts as a staff Android engineer with 10 years of experience. The staff reviewer makes sure that the doc and its citations are correct.
 _Avoid_: maintainer, expert reviewer
 
 **Chapter plan**:
