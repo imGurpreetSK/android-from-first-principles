@@ -1,3 +1,5 @@
 {
-  "extends": "astro/tsconfigs/strict"
+  "extends": "astro/tsconfigs/strict",
+  // A build test writes the built site of a fixture into the dist/ directory of the fixture. astro check must not check the built files.
+  "exclude": ["**/dist"]
 }

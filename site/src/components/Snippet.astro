@@ -1,0 +1,19 @@
+---
+// Shows one region of a file in samples/ as a code block, for example:
+// <Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="loop" />
+import { Code } from '@astrojs/starlight/components';
+import { root } from 'astro:config/server';
+import { snippet } from '../snippet';
+
+interface Props {
+  // The path of the file under samples/.
+  file: string;
+  region: string;
+}
+
+const { file, region } = Astro.props;
+// samples/ is next to the Astro root, as samples/ is next to site/ in the repo.
+const code = snippet(new URL('../samples/', root), file, region);
+---
+
+<Code code={code} lang={file.split('.').pop()} />
