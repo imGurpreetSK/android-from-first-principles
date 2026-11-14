@@ -23,13 +23,11 @@ Entry format, one or two lines:
 
 2026-11-14: A reviewer read a file in parallel with the command that wrote it. A subagent ran a pypdf script in parallel with the check for pypdf. The script failed. Rule: Start a call only after each call whose result it needs ends. On this machine, `gs -sDEVICE=txtwrite` extracts text from a PDF.
 
-2026-11-14: Agents parsed a bundled JS theme file as JSON. A regex missed text, because the theme was a JS string with `\"` escapes. Rule: Before you parse or search a file, print its first lines and check its format.
+2026-11-14: Agents parsed a JS theme file as JSON. Agents parsed the list output of `npm view --json` as an object. A script dropped a column of an HTML table. Rule: Before you parse or search a file or a command output, print its first lines and check its format. After you convert an HTML table to text, make sure that each column has values.
 
 2026-11-14: Agents guessed package paths and the GitHub repo slug. An agent ran `ls` on `@astrojs/starlight/components` as a file path. The `exports` key `./components` of the package maps to `./dist/components.ts`. Rule: To find a file in a package, use `find` or read the `exports` of the package. Read the repo slug from `git remote -v`.
 
 2026-11-14: A validator called a tool that the session does not have (Glob). Rule: Call only the tools that the session lists.
-
-2026-11-14: The HTML-to-text script of a reviewer dropped a column of a table. Rule: After you convert an HTML table to text, make sure that each column has values.
 
 2026-11-14: A reviewer searched the AGP jar for `setIsDefault`. Kotlin names that setter `setDefault`. A reviewer looked for `isDefault` in `ProductFlavor.kt`. The property is in `ApplicationProductFlavor.kt`. Rule: To list the members of a class in a jar, run `javap -cp <jar> <class>`. Before you say that a property is missing, check the parent and the app-specific AGP DSL interfaces.
 
@@ -62,8 +60,6 @@ Entry format, one or two lines:
 2026-11-14: Several agents ran many commands in one Bash call. The output was mixed, or the output compressor cut it. One search printed 43 KB. Expected failures of a whole-page assertion printed the full HTML page (about 5,000 tokens) three times. In an isolated git worktree, a guard refused long compound shell commands, for example `cd`, a heredoc and `gradle` in one command. A hook refused `git add` and `git commit` in one call. Two subagents had these refusals. Rule: Run one command in each Bash call. Do not join commands with `;`, `&&`, `||` or a newline in one Bash call. In a worktree, use absolute paths. Write files with the Write tool. Limit each output to the lines that you need. If you expect an assertion on a large value to fail, run only that test, and cut the output to the error line.
 
 2026-11-14: A fixer used `grep` in Bash to search one small file. A hook changed the command. Rule: To search one small file, use the Read tool.
-
-2026-11-14: The parent agent and a fact checker parsed the output of `npm view <pkg> time --json` as a JSON object. npm 12 printed a list, so the parse failed. Rule: Before you parse `npm view --json` output, check if it is a list.
 
 2026-11-14: The parent agent gave a fixer a condition-first rewrite of a rule. The rewrite changed an absolute ban on a Co-Authored-By line to a ban that applied only if a system message asked for the line. Rule: If you reorder a sentence for STE, keep its meaning. Keep an absolute rule absolute.
 
