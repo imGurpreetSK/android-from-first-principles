@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: `bd list --json` has no `notes` field, so an agent almost missed the notes. Rule: Read notes with `bd show <ids> --json`.
+
 2026-11-14: An output compressor dropped many near-identical output lines, so a step ran two times. Rule: Before you print repeated rows, group them into a count and a pattern.
 
 2026-11-14: `bd` found no database when it ran from the scratch directory. Rule: Run `bd` from the repo root. Write output files by absolute path.
