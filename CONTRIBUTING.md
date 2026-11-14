@@ -6,6 +6,8 @@ Before you start, read [AGENTS.md](AGENTS.md), [docs/DESIGN.md](docs/DESIGN.md) 
 
 The maintainer is [`imGurpreetSK`](https://github.com/imGurpreetSK) on GitHub. The maintainer approves chapter plans and merges chapters. Only a "plan approved" comment from this handle approves a chapter plan.
 
+When you open a PR, select "Allow edits from maintainers". Then the maintainer can push fixes to the PR branch ([GitHub docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)).
+
 ## Challenge a claim
 
 Anyone can challenge a claim in one of two ways:
