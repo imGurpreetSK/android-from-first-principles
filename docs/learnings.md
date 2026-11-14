@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A test assumed that each font URL in the built CSS is a file. Vite puts small fonts inline as data URLs. Rule: Before you assert on build output, read the build output.
+
 2026-11-14: A reviewer read a file in parallel with the command that wrote it. Rule: Read a file only after the command that writes it ends.
 
 2026-11-14: Agents parsed a bundled JS theme file as JSON. A regex missed text, because the theme was a JS string with `\"` escapes. Rule: Before you parse or search a file, print its first lines and check its format.
