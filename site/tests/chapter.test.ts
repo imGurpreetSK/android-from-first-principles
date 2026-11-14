@@ -66,8 +66,8 @@ test('a page without chapter fields lists no sources', () => {
 test.each([
   ['ai', 'chapter/index.html', 'Drafted with AI, edited by Gurpreet Singh'],
   ['human', 'human/index.html', 'Written by Jane Doe'],
-])('a chapter with drafted: %s shows its line before the page footer', (_, page, line) => {
-  expect(new RegExp(`<p[^>]*>${line}</p><footer`).test(read(page)), line).toBe(true);
+])('a chapter with drafted: %s shows its line in the page footer', (_, page, line) => {
+  expect(new RegExp(`<div class="meta[ "][^>]*>(?:(?!</div>)[\\s\\S])*<p>${line}</p></div>`).test(read(page)), line).toBe(true);
 });
 
 test('a page without chapter fields shows no drafted line', () => {

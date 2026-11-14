@@ -28,6 +28,7 @@ export default defineConfig({
       components: {
         MarkdownContent: local('./src/components/MarkdownContent.astro'),
         Footer: local('./src/components/Footer.astro'),
+        LastUpdated: local('./src/components/LastUpdated.astro'),
       },
     }),
   ],
