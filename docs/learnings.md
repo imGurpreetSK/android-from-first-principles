@@ -11,7 +11,7 @@ Entry format, one or two lines:
 
 ## Log
 
-2026-11-14: `bd init` wrote a block into AGENTS.md, tool files (`.claude/settings.json`, `.codex/`, `.cursor/`, `.agents/`) and extra lines into `.gitignore`. Rule: This repo uses beads stealth mode. After `bd init`, revert AGENTS.md and `.gitignore`, and delete those tool files.
+2026-11-14: `bd init` without `--stealth` wrote a block into AGENTS.md, tool files (`.claude/settings.json`, `.codex/`, `.cursor/`, `.agents/`) and extra lines into `.gitignore`. Rule: This repo uses beads stealth mode. Always run `bd init --stealth`. If init writes these files, revert AGENTS.md and `.gitignore`, and delete the tool files.
 
 2026-11-14: Each `bd create` failed because the beads DB was only half initialized. Rule: Before the first `bd create` in a workspace, run `bd info` and `bd config get issue_prefix`. If the prefix is not set, do not run `bd create`.
 
