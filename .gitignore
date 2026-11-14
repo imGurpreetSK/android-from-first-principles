@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+
+# Gradle, Kotlin, Android (samples/)
+.gradle/
+.kotlin/
+build/
+local.properties
+
+# Node, Astro (site/)
+node_modules/
+dist/
+.astro/
+npm-debug.log*
+
+# Env files
+.env
+.env.*
+
+# Vercel
+.vercel/
+
+# Claude Code local settings (.claude/commands/ stays tracked)
+.claude/settings.local.json
+
+# Beads stealth mode: local DB, syncs through git refs
+.beads/
+.beads.gate.lock
