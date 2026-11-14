@@ -54,3 +54,10 @@ Obey the rules in [AGENTS.md](AGENTS.md). The main rules are:
 - Write tests for all code that has logic. Put tests in the same commit as the code that they test. If you skip tests, write the reason in the commit message (rule 3).
 - Write all docs, chapters included, in Simplified Technical English (STE). AGENTS.md rule 4 gives the STE rules. Use the terms in CONTEXT.md.
 - Run `git status` before each commit (rule 8).
+
+## Build and test
+
+Before each commit, run these commands. If a command fails, do not commit.
+
+- Site: Run `npm ci`, `npm run build`, `npm test` and `npm run check` in `site/`.
+- Samples: Run `samples/gradlew -p samples build` from the repo root. It builds `samples/` and runs all its tests. It needs JDK 17 or later.
