@@ -14,6 +14,7 @@ const goDeeperNoTitle = fileURLToPath(new URL('./fixtures/go-deeper-no-title', i
 // The Astro root of this fixture is next to its samples/, as site/ is next to samples/ in the repo.
 const snippetFixture = new URL('./fixtures/snippet/site/', import.meta.url);
 const duplicateSlug = fileURLToPath(new URL('./fixtures/duplicate-slug', import.meta.url));
+const duplicateId = fileURLToPath(new URL('./fixtures/duplicate-id', import.meta.url));
 const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
 
 test('astro build makes a home page with the page title, the hero title and the tagline', () => {
@@ -88,6 +89,18 @@ test('astro build fails on two chapters with the same chapter slug in different 
   const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', duplicateSlug, '--force'], { encoding: 'utf8', timeout: 60_000 });
   expect(status).not.toBe(0);
   expect(stdout + stderr).toContain('same chapter slug "main-thread"');
+}, 60_000);
+
+test('astro build fails on two files with the same chapter slug in one section', () => {
+  // If the build does not fail, it writes into an output directory outside site/, so astro check does not check the built JS files.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-duplicate-id-'));
+  try {
+    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', duplicateId, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    expect(status).not.toBe(0);
+    expect(stdout + stderr).toContain('DuplicateContentEntrySlugError');
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
 }, 60_000);
 
 test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the sidebar shows only the sections with a chapter and numbers the chapters in sidebar order', () => {

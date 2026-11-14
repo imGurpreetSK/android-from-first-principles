@@ -7,6 +7,8 @@ import { sections } from './src/sections.ts';
 const local = (path) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
+  // Fail the build if two docs files have the same id, for example main-thread.md and main-thread.mdx in one section directory. The default only warns, and one file replaces the other.
+  prerenderConflictBehavior: 'error',
   integrations: [
     starlight({
       title: 'Android from First Principles',
