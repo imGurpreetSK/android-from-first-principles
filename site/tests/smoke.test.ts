@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import config from '../astro.config.mjs';
 
-test('the Astro config loads the Starlight integration', () => {
+test('Vitest runs and the Astro config lists Starlight', () => {
   expect(config.integrations?.flat().map((i) => i && i.name)).toContain('@astrojs/starlight');
 });
