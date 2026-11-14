@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A list of instructions put a condition and its action in different bullets. Some bullets were not commands. Rule: In a list of instructions, keep each condition and its action in the same bullet. Write every bullet as a command.
+
 2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Rule: Before you probe a binary, read its `--help`. If you must search a binary, use fixed-string `grep -F` with a timeout.
 
 2026-11-14: Code that read `bd ... --json` output failed. Some issues have no `dependencies` key. Rule: Read optional fields in `bd ... --json` output with a default value.
