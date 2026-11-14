@@ -25,7 +25,7 @@ Entry format, one or two lines:
 
 2026-11-14: AGENTS.md used idioms, filler words and rules that were not commands. A list of instructions put a condition and its action in different bullets. Rule: Before you commit a doc, check it against each STE rule in AGENTS.md. In a list of instructions, keep each condition and its action in the same bullet.
 
-2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Rule: Before you probe a binary, read its `--help`. If you must search a binary, use fixed-string `grep -F` with a timeout.
+2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Rule: Before you probe a binary, read its `--help`. If you must search a binary, use fixed-string `grep -F`. Set a timeout on the shell tool call. macOS has no `timeout` command.
 
 2026-11-14: `bd init` without `--stealth` wrote a block into AGENTS.md, tool files (`.claude/settings.json`, `.codex/`, `.cursor/`, `.agents/`) and extra lines into `.gitignore`. In this repo, `bd init --stealth` wrote only lines into `.git/info/exclude`. Rule: This repo uses beads stealth mode. Prefer `bd init --stealth` to `bd init`. Run `git status` before and after init. Revert each file that init changed. Delete each file that init added.
 
