@@ -31,7 +31,7 @@ Entry format, one or two lines:
 
 2026-11-14: A reviewer searched the AGP jar for `setIsDefault`. Kotlin names that setter `setDefault`. A reviewer looked for `isDefault` in `ProductFlavor.kt`. The property is in `ApplicationProductFlavor.kt`. Rule: To list the members of a class in a jar, run `javap -cp <jar> <class>`. Before you say that a property is missing, check the parent and the app-specific AGP DSL interfaces.
 
-2026-11-14: A reviewer ran `astro build --root <dir>` from the repo root. Astro wrote `.astro/.prerender` into the main checkout. Rule: Run `astro build --root <dir>` from a working directory that contains `<dir>`. If `outDir` is not in the working directory, Astro writes `.astro/.prerender` into the working directory.
+2026-11-14: A reviewer ran `astro build --root <dir>` from the repo root. Astro wrote `.astro/.prerender` into the main checkout. An agent ran `npm --prefix site exec -- vitest run`. `npm exec` runs in the current directory, so Vitest skipped `site/vitest.config.ts`, and Astro wrote `.astro/` and `node_modules/` into the repo root. Rule: Run `astro build --root <dir>` from a working directory that contains `<dir>`. If `outDir` is not in the working directory, Astro writes `.astro/.prerender` into the working directory. To run a package script in `site/`, run `npm --prefix site test`, or run the script with `site/` as the working directory.
 
 2026-11-14: A stale Astro content cache made a build test pass incorrectly. Rule: When you build a fixture, pass `--force` to `astro build`.
 
