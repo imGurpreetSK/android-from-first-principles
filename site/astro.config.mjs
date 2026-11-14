@@ -1,5 +1,9 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+
+// Starlight resolves a path that starts with "." against the Astro root. A test fixture has its own root, so give absolute paths.
+const local = (path) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
   integrations: [
@@ -19,8 +23,11 @@ export default defineConfig({
         '@fontsource/roboto/700.css',
         '@fontsource/roboto-mono/400.css',
         '@fontsource/roboto-mono/600.css',
-        './src/styles/theme.css',
+        local('./src/styles/theme.css'),
       ],
+      components: {
+        MarkdownContent: local('./src/components/MarkdownContent.astro'),
+      },
     }),
   ],
 });

@@ -1,0 +1,33 @@
+---
+import Default from '@astrojs/starlight/components/MarkdownContent.astro';
+
+// Only a chapter has the checked stamp. The home page has no chapter fields.
+const { checked } = Astro.locals.starlightRoute.entry.data;
+---
+
+<Default>
+  {
+    checked && (
+      <div class="checked-stamp">
+        <p>The editor checked the claims of this chapter against these versions:</p>
+        <ul>
+          <li>
+            Android {checked.android}, AOSP tag <code>{checked.aosp}</code>
+          </li>
+          {Object.entries(checked.libraries).map(([name, version]) => (
+            <li>
+              {name} {version}
+            </li>
+          ))}
+          {checked.play_services && <li>Play services {checked.play_services}</li>}
+          {checked.emulator && (
+            <li>
+              Emulator system image <code>{checked.emulator.image}</code>, revision {checked.emulator.revision}
+            </li>
+          )}
+        </ul>
+      </div>
+    )
+  }
+  <slot />
+</Default>
