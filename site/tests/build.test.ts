@@ -46,8 +46,10 @@ test('a Go deeper box is a closed <details> element that starts with its <summar
     const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', goDeeper, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
     expect(status, stdout + stderr).toBe(0);
     const html = readFileSync(join(outDir, 'go-deeper/index.html'), 'utf8');
-    // The box is in the static HTML, so it works without JavaScript. Without the open attribute, <details> is closed. A click on its <summary> opens and closes it.
-    // The first <summary> of a <details> element can get keyboard focus. The keyboard can activate it, as a click does.
+    // The box is in the static HTML, so it works without JavaScript. Without the open attribute, <details> is closed: https://html.spec.whatwg.org/multipage/interactive-elements.html#attr-details-open
+    // A click on its <summary> opens and closes it: https://html.spec.whatwg.org/multipage/interactive-elements.html#the-summary-element
+    // The HTML spec tells browsers to let the keyboard focus the first <summary> of a <details> element: https://html.spec.whatwg.org/multipage/interaction.html#the-tabindex-attribute
+    // It also tells browsers to let the keyboard activate that <summary>, as a click does: https://html.spec.whatwg.org/multipage/interaction.html#activation
     // The page also has the <details> element of the Starlight mobile table of contents.
     expect(html.match(/<details[^>]*><summary[^>]*>Go deeper:[\s\S]*?<\/details>/g)).toEqual(['<details><summary>Go deeper: Binder</summary><p>The box text.</p></details>']);
   } finally {
