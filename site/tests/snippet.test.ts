@@ -23,4 +23,8 @@ describe('snippet', () => {
   test('fails on a region without an endregion line', () => {
     expect(() => snippet(samples, 'Broken.kt', 'open')).toThrow('Region "open" in file Broken.kt has no "// endregion" line.');
   });
+
+  test('fails on a region that contains a region', () => {
+    expect(() => snippet(samples, 'Broken.kt', 'outer')).toThrow('Region "outer" in file Broken.kt contains a region. Regions must not nest.');
+  });
 });
