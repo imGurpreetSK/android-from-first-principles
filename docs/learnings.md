@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A validator called a tool that the session does not have (Glob). Rule: Call only the tools that the session lists.
+
 2026-11-14: The HTML-to-text script of a reviewer dropped a column of a table. Rule: After you convert an HTML table to text, make sure that each column has values.
 
 2026-11-14: A reviewer searched the AGP jar for `setIsDefault`. Kotlin names that setter `setDefault`. Rule: Search a jar for the Kotlin property name, not for a guessed accessor name.
