@@ -5,7 +5,7 @@ body:
     id: chapter
     attributes:
       label: Chapter
-      description: The chapter slug or the chapter URL.
+      description: Give the chapter slug or the chapter URL.
       placeholder: main-thread
     validations:
       required: true
