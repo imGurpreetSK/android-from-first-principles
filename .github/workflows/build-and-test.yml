@@ -32,15 +32,18 @@ jobs:
   samples:
     # The ubuntu-24.04 image has the Android SDK, the platform and the build tools that samples/ needs. It also sets ANDROID_HOME.
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        # JDK 17 is the oldest JDK that samples/ supports. On JDK 17, RebuildConventionTest.compileKotlin_rejectsJdk21Api cannot fail, because JDK 17 has no JDK 21 API. JDK 21 is the oldest JDK on which that test can fail.
+        java: ["17", "21"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # JDK 17 is the oldest JDK that samples/ supports.
       - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ matrix.java }}
           cache: gradle
           # The default cache key does not include samples/gradle/libs.versions.toml. That file has the plugin and library versions.
           cache-dependency-path: |
