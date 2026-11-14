@@ -33,7 +33,7 @@ Entry format, one or two lines:
 
 2026-11-14: A reviewer searched the AGP jar for `setIsDefault`. Kotlin names that setter `setDefault`. Rule: Search a jar for the Kotlin property name, not for a guessed accessor name.
 
-2026-11-14: In several agents, the Read tool showed "body elided" with a `<<ccr:…>>` marker. One agent used the partial output as the full file. Rule: If a read shows "body elided" with a `<<ccr:…>>` marker, call the `caveman_retrieve` tool with the handle in the marker. Before you say that a file is complete, compare its line count with the output of `wc -l`.
+2026-11-14: In several agents, the Read tool showed "body elided" with a `<<ccr:…>>` marker. One agent used the partial output as the full file. Rule: If any tool output shows "body elided" with a `<<ccr:…>>` marker, call the `caveman_retrieve` tool with the handle in the marker. Before you say that a file is complete, compare its line count with the output of `wc -l`.
 
 2026-11-14: A reviewer ran `astro build --root <dir>` from the repo root. Astro wrote `.astro/.prerender` into the main checkout. Rule: Run `astro build --root <dir>` from a working directory that contains `<dir>`. If `outDir` is not in the working directory, Astro writes `.astro/.prerender` into the working directory.
 
@@ -87,7 +87,7 @@ Entry format, one or two lines:
 
 2026-11-14: `bd ... --json` output does not include empty fields. Code that read the `dependencies` key failed. An agent saw no `notes` key in some rows and almost missed the notes. Rule: Read optional fields in `bd ... --json` output with a default value.
 
-2026-11-14: An output compressor dropped many near-identical output lines, so a step ran two times. An agent printed 14 similar lines. The compressor dropped them, and the Read tool also dropped them. Another agent printed all matches before it sliced them. Rule: Before you print repeated lines, join them onto one line, or group them into a count and a pattern. Slice matches before you print them. The Read tool does not show the dropped lines.
+2026-11-14: An output compressor dropped many near-identical output lines, so a step ran two times. An agent printed 14 similar lines. The compressor dropped them, and the Read tool also dropped them. Another agent printed all matches before it sliced them. Rule: Before you print repeated lines, join them onto one line, or group them into a count and a pattern. Slice matches before you print them. The Read tool does not show the dropped lines. To get the dropped lines, call the `caveman_retrieve` tool with the handle in the `<<ccr:…>>` marker.
 
 2026-11-14: `bd` found no database when it ran from the scratch directory. Rule: Run `bd` from the repo root. Write output files by absolute path.
 
