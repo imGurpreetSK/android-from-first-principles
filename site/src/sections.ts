@@ -22,7 +22,7 @@ export function checkChapters(entries: { id: string; data: Record<string, unknow
     // A slug field changes the id. Thus also check that the file is in the directory of its section.
     const directory = filePath?.split('/').at(-2);
     if (first !== section.slug || !slug || rest.length > 0 || directory !== section.slug) {
-      throw new Error(`The chapter ${filePath} has the section "${section.label}". Put the file in src/content/docs/${section.slug}/, not in a subdirectory, and remove a slug field. Then the URL is /${section.slug}/<chapter slug>/.`);
+      throw new Error(`The chapter ${filePath} has the section "${section.label}". Put the file in src/content/docs/${section.slug}/, not in a subdirectory. If the frontmatter has a slug field, remove it. Then the URL is /${section.slug}/<chapter slug>/.`);
     }
     const other = idBySlug.get(slug);
     if (other) {
