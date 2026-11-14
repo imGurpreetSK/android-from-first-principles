@@ -31,3 +31,4 @@ This repo holds Android from First Principles, a free online series on the machi
 Before each commit, run these commands. If a command fails, do not commit.
 
 - Site: Run `npm ci`, `npm run build`, `npm test` and `npm run check` in `site/`.
+- Samples: Run `samples/gradlew -p samples build` from the repo root. It builds `samples/` and runs all its tests. It needs JDK 17 or later.
