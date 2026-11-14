@@ -15,7 +15,7 @@ Entry format, one or two lines:
 
 2026-11-14: The parent agent opened the site in the browser while work was not done. The user wants the site open only when the whole task is done. Rule: Start the site dev server and open the site only when the whole task is done.
 
-2026-11-14: A fixer wrote a docs commit subject that read like a change to a rule: "Put … under CC BY-SA 4.0". Another fixer wrote subjects that told less than the diff, or that used a word that is not STE. Rule: Before you commit, compare the subject with the full diff. In the subject of a docs commit, say what the doc states. Check the subject against the STE rules in AGENTS.md.
+2026-11-14: A fixer wrote a docs commit subject that read like a change to a rule: "Put … under CC BY-SA 4.0". Another fixer wrote subjects that told less than the diff, or that used a word that is not STE. AGENTS.md used idioms, filler words and rules that were not commands. A list of instructions put a condition and its action in different bullets. Rule: Before you commit, compare the subject with the full diff. In the subject of a docs commit, say what the doc states. Before you commit a doc, check the doc and its commit subject against each STE rule in AGENTS.md. In a list of instructions, keep each condition and its action in the same bullet.
 
 2026-11-14: A fixer inserted a sentence. Then the pronoun "It" in the next sentence pointed to the wrong noun. Rule: After you insert a sentence, read the next sentence again. Check each pronoun.
 
@@ -92,8 +92,6 @@ Entry format, one or two lines:
 2026-11-14: In zsh, `bd show $ids` gave empty output. Zsh does not split a variable into words. Rule: In zsh, pass a list of ids with `${=ids}` or through `xargs`.
 
 2026-11-14: By default, `bd list` returns only 50 rows, so an export almost missed issues. Rule: If you export or check issues, pass `--limit 0` to `bd list` and `bd ready`. By default, `bd list` also hides closed issues. To include them, pass `--all`.
-
-2026-11-14: AGENTS.md used idioms, filler words and rules that were not commands. A list of instructions put a condition and its action in different bullets. Rule: Before you commit a doc, check it against each STE rule in AGENTS.md. In a list of instructions, keep each condition and its action in the same bullet.
 
 2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Agents passed flags that a tool does not have: the GNU `find` flag `-fprint` on macOS, `--output=/dev/null` to `gradlew`, and guessed `bd` flags. Rule: Before you probe a binary, read its `--help`. Before you pass a flag that you have not used in this repo, read the `--help` of the tool. If you must search a binary, use fixed-string `grep -F`. Set a timeout on the shell tool call. macOS has no `timeout` command.
 
