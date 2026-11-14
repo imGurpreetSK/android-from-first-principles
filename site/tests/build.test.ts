@@ -98,7 +98,7 @@ test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the 
     expect(status, stderr).toBe(0);
     expect(existsSync(join(outDir, 'concurrency/flow/index.html'))).toBe(true);
     const html = readFileSync(join(outDir, 'launch-path/main-thread/index.html'), 'utf8');
-    // Starlight gives the label of each top-level sidebar group the class "large". The fixture has no chapter in "State & Survival", the second section.
+    // Starlight gives the label of each sidebar group the class "large". While the fixture has no nested group, each match is a section. The fixture has no chapter in "State & Survival", the second section.
     const groups = [...html.matchAll(/<span class="large[ "][^>]*>([^<]*)<\/span>/g)].map((m) => m[1]);
     expect(groups).toEqual(['The Launch Path', 'Concurrency']);
     // The numbers continue across sections.
