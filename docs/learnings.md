@@ -51,7 +51,7 @@ Entry format, one or two lines:
 
 2026-11-14: `bd ... --json` output does not include empty fields. Code that read the `dependencies` key failed. An agent saw no `notes` key in some rows and almost missed the notes. Rule: Read optional fields in `bd ... --json` output with a default value.
 
-2026-11-14: An output compressor dropped many near-identical output lines, so a step ran two times. Rule: Before you print repeated lines, group them into a count and a pattern. If output says that lines were elided, read the full text with a file read tool. For command output, write it to a file first.
+2026-11-14: An output compressor dropped many near-identical output lines, so a step ran two times. An agent printed 14 similar lines. The compressor dropped them, and the Read tool also dropped them. Another agent printed all matches before it sliced them. Rule: Before you print repeated lines, join them onto one line, or group them into a count and a pattern. Slice matches before you print them. The Read tool does not show the dropped lines.
 
 2026-11-14: `bd` found no database when it ran from the scratch directory. Rule: Run `bd` from the repo root. Write output files by absolute path.
 
