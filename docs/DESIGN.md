@@ -219,7 +219,7 @@ The README and the site footer each have one line with a link: "Format inspired 
   - Each non-obvious claim links to its source.
   - If you find an error, challenge the claim.
 - `edited_by` names the editor: the person who checked each claim against its sources. On a contributor's chapter, the editor is the contributor. The maintainer gets no credit for the Merge step.
-- `edited_by` means that the editor checked the chapter at its baseline. Each later fix and each "Since Android <version>…" note has its own PR. That PR goes through the Fact check, Staff review and Merge steps. Git history keeps them. They do not change `edited_by`. Only a baseline move resets it.
+- `edited_by` means that the editor checked the chapter at its baseline. Each later fix and each "Since Android <version>…" note has its own PR. That PR goes through the Fact check, Staff review and Merge steps. The maintainer runs `/doc-review` on that PR after the Check step. Git history keeps them. They do not change `edited_by`. Only a baseline move resets it.
 - Each chapter footer shows its kind from `drafted`: "Drafted with AI, edited by <name>" or "Written by <name>".
 
 ## Open items
