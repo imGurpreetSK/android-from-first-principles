@@ -11,7 +11,7 @@ Entry format, one or two lines:
 
 ## Log
 
-2026-11-14: `bd list --json` has no `notes` field, so an agent almost missed the notes. Rule: Read notes with `bd show <ids> --json`.
+2026-11-14: `bd ... --json` output does not include empty fields. Code that read the `dependencies` key failed. An agent saw no `notes` key in some rows and almost missed the notes. Rule: Read optional fields in `bd ... --json` output with a default value.
 
 2026-11-14: An output compressor dropped many near-identical output lines, so a step ran two times. Rule: Before you print repeated rows, group them into a count and a pattern.
 
@@ -26,8 +26,6 @@ Entry format, one or two lines:
 2026-11-14: A list of instructions put a condition and its action in different bullets. Some bullets were not commands. Rule: In a list of instructions, keep each condition and its action in the same bullet. Write every bullet as a command.
 
 2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Rule: Before you probe a binary, read its `--help`. If you must search a binary, use fixed-string `grep -F` with a timeout.
-
-2026-11-14: Code that read `bd ... --json` output failed. Some issues have no `dependencies` key. Rule: Read optional fields in `bd ... --json` output with a default value.
 
 2026-11-14: `bd init` without `--stealth` wrote a block into AGENTS.md, tool files (`.claude/settings.json`, `.codex/`, `.cursor/`, `.agents/`) and extra lines into `.gitignore`. Rule: This repo uses beads stealth mode. Always run `bd init --stealth`. If init writes these files, revert AGENTS.md and `.gitignore`, and delete the tool files.
 
