@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
 const astro = fileURLToPath(new URL('../node_modules/.bin/astro', import.meta.url));
@@ -93,5 +94,15 @@ test('each page shows the license line and the credit line', () => {
         'Backend from First Principles https://github.com/DsThakurRawat/Backend-from-first-Principle',
       ]),
     );
+  }
+});
+
+test('the search index has no drafted line, license line or credit line', () => {
+  const dir = join(outDir, 'pagefind', 'fragment');
+  const fragments = readdirSync(dir).map((name) => gunzipSync(readFileSync(join(dir, name))).toString('utf8'));
+  expect(fragments).toHaveLength(2);
+  for (const fragment of fragments) {
+    expect(fragment).toMatch(/The body of the fixture chapter/);
+    expect(fragment).not.toMatch(/Drafted with AI|Written by|license|Format inspired by/);
   }
 });

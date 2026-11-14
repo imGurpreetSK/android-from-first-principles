@@ -1,9 +1,11 @@
 ---
 import Default from '@astrojs/starlight/components/Footer.astro';
+
+// data-pagefind-ignore keeps these lines out of the search index, because each page shows them.
 ---
 
 <Default />
-<div class="site-footer">
+<div class="site-footer" data-pagefind-ignore>
   <p>
     The text and the site code have the <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> license.
     The sample code has the <a href="https://github.com/imGurpreetSK/android-from-first-principles/blob/main/samples/LICENSE">MIT</a> license.
