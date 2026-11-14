@@ -150,14 +150,14 @@ Two repo-level Claude commands run the steps, so all chapters go through the sam
 
 ## Site
 
-- **Framework:** Astro + Starlight. Built in: sidebar, Pagefind search, dark mode, prev/next, "Edit on GitHub".
-- **Custom:** a reading-progress tracker. A manual "Mark as read" button at the end of each chapter and an "X / N" counter, stored in `localStorage`. N is the number of chapters on the site.
-- **Look:** Starlight layout with minimal theming:
-  - Android-green accent.
-  - Roboto for text, Roboto Mono for code, both self-hosted.
+- **Framework:** Astro and Starlight. Built-in features: sidebar, Pagefind search, dark mode, previous and next links, "Edit on GitHub".
+- **Custom:** a progress tracker for the reader. Each chapter ends with a manual "Mark as read" button. An "X / N" counter shows the progress. The tracker keeps its data in `localStorage`. N is the number of chapters on the site.
+- **Look:** the Starlight layout with a minimal theme:
+  - An Android-green accent color.
+  - Roboto for text and Roboto Mono for code. The site hosts both fonts.
   - A short home-page hero with the tagline.
-- **Diagrams:** Mermaid inside MDX, rendered in the browser by `astro-mermaid` (no headless browser in the build; follows dark mode).
-- **Hosting:** Vercel on the free subdomain. Every PR gets a preview deploy.
+- **Diagrams:** Mermaid in MDX. `astro-mermaid` renders the diagrams in the browser, so the build needs no headless browser. The diagrams follow dark mode.
+- **Host:** Vercel, on the free subdomain. Each PR gets a preview deploy.
 
 ## Code samples
 
