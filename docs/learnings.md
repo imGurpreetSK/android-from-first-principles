@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: Each `bd create` failed because the beads DB was only half initialized. Rule: Before the first `bd create` in a workspace, run `bd info` and `bd config get issue_prefix`. If the prefix is not set, do not run `bd create`.
+
 2026-11-14: In zsh, `echo ======` failed two times, one time in the parent agent. Zsh reads a word that starts with `=` as a command name. Rule: Quote each argument that starts with `=`.
 
 2026-11-14: AGENTS.md used idioms, filler words and rules that were not commands. Rule: Before you commit a doc, check it against each STE rule in AGENTS.md.
