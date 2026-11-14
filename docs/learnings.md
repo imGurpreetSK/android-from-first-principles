@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: In several agents, the Read tool showed "body elided" with a `<<ccr:…>>` marker. One agent used the partial output as the full file. Rule: If a read shows "body elided" with a `<<ccr:…>>` marker, call the `caveman_retrieve` tool with the handle in the marker. Before you say that a file is complete, compare its line count with the output of `wc -l`.
+
 2026-11-14: A reviewer ran `astro build --root <dir>` from the repo root. Astro wrote `.astro/.prerender` into the main checkout. Rule: Run `astro build --root <dir>` with `site/` as the working directory.
 
 2026-11-14: A stale Astro content cache made a build test pass incorrectly. Rule: When you build a fixture, pass `--force` to `astro build`.
