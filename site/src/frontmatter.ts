@@ -23,7 +23,7 @@ const chapter = {
   rebuild: z.boolean(),
   device: z.boolean(),
   drafted: z.enum(['ai', 'human']),
-  edited_by: z.string().min(1),
+  edited_by: z.string().trim().min(1),
 };
 const keys = Object.keys(chapter) as (keyof typeof chapter)[];
 

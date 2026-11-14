@@ -74,6 +74,10 @@ describe('chapter frontmatter', () => {
     expect(valid({ ...chapter, sources: [`${chapter.sources[0]}#42`] })).toBe(false);
   });
 
+  test.each(['', ' '])('rejects the edited_by value "%s"', (edited_by) => {
+    expect(valid({ ...chapter, edited_by })).toBe(false);
+  });
+
   test('rejects drafted other than ai or human', () => {
     expect(valid({ ...chapter, drafted: 'robot' })).toBe(false);
   });
