@@ -56,12 +56,12 @@ test('a chapter lists each of its sources at the end of its content', () => {
     'https://developer.android.com/guide/components/processes-and-threads',
   ];
   // The list is the last item before the end of the chapter content.
-  const list = chapter.match(/<h2>Sources<\/h2><ul>((?:(?!<\/ul>)[\s\S])*)<\/ul><\/div>/)?.[1] ?? '';
+  const list = chapter.match(/<h2 id="sources">Sources<\/h2>[\s\S]*?<\/div><ul>((?:(?!<\/ul>)[\s\S])*)<\/ul><\/div>/)?.[1] ?? '';
   expect([...list.matchAll(/<li><a href="([^"]+)">\1<\/a><\/li>/g)].map(([, url]) => url)).toEqual(sources);
 });
 
 test('a page without chapter fields lists no sources', () => {
-  expect(notChapter.includes('<h2>Sources</h2>')).toBe(false);
+  expect(notChapter.includes('id="sources"')).toBe(false);
 });
 
 test.each([
