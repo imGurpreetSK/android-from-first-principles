@@ -39,8 +39,6 @@ Entry format, one or two lines:
 
 2026-11-14: A stale Astro content cache made a build test pass incorrectly. Rule: When you build a fixture, pass `--force` to `astro build`.
 
-2026-11-14: A writer used a union content schema. The build printed "Unrecognized keys" and did not name the invalid field. Rule: Before you use a union content schema, build an invalid entry and read the error.
-
 2026-11-14: A writer put the main manifest of the app in `src/launchPath/`, so the build failed. Rule: Put the main manifest of an Android app in `src/main/AndroidManifest.xml`.
 
 2026-11-14: In many subagents, a hook changed each Bash call to the form `caveman shrink -- <command>`. Auto mode refused the first call and asked the agent to send the changed input again. One small-model subagent stopped there and did not commit its work. Rule: If auto mode asks you to send a changed input again, send that exact input one time in its own call. If auto mode refuses it again, do not send it again. Do the other tasks, and report the exact message.
