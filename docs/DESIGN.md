@@ -214,6 +214,6 @@ The README and the site footer each have one line with a link: "Format inspired 
 ## Open items
 
 - Connect Vercel to the repo.
-- Spike: confirm a contributor's PR from a fork gets a Vercel preview (step 4 depends on it), and what the maintainer must authorize.
-- Spike: confirm `astro-mermaid` renders one diagram in light and dark mode on a Vercel preview with current Astro/Starlight.
+- Spike: find out if a PR from a contributor's fork gets a Vercel preview. The Edit step needs the preview. Also find out what the maintainer must authorize.
+- Spike: find out if `astro-mermaid` renders one diagram in light and dark mode on a Vercel preview with the current Astro and Starlight.
 - Build plan: pending.
