@@ -70,9 +70,9 @@ Sources             required   auto-listed from frontmatter
 
 ## Curriculum
 
-35 chapters, 7 sections. Section 1 follows one cold start, from launcher tap to first frame, and gives the process / main-thread / lifecycle model every later chapter builds on.
+35 chapters in 7 sections. Section 1 follows one cold start, from launcher tap to first frame. It gives the process, main-thread and lifecycle model that all later chapters use.
 
-A chapter is identified by its chapter slug: a topic name unique across the series (`main-thread`), never its number or section. The progress key and `samples/main-thread` module use it. The URL adds the section for readability (`/launch-path/main-thread/`); moving a chapter to another section changes its URL, and the same PR adds a redirect from the old one. Numbers below are display labels from sidebar order and may shift when chapters are added or split.
+The chapter slug identifies a chapter. The slug is a topic name, unique across the series (`main-thread`). The number and the section of a chapter never identify it. The progress key and the `samples/main-thread` module use the slug. The URL adds the section, so that the URL is easy to read (`/launch-path/main-thread/`). If a PR moves a chapter to another section, the URL changes, and the same PR adds a redirect from the old URL. The numbers below are display labels from the sidebar order. They can change if the maintainer adds or splits chapters.
 
 **1. The Launch Path (tap → first frame)**
 01 APK: what the build actually produces
