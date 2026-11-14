@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: The parent agent opened the site in the browser while work was not done. The user wants the site open only when the whole task is done. Rule: Start the site dev server and open the site only when the whole task is done.
+
 2026-11-14: A fixer wrote a docs commit subject that read like a change to a rule: "Put … under CC BY-SA 4.0". Another fixer wrote subjects that told less than the diff, or that used a word that is not STE. Rule: Before you commit, compare the subject with the full diff. In the subject of a docs commit, say what the doc states. Check the subject against the STE rules in AGENTS.md.
 
 2026-11-14: A fixer inserted a sentence. Then the pronoun "It" in the next sentence pointed to the wrong noun. Rule: After you insert a sentence, read the next sentence again. Check each pronoun.
