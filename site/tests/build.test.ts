@@ -17,6 +17,17 @@ test('astro build makes a home page with the page title, the hero title and the 
   expect(html).toMatch(/<div class="hero[ "][^>]*>[\s\S]*?<h1[^>]*>Android from First Principles<\/h1>[\s\S]*?<div class="tagline[ "][^>]*>The machinery under Android app development\.<\/div>/);
 }, 60_000);
 
+test('astro build makes an About page with each sentence of the AI disclosure in docs/DESIGN.md', () => {
+  const { status, stderr } = spawnSync(astro, ['build', '--root', site], { encoding: 'utf8', timeout: 60_000 });
+  expect(status, stderr).toBe(0);
+  // The disclosure is the nested list in the "AI disclosure" section of docs/DESIGN.md.
+  const section = readFileSync(new URL('../../docs/DESIGN.md', import.meta.url), 'utf8').match(/^## AI disclosure\n([\s\S]*?)^## /m)![1];
+  const sentences = [...section.matchAll(/^  - (.+)$/gm)].map(([, sentence]) => sentence);
+  expect(sentences).not.toHaveLength(0);
+  const main = readFileSync(new URL('../dist/about/index.html', import.meta.url), 'utf8').match(/<main[\s\S]*<\/main>/)![0];
+  for (const sentence of sentences) expect(main.includes(sentence), sentence).toBe(true);
+}, 60_000);
+
 test('astro build fails on a chapter with invalid frontmatter', () => {
   // --force clears the content cache, so the build checks the fixture with the current schema.
   // spawnSync blocks the thread, so the test timeout cannot stop a stuck build. The spawnSync timeout stops it.
