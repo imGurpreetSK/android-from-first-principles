@@ -20,7 +20,7 @@ A chapter changes only if a "Challenge a claim" issue or a behavior change in th
 - If a claim is wrong at its baseline, correct it.
 - If a newer release changes a claim, add a "Since Android <version>…" note. The note cites the behavior-changes page of that release or the AOSP code at its tag. The baseline stays the same.
 
-Each fix and each "Since Android <version>…" note has its own PR. That PR goes through the Fact check, Staff review and Merge steps of the chapter pipeline. It does not change `edited_by`.
+Each fix and each "Since Android <version>…" note has its own PR. That PR goes through the Fact check, Staff review and Merge steps of the chapter pipeline. It does not change `edited_by`. The maintainer runs `/doc-review` on that PR after the Check step. If a fix PR adds a source to the `sources` of a chapter, that change is a plan amendment. Before the merge, the maintainer approves it with a "plan approved" comment.
 
 The maintainer moves a baseline only if the chapter is too far out of date. A baseline move runs the full chapter pipeline again. Only a baseline move resets `edited_by`.
 
