@@ -18,7 +18,7 @@ This repo holds Android from First Principles, a free online series on the machi
    - Write instructions as commands: "Run the tests."
    - Put a condition before its instruction: "If the build fails, stop."
    - Use each word with only one meaning. Do not use synonyms. Use the terms in `CONTEXT.md`.
-   - Avoid "-ing" forms, except in technical names.
+   - Avoid "-ing" forms, except in technical nouns.
 5. Each doc gets two reviews. A different subagent does each review. The writer of the doc does not review it.
    1. Reviewer 1 compares each claim with its source. Reviewer 1 also makes sure that the doc obeys STE.
    2. Then reviewer 2, a staff Android engineer with 10 years of experience, makes sure that the doc and its citations are correct.
