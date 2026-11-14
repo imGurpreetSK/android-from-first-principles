@@ -1,8 +1,8 @@
 # Android from First Principles — Design
 
-Most Android material teaches a framework. This series teaches the machinery underneath it: why the main thread is a loop, why a ViewModel survives rotation, what really happens between a launcher tap and the first frame.
+Most Android material teaches a framework. This series teaches the machinery under the framework: why the main thread is a loop, why a ViewModel survives rotation, and what happens between a launcher tap and the first frame.
 
-Format inspired by [Backend from First Principles](https://github.com/DsThakurRawat/Backend-from-first-Principle). No content or code is reused from it.
+[Backend from First Principles](https://github.com/DsThakurRawat/Backend-from-first-Principle) inspired the format. This series reuses no content or code from it.
 
 ## Reader
 
