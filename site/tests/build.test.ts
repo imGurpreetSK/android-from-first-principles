@@ -1,12 +1,15 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
 const astro = fileURLToPath(new URL('../node_modules/.bin/astro', import.meta.url));
 const site = fileURLToPath(new URL('..', import.meta.url));
-// A separate Astro root, so the built site does not get a page for the fixture.
+// Each fixture is a separate Astro root, so the built site does not get a page for a fixture.
 const fixture = fileURLToPath(new URL('./fixtures/invalid-chapter', import.meta.url));
+const goDeeper = fileURLToPath(new URL('./fixtures/go-deeper', import.meta.url));
 
 test('astro build makes a home page with the page title, the hero title and the tagline', () => {
   const { status, stderr } = spawnSync(astro, ['build', '--root', site], { encoding: 'utf8', timeout: 60_000 });
@@ -34,4 +37,20 @@ test('astro build fails on a chapter with invalid frontmatter', () => {
   const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', fixture, '--force'], { encoding: 'utf8', timeout: 60_000 });
   expect(status).not.toBe(0);
   expect(stdout + stderr).toMatch(/InvalidContentEntryDataError[\s\S]*drafted/);
+}, 60_000);
+
+test('a Go deeper box is a closed <details> element that starts with its <summary>', () => {
+  // An output directory outside site/, so astro check does not check the built JavaScript.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-go-deeper-'));
+  try {
+    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', goDeeper, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    expect(status, stdout + stderr).toBe(0);
+    const html = readFileSync(join(outDir, 'go-deeper/index.html'), 'utf8');
+    // The box is in the static HTML, so it works without JavaScript. Without the open attribute, <details> is closed. A click on its <summary> opens and closes it.
+    // The first <summary> of a <details> element can get keyboard focus. The keyboard can activate it, as a click does.
+    // The page also has the <details> element of the Starlight mobile table of contents.
+    expect(html.match(/<details[^>]*><summary[^>]*>Go deeper:[\s\S]*?<\/details>/g)).toEqual(['<details><summary>Go deeper: Binder</summary><p>The box text.</p></details>']);
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
 }, 60_000);

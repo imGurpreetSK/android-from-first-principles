@@ -1,0 +1,14 @@
+---
+// This component is a Go deeper box. The HTML <details> element is collapsible, keyboard accessible and works without JavaScript.
+// Without the open attribute, the box is closed. Starlight gives <details> its style in chapter content.
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<details>
+  <summary>Go deeper: {title}</summary>
+  <slot />
+</details>
