@@ -192,9 +192,9 @@ Two repo-level Claude commands run the steps, so all chapters go through the sam
 
 ## License
 
-- Writing: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Commercial use is allowed for everyone, so contributed chapters never block a future book or course. Why: [ADR 0001](adr/0001-cc-by-sa-for-writing.md).
+- Text: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Everyone can use the text for commercial purposes, so contributed chapters never block a future book or course. [ADR 0001](adr/0001-cc-by-sa-for-writing.md) gives the reason.
 - Code in `samples/`: MIT
-- Quoted third-party code (AOSP, AndroidX, libraries) keeps its own license; each excerpt links to its pinned source file. The site footer says so in one line.
+- Quoted third-party code (AOSP, AndroidX, libraries) keeps its own license. Each excerpt links to its pinned source file. One line in the site footer tells this.
 
 ## Credit
 
