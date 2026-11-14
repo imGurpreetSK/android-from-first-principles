@@ -12,3 +12,4 @@ Outside contributors can write whole chapters. The repo has no contributor agree
 
 - Anyone can republish or sell the text, if they credit it and share it under the same license.
 - The decision is hard to reverse. After the maintainer merges contributed chapters under BY-SA, a change to a non-commercial license needs the consent of each contributor.
+- The code in `site/` also uses CC BY-SA 4.0 (maintainer decision, 2026-11-14). But Creative Commons recommends against its licenses for software ([Creative Commons FAQ](https://creativecommons.org/faq/)).
