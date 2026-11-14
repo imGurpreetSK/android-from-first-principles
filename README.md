@@ -14,7 +14,7 @@ Anyone can challenge a claim. Open a "Challenge a claim" issue. In the issue, gi
 
 ## License
 
-- Text: [CC BY-SA 4.0](LICENSE)
+- Text, chapters included, and code in `site/`: [CC BY-SA 4.0](LICENSE)
 - Code in `samples/`: [MIT](samples/LICENSE)
 - Quoted third-party code (AOSP, AndroidX, libraries) keeps its own license. Each excerpt links to its pinned source file.
 
