@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: The parent agent did not start the validator for the staff review of the site. A wrong claim reached a fixer: "Starlight checks its options only during astro build". `astro check` runs the same hook. The fixer found the error. Rule: Before a fixer gets the findings of a review, run the validator on them. Do this for each review.
+
 2026-11-14: In an STE rewrite, a writer dropped the words "maps … to" from a table row. Rule: Before you commit a rewrite, compare each old line with its new line, fact by fact.
 
 2026-11-14: A writer put new pipeline steps after Edit. This broke the rule that Edit and Merge are one pass. Rule: Before you insert a step in a sequence, read each sentence that names the steps around it.
