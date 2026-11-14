@@ -41,6 +41,10 @@ describe('chapter frontmatter', () => {
     expect(valid(rest)).toBe(false);
   });
 
+  test('rejects an empty section', () => {
+    expect(valid({ ...chapter, section: '' })).toBe(false);
+  });
+
   test('rejects an AOSP tag of a different release', () => {
     expect(valid(checked({ aosp: 'android-16.0.0_r1' }))).toBe(false);
   });
