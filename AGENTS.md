@@ -30,4 +30,4 @@ This repo holds Android from First Principles, a free online series on the machi
 
 Before each commit, run these commands. If a command fails, do not commit.
 
-- Site: If `site/node_modules/` does not exist, run `npm ci` in `site/`. Then run `npm run build`, `npm test` and `npm run check` in `site/`.
+- Site: Run `npm ci`, `npm run build`, `npm test` and `npm run check` in `site/`.
