@@ -39,7 +39,7 @@ Entry format, one or two lines:
 
 2026-11-14: In many subagents, a hook changed each Bash call to the form `caveman shrink -- <command>`. Auto mode refused the first call and asked the agent to send the changed input again. One small-model subagent stopped there and did not commit its work. Rule: If auto mode asks you to send a changed input again, send that exact input one time in its own call. If auto mode refuses it again, do not send it again. Do the other tasks, and report the exact message.
 
-2026-11-14: A fixer wrote a proof result in a commit message before it ran the proof. Another fixer put an unchecked fact in a commit body. Rule: Before you write a proof result in a commit message, run the proof. Put only checked facts in a commit message.
+2026-11-14: A fixer wrote a proof result in a commit message before it ran the proof. Another fixer put an unchecked fact in a commit body. The parent agent put an unchecked fact in a fixer brief: "bold text gets weight 600". Bold text gets weight 700. Rule: Before you write a proof result in a commit message, run the proof. Put only checked facts in a brief and in a commit message.
 
 2026-11-14: A test that depends on the JDK ran on JDK 17, because the user-level `org.gradle.java.home` points to JDK 17. Rule: Before you run a test that depends on the JDK, run `gradlew --version` and read the "Daemon JVM" line.
 
