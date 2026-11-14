@@ -45,8 +45,6 @@ Entry format, one or two lines:
 
 2026-11-14: A fixer wrote a proof result in a commit message before it ran the proof. Another fixer put an unchecked fact in a commit body. Rule: Before you write a proof result in a commit message, run the proof. Put only checked facts in a commit message.
 
-2026-11-14: A version sort key compared numbers with text, so the Python script failed. Rule: In a version sort key, make each part a tuple with a type flag.
-
 2026-11-14: A test that depends on the JDK ran on JDK 17, because the user-level `org.gradle.java.home` points to JDK 17. Rule: Before you run a test that depends on the JDK, run `gradlew --version` and read the "Daemon JVM" line.
 
 2026-11-14: A reviewer used `val x by tasks.registering`. Gradle 9.6 deprecates all Kotlin DSL property delegates. Rule: Do not use Kotlin DSL delegates (`by registering`, `by getting`, `by creating`, `by existing`, `by extra`). To register a task, write `val x = tasks.register("x") { }`.
