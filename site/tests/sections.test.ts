@@ -22,6 +22,9 @@ describe('checkChapters', () => {
     ['in its own directory', 'launch-path/main-thread', 'src/content/docs/launch-path/main-thread/index.md'],
     ['in the directory of a different section, with a slug field that gives the URL of its section', 'launch-path/main-thread', 'src/content/docs/concurrency/main-thread.md'],
     ['in the directory of its section, with a slug field that gives a different URL', 'main-thread', 'src/content/docs/launch-path/main-thread.md'],
+    ['in the directory of its section, with a slug field that gives the URL of a different section', 'concurrency/main-thread', 'src/content/docs/launch-path/main-thread.md'],
+    ['in the directory of its section, with a slug field that gives the URL of the section', 'launch-path', 'src/content/docs/launch-path/main-thread.md'],
+    ['in the directory of its section, with a slug field that gives a deeper URL', 'launch-path/looper/main-thread', 'src/content/docs/launch-path/main-thread.md'],
   ])('rejects a chapter %s', (_, id, filePath) => {
     expect(() => checkChapters([entry(id, 'The Launch Path', filePath)])).toThrow('Put the file in src/content/docs/launch-path/');
   });
