@@ -1,6 +1,6 @@
 # Android from First Principles
 
-A free online series. It explains the machinery under Android app development, one chapter at a time. Each claim has a citation.
+A free online series. It explains the machinery under Android app development, one chapter at a time. Each non-obvious claim has a citation.
 
 ## Language
 

@@ -215,7 +215,7 @@ The README and the site footer each have one line with a link: "Format inspired 
 - The README and an About page tell these facts in plain words:
   - AI drafts most chapters from a source list that the maintainer approves.
   - Then a human edits and checks each chapter.
-  - Each claim links to its source.
+  - Each non-obvious claim links to its source.
   - If you find an error, challenge the claim.
 - `edited_by` names the editor: the person who checked each claim against its sources. On a contributor's chapter, the editor is the contributor. The maintainer gets no credit for the Merge step.
 - `edited_by` means that the editor checked the chapter at its baseline. The maintainer checks each later fix and each "Since Android N…" note in its own PR. Git history keeps them. They do not change `edited_by`. Only a baseline move resets it.
