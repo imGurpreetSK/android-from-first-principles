@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: Agents parsed a bundled JS theme file as JSON. A regex missed text, because the theme was a JS string with `\"` escapes. Rule: Before you parse or search a file, print its first lines and check its format.
+
 2026-11-14: Agents guessed paths: a package path (`@astrojs/starlight/components`, a `dist/` path) and the GitHub repo slug. Rule: To find a file in a package, use `find` or read the `exports` of the package. Read the repo slug from `git remote -v`.
 
 2026-11-14: A validator called a tool that the session does not have (Glob). Rule: Call only the tools that the session lists.
