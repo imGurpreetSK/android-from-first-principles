@@ -73,7 +73,7 @@ Entry format, one or two lines:
 
 2026-11-14: In the Bash tool shell, `grep` is `ugrep`. A pattern with several bounded repeats (for example three `[^<]{0,80}`) failed with "exceeds complexity limits". One bounded repeat passes. Rule: For a complex pattern, use Python `re`.
 
-2026-11-14: A subagent guessed page paths on asd-ste100.org, for example `/faq` and `/rules`. Each path gave HTTP 404. Rule: Get page links from the home page. The pages are files, for example `STE_faq.html` and `about_STE.html`.
+2026-11-14: AGENTS.md stated an STE rule that did not match the STE FAQ. A subagent guessed page paths on asd-ste100.org. Each path gave HTTP 404. WebFetch got HTTP 403 from the site. Rule: Before you write an STE rule, compare it with asd-ste100.org. Read that site with `curl -sL`. Get page links from the home page. The pages are files, for example `STE_faq.html` and `about_STE.html`.
 
 2026-11-14: `bd ... --json` output does not include empty fields. Code that read the `dependencies` key failed. An agent saw no `notes` key in some rows and almost missed the notes. Rule: Read optional fields in `bd ... --json` output with a default value.
 
@@ -90,7 +90,3 @@ Entry format, one or two lines:
 2026-11-14: `bd init` without `--stealth` wrote into AGENTS.md, tool files and `.gitignore`. Each `bd create` failed, because the beads database was only half initialized. Rule: This repo uses beads stealth mode. Prefer `bd init --stealth` to `bd init`. Run `git status` before and after init. Revert each file that init changed. Delete each file that init added. Before the first `bd create` in a workspace, run `bd info` and `bd config get issue_prefix`. If the prefix is not set, do not run `bd create`.
 
 2026-11-14: In zsh, `echo ======` failed two times, one time in the parent agent. Zsh reads a word that starts with `=` as a command name. Two fixers passed unquoted arguments with glob characters, for example `--include=*.js` and `--format=...[...]`. Zsh failed. Rule: In zsh, quote each argument that starts with `=` or that has `[`, `]`, `*` or `?`.
-
-2026-11-14: AGENTS.md stated an STE rule that did not match the STE FAQ. Rule: Compare each STE rule with asd-ste100.org before you write it.
-
-2026-11-14: WebFetch got HTTP 403 from asd-ste100.org. Rule: Use `curl -sL` to read that site.
