@@ -91,5 +91,5 @@ The source list of a chapter, and whether the chapter has a rebuild and device p
 _Avoid_: outline, brief
 
 **Plan amendment**:
-A change to an approved chapter plan during the draft, for example a new source. It needs its own approval before the draft continues.
+A change to an approved chapter plan during the draft or in a later fix PR, for example a fix PR that adds a source. It needs its own approval.
 _Avoid_: plan update, adding a source
