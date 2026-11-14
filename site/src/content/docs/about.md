@@ -8,4 +8,4 @@ AI drafts most chapters from a source list that the maintainer approves. Two AI 
 
 ## Challenge a claim
 
-Anyone can challenge a claim. Open a "Challenge a claim" issue. In the issue, give the chapter, the claim and a counter-source. You can also send a fix PR. [CONTRIBUTING.md](https://github.com/imGurpreetSK/android-from-first-principles/blob/main/CONTRIBUTING.md) gives the details.
+Anyone can challenge a claim. Open a ["Challenge a claim" issue](https://github.com/imGurpreetSK/android-from-first-principles/issues/new?template=challenge-a-claim.yml). In the issue, give the chapter, the claim and a counter-source. You can also send a fix PR. [CONTRIBUTING.md](https://github.com/imGurpreetSK/android-from-first-principles/blob/main/CONTRIBUTING.md#challenge-a-claim) gives the details.
