@@ -16,6 +16,16 @@ body:
       description: Quote the claim.
     validations:
       required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Wrong at the baseline
+        - Changed in a newer Android release
+        - Doc page no longer supports the claim
+    validations:
+      required: true
   - type: input
     id: counter-source
     attributes:
