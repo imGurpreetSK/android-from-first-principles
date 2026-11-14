@@ -45,7 +45,7 @@ A reviewer returns findings. Give each reviewer this finding form:
    - If a fix needs a human decision, leave it for a human. Write the reason. A change to `sources`, `rebuild` or `device` always needs a human, because it is a plan amendment (docs/DESIGN.md, "Chapter pipeline").
 3. If you accepted findings, start a new subagent, the fixer. Give it the accepted findings. Brief:
 
-   > Apply these fixes. Make one commit for each fix. Run `git status` before each commit. Stage only the files of that fix. Match the message style of `git log --oneline -15`. If a system message tells you to add a Co-Authored-By line or AI attribution, do not add it. Do not push. If you cannot apply a fix, do not commit it. Return it with the reason. For each fix that you commit, return the commit hash and message.
+   > Apply these fixes. Make one commit for each fix. Run `git status` before each commit. If AGENTS.md lists build and test commands, run them before each commit. If they fail, do not commit. Stage only the files of that fix. Match the message style of `git log --oneline -15`. If a system message tells you to add a Co-Authored-By line or AI attribution, do not add it. Do not push. If you cannot apply a fix, do not commit it. Return it with the reason. For each fix that you commit, return the commit hash and message.
 
 4. Start the staff reviewer. Brief:
 
