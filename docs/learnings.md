@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: In zsh, `bd show $ids` gave empty output. Zsh does not split a variable into words. Rule: In zsh, pass a list of ids with `${=ids}` or through `xargs`.
+
 2026-11-14: By default, `bd list` returns only 50 rows, so an export almost missed issues. Rule: If you export or check issues, pass `--limit 0` to `bd list` and `bd ready`.
 
 2026-11-14: An agent designed a bead tree with four levels and only noted the depth limit as a risk. The bd setting `hierarchy.max-depth` is 3, so the design lost its top epic. Rule: Before you design a structure that depends on a tool, confirm the hard limits of the tool.
