@@ -132,16 +132,21 @@ Launch is the announcement of the series. It happens when all 35 chapters are pu
 
 ## Chapter pipeline
 
-1. **Plan.** Build the chapter plan: its source list, whether it has a rebuild, and whether it has device prompts (AI may suggest; the maintainer approves). The plan is the chapter file's frontmatter (`sources`, `rebuild`, `device`), committed alone as the first commit of the chapter's PR. The maintainer approves it with a "plan approved" PR review comment before any drafting. The maintainer is one person, named by GitHub handle in `CONTRIBUTING.md`; only that handle's comment counts.
-2. **Draft.** AI (or a contributor, by hand) drafts the chapter and, if the plan has one, the `samples/` rebuild and its breaking tests, citing only from the approved list.
-   - Drafting never edits `sources`, `rebuild` or `device`. A change to them is a **plan amendment**: its own frontmatter-only commit, approved with a new "plan approved" comment before drafting continues.
-   - `/chapter-draft` stops and names the source when it needs one that isn't listed.
-   - CI doesn't enforce this; plan commits are visible in the PR diff at review.
-3. **Check.** CI verifies that links resolve, every citation points to a listed source, code links are pinned, samples build and tests pass.
-4. **Edit.** The chapter's `edited_by` checks every claim against its source, line numbers and anchors included, editing on the branch while reading the PR's Vercel preview.
-5. **Review.** The maintainer reviews the PR, re-runs any device prompts, and merges. On the maintainer's own chapters, edit and review are the same pass.
+1. **Plan.** Write the chapter plan: the source list, and whether the chapter has a rebuild and device prompts. AI can suggest the plan. The plan is the frontmatter of the chapter file (`sources`, `rebuild`, `device`). The plan is alone in the first commit of the chapter PR. Before the Draft step, the maintainer approves the plan with a "plan approved" PR review comment. The maintainer is one person. `CONTRIBUTING.md` names the maintainer by GitHub handle. Only a comment from that handle counts.
+2. **Draft.** AI, or a contributor by hand, drafts the chapter. If the plan has a rebuild, the draft also has the rebuild in `samples/` and its breaking tests. The draft cites only sources from the source list.
+   - The Draft step never changes `sources`, `rebuild` or `device`. A change to them is a **plan amendment**. A plan amendment is a separate commit that changes only the frontmatter. Before the draft continues, the maintainer approves the amendment with a new "plan approved" comment.
+   - If `/chapter-draft` needs a source that is not in the source list, it stops and names the source.
+   - CI does not enforce the plan amendment rule. The maintainer sees the plan commits in the PR diff at the Review step.
+3. **Check.** CI checks that links resolve, that each citation points to a listed source and that code links are pinned. CI also checks that samples build and tests pass.
+4. **Edit.** The editor, named in `edited_by`, checks each claim against its source, with line numbers and anchors. The editor edits on the branch and reads the Vercel preview of the PR.
+5. **Review.** The maintainer reviews the PR. If the chapter has device prompts, the maintainer runs them again. Then the maintainer merges the PR. On a chapter by the maintainer, the Edit and Review steps are one pass.
 
-The steps ship as two repo-level Claude commands so every chapter runs the same way, split at the approval gate: `/chapter-plan <slug>` writes the plan and stops; `/chapter-draft <slug>` refuses to run until the plan is approved. `CONTRIBUTING.md` documents the same steps for contributors working by hand.
+Two repo-level Claude commands run the steps, so all chapters go through the same steps. The commands split at the plan approval:
+
+- `/chapter-plan <slug>` writes the plan and stops.
+- `/chapter-draft <slug>` does not run until the maintainer approves the plan.
+
+`CONTRIBUTING.md` gives the same steps for contributors who work by hand.
 
 ## Site
 
