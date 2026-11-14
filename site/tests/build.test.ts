@@ -8,10 +8,11 @@ const site = fileURLToPath(new URL('..', import.meta.url));
 // A separate Astro root, so the built site does not get a page for the fixture.
 const fixture = fileURLToPath(new URL('./fixtures/invalid-chapter', import.meta.url));
 
-test('astro build makes a home page with the hero title and the tagline', () => {
+test('astro build makes a home page with the page title, the hero title and the tagline', () => {
   const { status, stderr } = spawnSync(astro, ['build', '--root', site], { encoding: 'utf8', timeout: 60_000 });
   expect(status, stderr).toBe(0);
   const html = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
+  expect(html).toContain('<title>Android from First Principles</title>');
   // Without a hero, Starlight also renders the page title as an h1. Thus look for the h1 and the tagline in the hero.
   expect(html).toMatch(/<div class="hero[ "][^>]*>[\s\S]*?<h1[^>]*>Android from First Principles<\/h1>[\s\S]*?<div class="tagline[ "][^>]*>The machinery under Android app development, one chapter at a time\.<\/div>/);
 }, 60_000);

@@ -1,6 +1,9 @@
 ---
 title: Android from First Principles
 template: splash
+head:
+  - tag: title
+    content: Android from First Principles
 hero:
   tagline: The machinery under Android app development, one chapter at a time.
 ---
