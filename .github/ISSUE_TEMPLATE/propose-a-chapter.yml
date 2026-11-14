@@ -1,5 +1,6 @@
 name: Propose a chapter
 description: Propose a new topic or a split of a chapter.
+labels: [proposal]
 body:
   - type: input
     id: topic
