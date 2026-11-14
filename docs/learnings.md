@@ -45,4 +45,4 @@ Entry format, one or two lines:
 
 2026-11-14: WebFetch got HTTP 403 from asd-ste100.org. Rule: Use `curl -sL` to read that site.
 
-2026-11-14: A subagent could not start its own subagents. Rule: The parent agent starts every reviewer and validator.
+2026-11-14: In one run, a subagent could not start its own subagents. Rule: Follow AGENTS.md rule 6.
