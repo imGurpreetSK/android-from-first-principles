@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A writer put the main manifest of the app in `src/launchPath/`, so the build failed. Rule: Put the main manifest of an Android app in `src/main/AndroidManifest.xml`.
+
 2026-11-14: In many subagents, a hook changed each Bash call to the form `caveman shrink -- <command>`. Auto mode refused the first call and asked the agent to send the changed input again. One small-model subagent stopped there and did not commit its work. Rule: If auto mode asks you to send a changed input again, send that exact input one time in its own call. If auto mode refuses it again, stop and report the exact message.
 
 2026-11-14: A fixer wrote a proof result in a commit message before it ran the proof. Another fixer put an unchecked fact in a commit body. Rule: Before you write a proof result in a commit message, run the proof. Put only checked facts in a commit message.
