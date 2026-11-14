@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: By default, `bd list` returns only 50 rows, so an export almost missed issues. Rule: If you export or check issues, pass `--limit 0` to `bd list` and `bd ready`.
+
 2026-11-14: An agent designed a bead tree with four levels and only noted the depth limit as a risk. The bd setting `hierarchy.max-depth` is 3, so the design lost its top epic. Rule: Before you design a structure that depends on a tool, confirm the hard limits of the tool.
 
 2026-11-14: A list of instructions put a condition and its action in different bullets. Some bullets were not commands. Rule: In a list of instructions, keep each condition and its action in the same bullet. Write every bullet as a command.
