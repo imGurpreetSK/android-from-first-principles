@@ -1,0 +1,27 @@
+name: Propose a chapter
+description: Propose a new topic or a split of a chapter.
+body:
+  - type: input
+    id: topic
+    attributes:
+      label: Topic
+      description: If you propose a split, also give the chapter slug.
+    validations:
+      required: true
+  - type: dropdown
+    id: proposal
+    attributes:
+      label: Proposal
+      options:
+        - New topic
+        - Split of a chapter
+    validations:
+      required: true
+  - type: input
+    id: question
+    attributes:
+      label: Question
+      description: The question that the chapter answers.
+      placeholder: Why does a ViewModel survive rotation?
+    validations:
+      required: true
