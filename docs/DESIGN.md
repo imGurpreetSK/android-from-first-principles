@@ -225,4 +225,4 @@ The README and the site footer each have one line with a link: "Format inspired 
 - Connect Vercel to the repo.
 - Spike: find out if a PR from a contributor's fork gets a Vercel preview. The Edit step needs the preview. Also find out what the maintainer must authorize.
 - Spike: find out if `astro-mermaid` renders one diagram in light and dark mode on a Vercel preview with the current Astro and Starlight.
-- Build plan: pending.
+- Build plan: beads tracks the tasks. To find work, run `bd ready --exclude-type epic,feature`.
