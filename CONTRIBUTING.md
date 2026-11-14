@@ -30,3 +30,17 @@ Anyone can propose a new chapter in a "Chapter proposal" issue. A proposal is a 
 - If a proposal stalls, the maintainer unassigns it with a comment.
 
 The site shows the chapter only after it is published.
+
+## Chapter pipeline
+
+These are the steps of the [chapter pipeline](docs/DESIGN.md#chapter-pipeline) for a contributor who works by hand. Obey docs/DESIGN.md, "Chapter shape", "Sourcing rules" and "Code samples".
+
+1. **Plan.** Write the chapter plan: the source list, and whether the chapter has a rebuild and device prompts. The plan is the frontmatter of the chapter file (`sources`, `rebuild`, `device`). Put the plan alone in the first commit of the chapter PR.
+   - **Approval.** Before the Draft step, the maintainer approves the plan with a "plan approved" comment on the PR. The comment can be a plain PR comment or the text of a GitHub approval. Only a comment from `imGurpreetSK` counts.
+2. **Draft.** Draft the chapter. Cite only sources from the source list. If the plan has a rebuild, also add the rebuild in `samples/<chapter slug>/` and its breaking tests.
+   - **Plan amendment.** The Draft step never changes `sources`, `rebuild` or `device`. A change to them is a plan amendment. Put a plan amendment in a separate commit that changes only the frontmatter. Before the draft continues, the maintainer approves the amendment with a new "plan approved" comment. CI does not enforce this rule. The maintainer sees the plan commits in the PR diff at the Merge step.
+3. **Check.** CI checks that links resolve, that each citation points to a listed source and that code links are pinned. CI also checks that samples build and tests pass. After the Check step, the maintainer runs `/doc-review` on the chapter. `/doc-review` runs the Fact check and Staff review steps. Each review runs in a separate subagent. A fixer subagent applies the accepted fixes in micro commits.
+4. **Fact check.** The fact checker compares each claim with its source. The fact checker also makes sure that the chapter obeys Simplified Technical English (STE).
+5. **Staff review.** The staff reviewer, a staff Android engineer with 10 years of experience, makes sure that the chapter and its citations are correct.
+6. **Edit.** You are the editor. Put your name in `edited_by`. Check each claim against its source, with line numbers and anchors. Edit on the branch and read the Vercel preview of the PR. If the chapter has device prompts, capture their output on an emulator with the system image that the `checked` stamp names.
+7. **Merge.** The maintainer checks the PR. If the chapter has device prompts, the maintainer runs them again. Then the maintainer merges the PR.
