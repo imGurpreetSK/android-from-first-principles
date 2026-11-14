@@ -90,7 +90,7 @@ test('astro build fails on two chapters with the same chapter slug in different 
   expect(stdout + stderr).toContain('same chapter slug "main-thread"');
 }, 60_000);
 
-test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the sidebar shows only the sections with a chapter', () => {
+test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the sidebar shows only the sections with a chapter and numbers the chapters in sidebar order', () => {
   // An output directory outside site/, so astro check does not check the built JS files.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-sidebar-'));
   try {
@@ -101,6 +101,9 @@ test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the 
     // Starlight gives the label of each top-level sidebar group the class "large". The fixture has no chapter in "State & Survival", the second section.
     const groups = [...html.matchAll(/<span class="large[ "][^>]*>([^<]*)<\/span>/g)].map((m) => m[1]);
     expect(groups).toEqual(['The Launch Path', 'Concurrency']);
+    // The numbers continue across sections.
+    expect(html).toContain('>01 Main thread</span>');
+    expect(html).toContain('>02 Flow</span>');
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
