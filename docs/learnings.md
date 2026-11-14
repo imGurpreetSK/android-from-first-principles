@@ -17,7 +17,7 @@ Entry format, one or two lines:
 
 2026-11-14: A fixer wrote a docs commit subject that read like a change to a rule: "Put … under CC BY-SA 4.0". Another fixer wrote subjects that told less than the diff, or that used a word that is not STE. AGENTS.md used idioms, filler words and rules that were not commands. A list of instructions put a condition and its action in different bullets. Rule: Before you commit, compare the subject with the full diff. In the subject of a docs commit, say what the doc states. Before you commit a doc, check the doc and its commit subject against each STE rule in AGENTS.md. In a list of instructions, keep each condition and its action in the same bullet.
 
-2026-11-14: A fixer inserted a sentence. Then the pronoun "It" in the next sentence pointed to the wrong noun. Rule: After you insert a sentence, read the next sentence again. Check each pronoun.
+2026-11-14: A fixer inserted a sentence. Then the pronoun "It" in the next sentence pointed to the wrong noun. A fixer cut text at the end of a file with the Edit tool. The cut also removed the final newline. Rule: After you insert a sentence, read the next sentence again. Check each pronoun. After you cut text at the end of a file, run `git diff` and look for "No newline at end of file".
 
 2026-11-14: A test assumed that each font URL in the built CSS is a file. Vite puts small fonts inline as data URLs. Rule: Before you assert on build output, read the build output.
 
