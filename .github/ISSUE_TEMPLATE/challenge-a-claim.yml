@@ -1,0 +1,25 @@
+name: Challenge a claim
+description: Show with a source that a claim in a chapter is wrong.
+body:
+  - type: input
+    id: chapter
+    attributes:
+      label: Chapter
+      description: The chapter slug or the chapter URL.
+      placeholder: main-thread
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: Claim
+      description: Quote the claim.
+    validations:
+      required: true
+  - type: input
+    id: counter-source
+    attributes:
+      label: Counter-source
+      description: "The URL of a source that shows that the claim is wrong. Code: a file and a line at a tag or a full SHA. Doc: an official doc page, not an archive snapshot. Talk: the URL and a timestamp."
+    validations:
+      required: true
