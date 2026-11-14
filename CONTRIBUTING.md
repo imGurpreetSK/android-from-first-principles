@@ -61,3 +61,12 @@ Before each commit, run these commands. If a command fails, do not commit.
 
 - Site: Run `npm ci`, `npm run build`, `npm test` and `npm run check` in `site/`.
 - Samples: Run `samples/gradlew -p samples build` from the repo root. It builds `samples/` and runs all its tests. It needs JDK 17 or later.
+
+## Licenses
+
+All contributions come under the licenses of the repo. There is no contributor license agreement (CLA).
+
+- Text: [CC BY-SA 4.0](LICENSE). Everyone can use the text for commercial purposes. [ADR 0001](docs/adr/0001-cc-by-sa-for-writing.md) gives the reason.
+- Code in `samples/`: [MIT](samples/LICENSE).
+- Quoted third-party code (AOSP, AndroidX, libraries) keeps its own license. Each excerpt links to its pinned source file. Quoted AOSP code (Apache 2.0) is a short excerpt with a link.
+- Rebuilds in `samples/` are original code, not copies.
