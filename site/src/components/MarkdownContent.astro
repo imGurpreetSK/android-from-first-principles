@@ -1,8 +1,8 @@
 ---
 import Default from '@astrojs/starlight/components/MarkdownContent.astro';
 
-// Only a chapter has the checked stamp. The home page has no chapter fields.
-const { checked } = Astro.locals.starlightRoute.entry.data;
+// Only a chapter has the checked stamp and sources. The home page has no chapter fields.
+const { checked, sources } = Astro.locals.starlightRoute.entry.data;
 ---
 
 <Default>
@@ -30,4 +30,18 @@ const { checked } = Astro.locals.starlightRoute.entry.data;
     )
   }
   <slot />
+  {
+    sources && (
+      <>
+        <h2>Sources</h2>
+        <ul>
+          {sources.map((url) => (
+            <li>
+              <a href={url}>{url}</a>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
 </Default>

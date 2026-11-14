@@ -42,3 +42,18 @@ test('a chapter shows the checked stamp at the top of its content', () => {
 test('a page without chapter fields shows no checked stamp', () => {
   expect(notChapter.includes('checked-stamp')).toBe(false);
 });
+
+test('a chapter lists each of its sources at the end of its content', () => {
+  // The sources of the fixture chapter, in order.
+  const sources = [
+    'https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java',
+    'https://developer.android.com/guide/components/processes-and-threads',
+  ];
+  // The list is the last item before the end of the chapter content.
+  const list = chapter.match(/<h2>Sources<\/h2><ul>((?:(?!<\/ul>)[\s\S])*)<\/ul><\/div>/)?.[1] ?? '';
+  expect([...list.matchAll(/<li><a href="([^"]+)">\1<\/a><\/li>/g)].map(([, url]) => url)).toEqual(sources);
+});
+
+test('a page without chapter fields lists no sources', () => {
+  expect(notChapter.includes('<h2>Sources</h2>')).toBe(false);
+});
