@@ -104,6 +104,8 @@ test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the 
     // The numbers continue across sections.
     expect(html).toContain('>01 Main thread</span>');
     expect(html).toContain('>02 Flow</span>');
+    // The next link keeps the label without the number.
+    expect(html).toMatch(/<span class="link-title[ "][^>]*>Flow<\/span>/);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
