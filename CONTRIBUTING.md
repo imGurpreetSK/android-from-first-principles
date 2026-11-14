@@ -71,7 +71,7 @@ Before each commit, run these commands. If a command fails, do not commit.
 
 All contributions come under the licenses of the repo. There is no contributor license agreement (CLA).
 
-- Text: [CC BY-SA 4.0](LICENSE). Everyone can use the text for commercial purposes. [ADR 0001](docs/adr/0001-cc-by-sa-for-writing.md) gives the reason.
+- Text, chapters included, and code in `site/`: [CC BY-SA 4.0](LICENSE). Everyone can use the text for commercial purposes. [ADR 0001](docs/adr/0001-cc-by-sa-for-writing.md) gives the reason.
 - Code in `samples/`: [MIT](samples/LICENSE).
 - Quoted third-party code (AOSP, AndroidX, libraries) keeps its own license. Quoted AOSP code (Apache 2.0) is a short excerpt. Each excerpt links to its pinned source file.
 - Rebuilds in `samples/` are original code, not copies.
