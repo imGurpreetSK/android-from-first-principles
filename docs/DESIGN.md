@@ -63,12 +63,12 @@ All docs, chapters included, use Simplified Technical English (STE). [AGENTS.md]
 - The `checked` stamp names the **baseline** of the chapter: the Android release whose behavior the chapter describes as current. The stamp also names the library versions against which the editor checked the claims. If the chapter depends on Play services, the stamp also names the Play services version. If the chapter has device prompts, the stamp also names the emulator system image and its revision, for example `system-images;android-37.0;google_apis;arm64-v8a`, revision 8. The site shows the stamp at the top of each chapter.
 - The baseline is the newest Android release that has an AOSP release tag when the maintainer approves the chapter plan. This rule is necessary because AOSP gets new source only in Q2 and Q4 ([source.android.com](https://source.android.com/)). Exception: Section 1 follows one cold start, so all its chapters use Android 17 (`android-17.0.0_r1`).
 - Behavior is different across OS versions, OEMs and Play services. Chapters handle the differences inline:
-  - **OS versions:** "Since Android N…" notes. Each note cites the behavior-changes page of that release or the AOSP code at its tag. Chapters cover releases back to Android 10 (API 29), the minSdk of the series. Older behavior is out of scope.
+  - **OS versions:** "Since Android <version>…" notes. Each note cites the behavior-changes page of that release or the AOSP code at its tag. Chapters cover releases back to Android 10 (API 29), the minSdk of the series. Older behavior is out of scope.
   - **OEMs and devices:** chapters describe AOSP behavior. If OEMs can differ, cite the Compatibility Definition Document (CDD). Chapters make no OEM-specific claims.
   - **Play services:** its code is not public, so claims cite only its docs.
 - The stamp is a record, not a promise. Nobody checks chapters again on a schedule. A chapter changes only if a "Challenge a claim" issue or a behavior change in the Android release notes applies to it:
   - If a claim is wrong at its baseline, correct it.
-  - If a newer release changes a claim, add a "Since Android N…" note that cites that release. The baseline stays the same, because nobody checked the other claims against the newer release.
+  - If a newer release changes a claim, add a "Since Android <version>…" note that cites that release. The baseline stays the same, because nobody checked the other claims against the newer release.
   - A baseline move needs a new check of each claim, so it runs the full chapter pipeline again. The maintainer moves a baseline only if the chapter is too far out of date.
 - Quoted AOSP code (Apache 2.0) is a short excerpt with a link. Rebuilds in `samples/` are original code, not copies.
 
@@ -218,7 +218,7 @@ The README and the site footer each have one line with a link: "Format inspired 
   - Each non-obvious claim links to its source.
   - If you find an error, challenge the claim.
 - `edited_by` names the editor: the person who checked each claim against its sources. On a contributor's chapter, the editor is the contributor. The maintainer gets no credit for the Merge step.
-- `edited_by` means that the editor checked the chapter at its baseline. Each later fix and each "Since Android N…" note has its own PR. That PR goes through the Fact check, Staff review and Merge steps. Git history keeps them. They do not change `edited_by`. Only a baseline move resets it.
+- `edited_by` means that the editor checked the chapter at its baseline. Each later fix and each "Since Android <version>…" note has its own PR. That PR goes through the Fact check, Staff review and Merge steps. Git history keeps them. They do not change `edited_by`. Only a baseline move resets it.
 - Each chapter footer shows its kind from `drafted`: "Drafted with AI, edited by <name>" or "Written by <name>".
 
 ## Open items
