@@ -8,7 +8,7 @@ Review the doc `$ARGUMENTS`. This command does the two reviews of AGENTS.md rule
 
 ## Rules for you
 
-- If the file `$ARGUMENTS` does not exist, say "No file: `$ARGUMENTS`" and stop.
+- If `$ARGUMENTS` is not the path of one file that exists, say "No file: `$ARGUMENTS`" and stop.
 - Read AGENTS.md and docs/learnings.md before you start.
 - Start each subagent yourself. A subagent cannot start its own subagents.
 - Do not edit the doc. Only the fixer edits the doc. The writer of the doc and the reviewers do not edit it.
