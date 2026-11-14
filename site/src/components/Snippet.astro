@@ -1,6 +1,7 @@
 ---
 // Shows one region of a samples/ file in a code block, for example:
 // <Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="loop" />
+import { extname } from 'node:path';
 import { Code } from '@astrojs/starlight/components';
 import { root } from 'astro:config/server';
 import { snippet } from '../snippet';
@@ -16,4 +17,4 @@ const { file, region } = Astro.props;
 const code = snippet(new URL('../samples/', root), file, region);
 ---
 
-<Code code={code} lang={file.split('.').pop()} />
+<Code code={code} lang={extname(file).slice(1)} />
