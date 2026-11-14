@@ -39,6 +39,11 @@ test('a chapter shows the checked stamp at the top of its content', () => {
   }
 });
 
+test('a chapter without optional checked fields shows only the Android line in its stamp', () => {
+  const stamp = read('human/index.html').match(/<div class="checked-stamp">([\s\S]*?)<\/div>/)?.[1] ?? '';
+  expect(stamp.match(/<li>/g)).toEqual(['<li>']);
+});
+
 test('a page without chapter fields shows no checked stamp', () => {
   expect(notChapter.includes('checked-stamp')).toBe(false);
 });
