@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A version sort key compared numbers with text, so the Python script failed. Rule: In a version sort key, make each part a tuple with a type flag.
+
 2026-11-14: A reviewer looked for `isDefault` in `ProductFlavor.kt`. The property is in `ApplicationProductFlavor.kt`. Rule: Before you say that a property is missing, search the parent and the app-specific AGP DSL interfaces.
 
 2026-11-14: A test that depends on the JDK ran on JDK 17, because the user-level `org.gradle.java.home` points to JDK 17. Rule: Before you run a test that depends on the JDK, run `gradlew --version` and read the "Daemon JVM" line.
