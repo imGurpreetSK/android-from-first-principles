@@ -43,30 +43,30 @@ Sources             required   auto-listed from frontmatter
 
 ## Sourcing rules
 
-- Every chapter starts from a **source list** the maintainer approves: AOSP source, official docs, talks, library source.
-- Drafts may cite **only** from that list. A source is one entry: one code file at a pinned ref, one doc page, or one talk.
-- CI enforces it: every external link in a chapter body, with its line number, anchor or timestamp removed, must exactly match an entry in `sources`. Links between chapters, and to this repo's own GitHub pages, are exempt.
-- Every non-obvious claim links to its source inline:
-  - Code: pinned ref + file + line, never a moving branch. CI rejects any code link that isn't provably pinned:
-    - Gitiles: `+/refs/tags/<tag>/` or a full 40-character SHA. The short `+/<ref>/` form is rejected, since it may resolve to a branch.
-    - GitHub: a full SHA, or a ref that `git ls-remote --tags` confirms is a tag (checked once per repo in the link check).
-    - AOSP: release tag (Section 1: `android-17.0.0_r1`).
-    - AndroidX/Jetpack: full commit SHA from the library's release branch (e.g. `androidx-lifecycle-release`) at the version in `checked`. AndroidX has no release tags.
+- Each chapter starts from a **source list** that the maintainer approves. The sources are AOSP code, official docs, talks and library code.
+- A draft cites **only** sources from that list. A source is one entry: one code file at a pinned ref, one doc page or one talk.
+- CI enforces this rule. CI removes the line number, anchor or timestamp from each external link in a chapter body. The result must exactly match an entry in `sources`. Links between chapters and links to the GitHub pages of this repo are exempt.
+- Each non-obvious claim has a citation:
+  - Code: a pinned ref, a file and a line. A branch moves, so never cite a branch. If CI cannot prove that a code link is pinned, CI rejects the link:
+    - Gitiles: `+/refs/tags/<tag>/` or a full 40-character SHA. CI rejects the short `+/<ref>/` form, because it can resolve to a branch.
+    - GitHub: a full SHA, or a ref that `git ls-remote --tags` shows is a tag. The link check runs `git ls-remote` one time for each repo.
+    - AOSP: a release tag. Section 1 uses `android-17.0.0_r1`.
+    - AndroidX/Jetpack: a full commit SHA from the release branch of the library (for example `androidx-lifecycle-release`) at the version in `checked`. AndroidX has no release tags.
     - Libraries with GitHub release tags (kotlinx.coroutines, OkHttp, Retrofit, …): the tag.
-    - Host: AOSP and AndroidX links point only at `android.googlesource.com` (Gitiles): real 404s for the link check, `#<line>` anchors, and it serves AndroidX release-branch SHAs, which the GitHub mirror may lack. Other Google code on Gitiles (R8 on `r8.googlesource.com`, AGP in `platform/tools/base`) links there at its tag. Everything else links to GitHub at its tag. cs.android.com may be mentioned as plain text for browsing, never as a citation.
-  - Docs: URL of the live page. Doc pages can't be pinned and may be rewritten; the `checked` stamp records when they were verified, and a page that stops supporting its claim is handled as a "Challenge a claim". No archive snapshots. Where code can back a claim, cite the code.
-  - Talks: URL + timestamp.
-- The `checked` stamp names the chapter's **baseline**: the Android release whose behavior the chapter describes as current, plus the library versions (and the Play services version, when the chapter depends on it) its claims were verified against. It is shown at the top of every chapter.
-- The baseline is the latest stable Android release when the chapter's plan is approved. Exception: Section 1 traces one cold start, so all its chapters use Android 17, `android-17.0.0_r1`.
-- Behavior varies by OS version, OEM and Play services. Chapters handle that inline:
-  - **OS versions:** "Since Android N…" notes, each citing that release's behavior-changes page or the AOSP code at its tag. Coverage goes back to Android 10 (API 29), the series' minSdk; older behavior is out of scope.
-  - **OEMs and devices:** chapters describe AOSP behavior. Where OEMs may differ, cite the Compatibility Definition Document (CDD). No OEM-specific claims.
-  - **Play services:** closed source, so claims cite its docs only.
-- The stamp is a record, not a promise. No scheduled re-checks. A chapter is touched only when a "Challenge a claim" issue or a behavior change in Android's release notes reaches it:
-  - A claim wrong at its baseline is corrected.
-  - A claim changed by a newer release gets a "Since Android N…" note citing that release. The baseline stays: only that claim was checked against the newer release.
-  - Moving the baseline means re-checking every claim, so it runs the full pipeline again (plan PR, approval, draft, edit). The maintainer does it only when a chapter has drifted enough to warrant it.
-- Quoted AOSP code (Apache 2.0) stays a short excerpt with a link. Rebuilds in `samples/` are original code, not copies.
+    - Host: AOSP and AndroidX links point only to `android.googlesource.com` (Gitiles). Gitiles gives real 404s to the link check and has `#<line>` anchors. It also serves AndroidX release-branch SHAs, which the GitHub mirror sometimes does not have. Other Google code on Gitiles links there at its tag, for example R8 on `r8.googlesource.com` and AGP in `platform/tools/base`. All other code links to GitHub at its tag. A chapter can name cs.android.com in plain text as a place to browse code. A chapter never cites it.
+  - Docs: the URL of the page, not an archive snapshot. There is no way to pin a doc page. Its owner can rewrite it. The `checked` stamp records when the editor checked the page. If a page no longer supports its claim, open a "Challenge a claim" issue. If code can support a claim, cite the code.
+  - Talks: the URL and a timestamp.
+- The `checked` stamp names the **baseline** of the chapter: the Android release whose behavior the chapter describes as current. The stamp also names the library versions against which the editor checked the claims. If the chapter depends on Play services, the stamp also names the Play services version. The site shows the stamp at the top of each chapter.
+- The baseline is the latest stable Android release when the maintainer approves the chapter plan. Exception: Section 1 follows one cold start, so all its chapters use Android 17 (`android-17.0.0_r1`).
+- Behavior is different across OS versions, OEMs and Play services. Chapters handle the differences inline:
+  - **OS versions:** "Since Android N…" notes. Each note cites the behavior-changes page of that release or the AOSP code at its tag. Chapters cover releases back to Android 10 (API 29), the minSdk of the series. Older behavior is out of scope.
+  - **OEMs and devices:** chapters describe AOSP behavior. If OEMs can differ, cite the Compatibility Definition Document (CDD). Chapters make no OEM-specific claims.
+  - **Play services:** its code is not public, so claims cite only its docs.
+- The stamp is a record, not a promise. Nobody checks chapters again on a schedule. A chapter changes only if a "Challenge a claim" issue or a behavior change in the Android release notes applies to it:
+  - If a claim is wrong at its baseline, correct it.
+  - If a newer release changes a claim, add a "Since Android N…" note that cites that release. The baseline stays the same, because nobody checked the other claims against the newer release.
+  - A baseline move needs a new check of each claim, so it runs the full chapter pipeline again. The maintainer moves a baseline only if the chapter is too far out of date.
+- Quoted AOSP code (Apache 2.0) is a short excerpt with a link. Rebuilds in `samples/` are original code, not copies.
 
 ## Curriculum
 
