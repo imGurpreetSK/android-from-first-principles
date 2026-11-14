@@ -24,7 +24,7 @@ android {
     // launchPath is the app of all Section 1 chapters. Each other flavor is the app of one chapter.
     flavorDimensions += "chapter"
     productFlavors {
-        // After Section 1 ships, do not change src/main, defaultConfig or this flavor. All of them build the Section 1 app.
+        // After Section 1 ships, do not change src/main, defaultConfig, the release build type or this flavor. All of them build the Section 1 app.
         create("launchPath") {
             dimension = "chapter"
             isDefault = true
