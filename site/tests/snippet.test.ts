@@ -8,11 +8,11 @@ describe('snippet', () => {
     expect(snippet(samples, 'Sample.kt', 'loop')).toBe('fun loop() {\n    while (true) println("loop")\n}');
   });
 
-  test('fails on a missing file', () => {
+  test('fails on a file that does not exist', () => {
     expect(() => snippet(samples, 'Missing.kt', 'loop')).toThrow(/ENOENT.*Missing\.kt/);
   });
 
-  test('fails on a missing region', () => {
+  test('fails on a region that does not exist', () => {
     expect(() => snippet(samples, 'Sample.kt', 'missing')).toThrow('File Sample.kt has 0 regions with the name "missing". It must have 1.');
   });
 
