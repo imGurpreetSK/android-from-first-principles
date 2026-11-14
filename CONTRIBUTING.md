@@ -24,7 +24,7 @@ The maintainer moves a baseline only if the chapter is too far out of date. A ba
 
 ## Propose a chapter
 
-Anyone can propose a new chapter in a "Chapter proposal" issue. A proposal is a new topic or a split of a chapter.
+Anyone can propose a new chapter in an issue. A proposal is a new topic or a split of a chapter.
 
 - If the maintainer adds the chapter to the [curriculum](docs/DESIGN.md#curriculum), the maintainer assigns the proposer. Then the proposer follows the chapter pipeline.
 - If a proposal stalls, the maintainer unassigns it with a comment.
