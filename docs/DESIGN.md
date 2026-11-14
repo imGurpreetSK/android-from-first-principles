@@ -154,7 +154,7 @@ Three repo-level Claude commands run the steps, so all chapters go through the s
 - `/chapter-plan <slug>` writes the plan and stops.
 - `/chapter-draft <slug>` does not run until the maintainer approves the plan.
 
-`/doc-review <path>` runs the fact checker and then the staff reviewer on one doc. Each review runs in a separate subagent.
+`/doc-review <path>` runs the fact checker and then the staff reviewer on one doc. Each review runs in a separate subagent. A fixer subagent applies the accepted fixes in micro commits.
 
 `CONTRIBUTING.md` gives the same steps for contributors who work by hand.
 
