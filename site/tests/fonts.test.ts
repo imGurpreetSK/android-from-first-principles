@@ -52,6 +52,14 @@ test.each([
   }
 });
 
+test.each([
+  ['--sl-font', 'Roboto'],
+  ['--sl-font-mono', 'Roboto Mono'],
+])('the built CSS sets %s to %s', (property, family) => {
+  const css = files.filter(({ name }) => name.endsWith('.css')).map(({ text }) => text).join('\n');
+  expect(new RegExp(`${property}:\\s*["']?${family}["']?\\s*[;}]`).test(css), property).toBe(true);
+});
+
 test('a printed page gets the light accent color in each theme', () => {
   // The CSS files in the order that the page links them. Of the unlayered :root rules, the last one wins.
   const page = files.find(({ name }) => name === '404.html')!.text;
