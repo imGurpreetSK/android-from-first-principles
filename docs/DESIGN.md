@@ -148,10 +148,12 @@ Launch is the announcement of the series. It happens when all 35 chapters are pu
 6. **Edit.** The editor, named in `edited_by`, checks each claim against its source, with line numbers and anchors. The editor edits on the branch and reads the Vercel preview of the PR.
 7. **Merge.** The maintainer checks the PR. If the chapter has device prompts, the maintainer runs them again. Then the maintainer merges the PR. On a chapter by the maintainer, the Edit and Merge steps are one pass.
 
-Two repo-level Claude commands run the steps, so all chapters go through the same steps. The commands split at the plan approval:
+Three repo-level Claude commands run the steps, so all chapters go through the same steps. The first two commands split at the plan approval:
 
 - `/chapter-plan <slug>` writes the plan and stops.
 - `/chapter-draft <slug>` does not run until the maintainer approves the plan.
+
+`/doc-review <path>` runs the fact checker and then the staff reviewer on one doc. Each review runs in a separate subagent.
 
 `CONTRIBUTING.md` gives the same steps for contributors who work by hand.
 
