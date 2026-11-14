@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A fixer wrote a docs commit subject that read like a change to a rule: "Put … under CC BY-SA 4.0". Another fixer wrote subjects that told less than the diff, or that used a word that is not STE. Rule: Before you commit, compare the subject with the full diff. In the subject of a docs commit, say what the doc states. Check the subject against the STE rules in AGENTS.md.
+
 2026-11-14: A fixer inserted a sentence. Then the pronoun "It" in the next sentence pointed to the wrong noun. Rule: After you insert a sentence, read the next sentence again. Check each pronoun.
 
 2026-11-14: A test assumed that each font URL in the built CSS is a file. Vite puts small fonts inline as data URLs. Rule: Before you assert on build output, read the build output.
