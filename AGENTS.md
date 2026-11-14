@@ -25,3 +25,9 @@ This repo holds Android from First Principles, a free online series on the machi
 6. If you are an agent, use subagents to write, review and validate. The parent agent starts each subagent and collects its result.
 7. When an agent or subagent makes a mistake, add an entry to `docs/learnings.md` with the rule that prevents it.
 8. `.gitignore` keeps local state out of the remote. Run `git status` before each commit.
+
+## Build and test
+
+Before each commit, run these commands. If a command fails, do not commit.
+
+- Site: If `site/node_modules/` does not exist, run `npm ci` in `site/`. Then run `npm run build`, `npm test` and `npm run check` in `site/`.
