@@ -6,7 +6,7 @@ Before you start, read [AGENTS.md](AGENTS.md), [docs/DESIGN.md](docs/DESIGN.md) 
 
 The maintainer is [`imGurpreetSK`](https://github.com/imGurpreetSK) on GitHub. The maintainer approves chapter plans and merges chapters. Only a "plan approved" comment from this handle approves a chapter plan.
 
-When you open a PR, select "Allow edits from maintainers". Then the maintainer can push fixes to the PR branch ([GitHub docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)).
+Open each PR from a fork that your user account owns. When you open the PR, select "Allow edits from maintainers". Then the maintainer can push fixes to the PR branch. GitHub offers this option only on a fork that a user account owns, not on a fork that an organization owns ([GitHub docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)).
 
 ## Challenge a claim
 
