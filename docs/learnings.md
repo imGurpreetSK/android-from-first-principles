@@ -31,7 +31,7 @@ Entry format, one or two lines:
 
 2026-11-14: The HTML-to-text script of a reviewer dropped a column of a table. Rule: After you convert an HTML table to text, make sure that each column has values.
 
-2026-11-14: A reviewer searched the AGP jar for `setIsDefault`. Kotlin names that setter `setDefault`. Rule: Search a jar for the Kotlin property name, not for a guessed accessor name.
+2026-11-14: A reviewer searched the AGP jar for `setIsDefault`. Kotlin names that setter `setDefault`. A reviewer looked for `isDefault` in `ProductFlavor.kt`. The property is in `ApplicationProductFlavor.kt`. Rule: To list the members of a class in a jar, run `javap -cp <jar> <class>`. Before you say that a property is missing, check the parent and the app-specific AGP DSL interfaces.
 
 2026-11-14: In several agents, the Read tool showed "body elided" with a `<<ccr:…>>` marker. One agent used the partial output as the full file. Rule: If any tool output shows "body elided" with a `<<ccr:…>>` marker, call the `caveman_retrieve` tool with the handle in the marker. Before you say that a file is complete, compare its line count with the output of `wc -l`.
 
@@ -48,8 +48,6 @@ Entry format, one or two lines:
 2026-11-14: A fixer wrote a proof result in a commit message before it ran the proof. Another fixer put an unchecked fact in a commit body. Rule: Before you write a proof result in a commit message, run the proof. Put only checked facts in a commit message.
 
 2026-11-14: A version sort key compared numbers with text, so the Python script failed. Rule: In a version sort key, make each part a tuple with a type flag.
-
-2026-11-14: A reviewer looked for `isDefault` in `ProductFlavor.kt`. The property is in `ApplicationProductFlavor.kt`. Rule: Before you say that a property is missing, search the parent and the app-specific AGP DSL interfaces.
 
 2026-11-14: A test that depends on the JDK ran on JDK 17, because the user-level `org.gradle.java.home` points to JDK 17. Rule: Before you run a test that depends on the JDK, run `gradlew --version` and read the "Daemon JVM" line.
 
@@ -91,7 +89,7 @@ Entry format, one or two lines:
 
 2026-11-14: By default, `bd list` returns only 50 rows, so an export almost missed issues. Rule: If you export or check issues, pass `--limit 0` to `bd list` and `bd ready`. By default, `bd list` also hides closed issues. To include them, pass `--all`.
 
-2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Agents passed flags that a tool does not have: the GNU `find` flag `-fprint` on macOS, `--output=/dev/null` to `gradlew`, and guessed `bd` flags. Rule: Before you probe a binary, read its `--help`. Before you pass a flag that you have not used in this repo, read the `--help` of the tool. If you must search a binary, use fixed-string `grep -F`. Set a timeout on the Bash call. macOS has no `timeout` command.
+2026-11-14: An agent searched inside a binary before it read the `--help` of the binary. Agents passed flags that a tool does not have: the GNU `find` flag `-fprint` on macOS, `--output=/dev/null` to `gradlew`, and guessed `bd` flags. Rule: Before you probe a binary, read its `--help`. Before you pass a flag that you have not used in this repo, read the `--help` of the tool. If you must search a binary, use fixed-string `grep -F`. A jar is compressed. `grep` does not find text in its classes. Set a timeout on the Bash call. macOS has no `timeout` command.
 
 2026-11-14: `bd init` without `--stealth` wrote a block into AGENTS.md, tool files (`.claude/settings.json`, `.codex/`, `.cursor/`, `.agents/`) and extra lines into `.gitignore`. In this repo, `bd init --stealth` wrote only lines into `.git/info/exclude`. Rule: This repo uses beads stealth mode. Prefer `bd init --stealth` to `bd init`. Run `git status` before and after init. Revert each file that init changed. Delete each file that init added.
 
