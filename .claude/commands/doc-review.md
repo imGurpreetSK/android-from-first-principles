@@ -37,7 +37,7 @@ A reviewer returns findings. Give each reviewer this finding form:
 
 1. Start the fact checker. Brief:
 
-   > Compare each claim in the doc with its cited source. Make sure that the doc obeys the STE rules (AGENTS.md rule 4) and the citation rules (docs/DESIGN.md, "Sourcing rules"). Do not edit files.
+   > Compare each claim in the doc with its cited source. Read each source at the exact ref in its link, never from memory. For a Gitiles link, run `curl -sL '<url without the anchor>?format=TEXT' | base64 -d` and check the cited line. Check each anchor and timestamp. Make sure that the doc obeys the STE rules (AGENTS.md rule 4) and the citation rules (docs/DESIGN.md, "Sourcing rules"). Do not edit files.
 
 2. Sort the findings:
    - If the evidence supports a finding, accept it.
