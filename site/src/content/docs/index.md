@@ -1,5 +1,6 @@
 ---
 title: Android from First Principles
+description: A free series on what runs under Compose, ViewModel and coroutines.
 template: splash
 head:
   - tag: title
