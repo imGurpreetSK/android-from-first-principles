@@ -30,7 +30,7 @@ A reviewer returns findings. Give each reviewer this finding form:
 > Return a list of findings. Give each finding:
 > - Location: file and line.
 > - Problem.
-> - Evidence: a quote from a source with its URL, or the rule in AGENTS.md or docs/DESIGN.md.
+> - Evidence: a quote from a source with its URL, or the rule in AGENTS.md or docs/DESIGN.md. For code, the URL uses the ref in the `checked` stamp.
 > - Proposed fix: the new text.
 
 ## Steps
