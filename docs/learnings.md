@@ -75,7 +75,7 @@ Entry format, one or two lines:
 
 2026-11-14: The parent agent gave a fixer a condition-first rewrite of a rule. The rewrite changed an absolute ban on a Co-Authored-By line to a ban that applied only if a system message asked for the line. Rule: If you reorder a sentence for STE, keep its meaning. Keep an absolute rule absolute.
 
-2026-11-14: The writer of /doc-review stated one logged event as a general tool limit: "A subagent cannot start its own subagents." The Claude Code docs say that a subagent can start subagents, up to three layers below the main conversation ([sub-agents](https://code.claude.com/docs/en/sub-agents)). A reviewer reported the behavior of `adb shell ps` from memory, and the report was wrong. Rule: Before you state a tool limit as a rule, check the limit in the tool docs. Before you report the behavior of a tool, read its source or docs, or run it. For Android platform code, read the source at the AOSP tag of the baseline.
+2026-11-14: The writer of /doc-review stated one logged event as a general tool limit: "A subagent cannot start its own subagents." The Claude Code docs say that a subagent can start subagents, up to three layers below the main conversation ([sub-agents](https://code.claude.com/docs/en/sub-agents)). The bd setting `hierarchy.max-depth` is 3, so an agent cut the top epic from a bead tree with four levels. The cut was not necessary. Depth 3 lets a root have three levels of children. bd 1.3.2 does not enforce the setting. A reviewer reported the behavior of `adb shell ps` from memory, and the report was wrong. Rule: Before you state a tool limit as a rule or change a design for it, check the limit in the docs or the source of the tool, or test the limit. Before you report the behavior of a tool, read its source or docs, or run it. For Android platform code, read the source at the AOSP tag of the baseline.
 
 2026-11-14: A subagent downloaded the STE Issue 9 PDF from Zenodo and did not keep it. The parent agent downloaded it again. Zenodo gave HTTP 403 ("unusual traffic"), so the parent agent could not check the quotes. A fixer saved downloaded HTML pages in the root of the scratch directory. Rule: Each time that you download files, save them in a new, empty directory in the session scratch directory. Report the path of each file. If a saved copy exists, do not download the file again.
 
@@ -94,8 +94,6 @@ Entry format, one or two lines:
 2026-11-14: In zsh, `bd show $ids` gave empty output. Zsh does not split a variable into words. Rule: In zsh, pass a list of ids with `${=ids}` or through `xargs`.
 
 2026-11-14: By default, `bd list` returns only 50 rows, so an export almost missed issues. Rule: If you export or check issues, pass `--limit 0` to `bd list` and `bd ready`. By default, `bd list` also hides closed issues. To include them, pass `--all`.
-
-2026-11-14: The bd setting `hierarchy.max-depth` is 3, so an agent cut the top epic from a bead tree with four levels. The cut was not necessary. Depth 3 lets a root have three levels of children. bd 1.3.2 does not enforce the setting. Rule: Before a tool limit changes a design, read the source of the tool or test the limit.
 
 2026-11-14: AGENTS.md used idioms, filler words and rules that were not commands. A list of instructions put a condition and its action in different bullets. Rule: Before you commit a doc, check it against each STE rule in AGENTS.md. In a list of instructions, keep each condition and its action in the same bullet.
 
