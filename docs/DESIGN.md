@@ -142,8 +142,11 @@ Launch is the announcement of the series. It happens when all 35 chapters are pu
    - If `/chapter-draft` needs a source that is not in the source list, it stops and names the source.
    - CI does not enforce the plan amendment rule. The maintainer sees the plan commits in the PR diff at the Merge step.
 3. **Check.** CI checks that links resolve, that each citation points to a listed source and that code links are pinned. CI also checks that samples build and tests pass.
-4. **Edit.** The editor, named in `edited_by`, checks each claim against its source, with line numbers and anchors. The editor edits on the branch and reads the Vercel preview of the PR.
-5. **Merge.** The maintainer checks the PR. If the chapter has device prompts, the maintainer runs them again. Then the maintainer merges the PR. On a chapter by the maintainer, the Edit and Merge steps are one pass.
+4. **Fact check.** The fact checker compares each claim with its source. The fact checker also makes sure that the chapter obeys STE.
+5. **Staff review.** The staff reviewer, a staff Android engineer with 10 years of experience, makes sure that the chapter and its citations are correct.
+   - A different subagent does each review. The writer of the chapter does not review it.
+6. **Edit.** The editor, named in `edited_by`, checks each claim against its source, with line numbers and anchors. The editor edits on the branch and reads the Vercel preview of the PR.
+7. **Merge.** The maintainer checks the PR. If the chapter has device prompts, the maintainer runs them again. Then the maintainer merges the PR. On a chapter by the maintainer, the Edit and Merge steps are one pass.
 
 Two repo-level Claude commands run the steps, so all chapters go through the same steps. The commands split at the plan approval:
 
