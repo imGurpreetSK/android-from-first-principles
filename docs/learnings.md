@@ -21,7 +21,7 @@ Entry format, one or two lines:
 
 2026-11-14: A test assumed that each font URL in the built CSS is a file. Vite puts small fonts inline as data URLs. Rule: Before you assert on build output, read the build output.
 
-2026-11-14: A reviewer read a file in parallel with the command that wrote it. Rule: Read a file only after the command that writes it ends.
+2026-11-14: A reviewer read a file in parallel with the command that wrote it. A subagent ran a pypdf script in parallel with the check for pypdf. The script failed. Rule: Start a call only after each call whose result it needs ends. On this machine, `gs -sDEVICE=txtwrite` extracts text from a PDF.
 
 2026-11-14: Agents parsed a bundled JS theme file as JSON. A regex missed text, because the theme was a JS string with `\"` escapes. Rule: Before you parse or search a file, print its first lines and check its format.
 
@@ -80,8 +80,6 @@ Entry format, one or two lines:
 2026-11-14: A subagent downloaded the STE Issue 9 PDF from Zenodo and did not keep it. The parent agent downloaded it again. Zenodo gave HTTP 403 ("unusual traffic"), so the parent agent could not check the quotes. A fixer saved downloaded HTML pages in the root of the scratch directory. Rule: Each time that you download files, save them in a new, empty directory in the session scratch directory. Report the path of each file. If a saved copy exists, do not download the file again.
 
 2026-11-14: In the Bash tool shell, `grep` is `ugrep`. A pattern with several bounded repeats (for example three `[^<]{0,80}`) failed with "exceeds complexity limits". One bounded repeat passes. Rule: For a complex pattern, use Python `re`.
-
-2026-11-14: A subagent ran a pypdf script in parallel with the check for pypdf. The script failed. Rule: Before you run a command that needs a tool, make sure that the tool exists. On this machine, `gs -sDEVICE=txtwrite` extracts text from a PDF.
 
 2026-11-14: A subagent guessed page paths on asd-ste100.org, for example `/faq` and `/rules`. Each path gave HTTP 404. Rule: Get page links from the home page. The pages are files, for example `STE_faq.html` and `about_STE.html`.
 
