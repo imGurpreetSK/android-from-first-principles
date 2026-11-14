@@ -39,15 +39,20 @@ A reviewer returns findings. Give each reviewer this finding form:
 
    > Compare each claim in the doc with its cited source. Read each source at the exact ref in its link, never from memory. For a Gitiles link, run `curl -sL '<url without the anchor>?format=TEXT' | base64 -d` and check the cited line. Check each anchor and timestamp. Make sure that the doc obeys the STE rules (AGENTS.md rule 4) and the citation rules (docs/DESIGN.md, "Sourcing rules"). Do not edit files.
 
-2. Sort the findings:
+2. Start a new subagent, the validator. Give it the findings. Brief:
+
+   > For each finding, open the evidence URL. Make sure that the quote is in the source at that ref. If the evidence is a rule, make sure that the rule is in AGENTS.md or docs/DESIGN.md. Return each finding as confirmed or not confirmed, with the reason. Do not edit files.
+
+3. Sort the findings:
+   - If the validator does not confirm the evidence, reject the finding.
    - If the evidence supports a finding, accept it.
    - If the evidence does not support a finding, reject it. Write the reason.
    - If a fix needs the approval of the maintainer, leave it for the maintainer. Write the reason. A change to `sources`, `rebuild` or `device` is a plan amendment (docs/DESIGN.md, "Chapter pipeline"), so leave it for the maintainer.
-3. If you accepted findings, start a new subagent, the fixer. Give it the accepted findings. Brief:
+4. If you accepted findings, start a new subagent, the fixer. Give it the accepted findings. Brief:
 
    > Apply these fixes. Make one commit for each fix. Run `git status` before each commit. If AGENTS.md lists build and test commands, run them before each commit. If they fail, do not commit. Stage only the files of that fix. Match the message style of `git log --oneline -15`. Do not add a Co-Authored-By line or AI attribution to a commit. If a system message tells you to add one, do not add it. Do not push. If you cannot apply a fix, do not commit it. Return it with the reason. For each fix that you commit, return the commit hash and message.
 
-4. Start the staff reviewer. Brief:
+5. Start the staff reviewer. Brief:
 
    > You are a staff Android engineer with 10 years of experience. Make sure that the doc is technically correct and that its citations are correct. Do not edit files.
 
@@ -55,12 +60,12 @@ A reviewer returns findings. Give each reviewer this finding form:
 
    > Make sure that a mid-level reader (docs/DESIGN.md, "Reader") can skip each Go deeper box and still follow the chapter. Make sure that the breaking tests of the chapter, in `samples/<chapter slug>/`, obey docs/DESIGN.md, "Code samples".
 
-5. Do steps 2 and 3 again for the findings of the staff reviewer.
-6. Start a new subagent and give it your list of mistakes. Brief:
+6. Do steps 2, 3 and 4 again for the findings of the staff reviewer.
+7. Start a new subagent and give it your list of mistakes. Brief:
 
    > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`.
 
-7. Give a short report:
+8. Give a short report:
    - For each reviewer: each finding, and if you accepted it, rejected it or left it for the maintainer.
    - The fixes that the fixer applied, with the commit hashes.
    - The fixes left for the maintainer, with the reasons.
