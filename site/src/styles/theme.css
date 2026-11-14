@@ -1,0 +1,5 @@
+/* The Fontsource files in customCss give Roboto and Roboto Mono. Starlight adds the system fonts as a fallback. */
+:root {
+  --sl-font: 'Roboto';
+  --sl-font-mono: 'Roboto Mono';
+}

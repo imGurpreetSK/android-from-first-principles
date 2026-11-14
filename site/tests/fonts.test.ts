@@ -1,0 +1,49 @@
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { afterAll, beforeAll, expect, test } from 'vitest';
+
+const astro = fileURLToPath(new URL('../node_modules/.bin/astro', import.meta.url));
+const root = fileURLToPath(new URL('..', import.meta.url));
+// A separate output directory, so the test does not change dist/.
+const outDir = mkdtempSync(join(tmpdir(), 'afp-site-'));
+// The site has no chapters yet, so the build has only the Starlight 404 page. That page loads the custom CSS.
+let files: { name: string; text: string }[] = [];
+
+beforeAll(() => {
+  // spawnSync blocks the thread, so the hook timeout cannot stop a stuck build. The spawnSync timeout stops it.
+  const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', root, '--outDir', outDir], { encoding: 'utf8', timeout: 60_000 });
+  expect(status, stdout + stderr).toBe(0);
+  files = readdirSync(outDir, { recursive: true, encoding: 'utf8' })
+    .filter((name) => /\.(html|css)$/.test(name))
+    .map((name) => ({ name, text: readFileSync(join(outDir, name), 'utf8') }));
+}, 60_000);
+
+afterAll(() => rmSync(outDir, { recursive: true, force: true }));
+
+test('no built HTML or CSS file loads a font or a stylesheet from another host', () => {
+  expect(files.length).toBeGreaterThan(0);
+  for (const { name, text } of files) {
+    // The match is the only text in the failure message, so a long minified file does not fill the output.
+    expect(text.match(/fonts\.(googleapis|gstatic)\.com|(url\(|@import)\s*["']?(https?:)?\/\/[^"')\s]*/)?.[0], name).toBeUndefined();
+    const links = (text.match(/<link\b[^>]*>/g) ?? [])
+      .filter((tag) => /\brel="?(stylesheet|preload|preconnect)\b/.test(tag) && /\bhref="?(https?:)?\/\//.test(tag));
+    expect(links, name).toEqual([]);
+  }
+});
+
+test.each(['Roboto', 'Roboto Mono'])('the built CSS has @font-face rules for %s with font files on the site', (family) => {
+  const css = files.filter(({ name }) => name.endsWith('.css')).map(({ text }) => text).join('\n');
+  const rules = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)]
+    .map(([, body]) => body)
+    .filter((body) => new RegExp(`font-family:\\s*["']?${family}["']?\\s*(;|$)`).test(body));
+  expect(rules).not.toHaveLength(0);
+  for (const body of rules) {
+    const urls = [...body.matchAll(/url\(\s*["']?([^"')]+)/g)].map(([, url]) => url);
+    expect(urls, family).not.toHaveLength(0);
+    // Vite puts a small font file into the CSS as a data URL.
+    for (const url of urls) expect(url.startsWith('data:') || existsSync(join(outDir, url)), url.slice(0, 80)).toBe(true);
+  }
+});
