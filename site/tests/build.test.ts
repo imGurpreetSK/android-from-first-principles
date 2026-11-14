@@ -40,7 +40,7 @@ test('astro build fails on a chapter with invalid frontmatter', () => {
 }, 60_000);
 
 test('a Go deeper box is a closed <details> element that starts with its <summary>', () => {
-  // An output directory outside site/, so astro check does not check the built JavaScript.
+  // The output directory is outside site/, so astro check does not check the built JavaScript.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-go-deeper-'));
   try {
     const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', goDeeper, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
