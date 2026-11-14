@@ -1,5 +1,6 @@
 [versions]
 agp = "9.5.0"
+# Kotlin 2.4.21 fully supports AGP up to 9.3.1 and Gradle up to 9.7.0. After each upgrade, run the build with --warning-mode=all.
 kotlin = "2.4.21"
 junit = "6.1.3"
 # The launch app compiles against this API level.
