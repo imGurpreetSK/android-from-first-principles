@@ -57,7 +57,7 @@ An inline link from a claim to one spot in a listed source: a line, a heading or
 _Avoid_: footnote, reference
 
 **Checked stamp**:
-The record of the baseline of a chapter and of the library versions against which the editor checked its claims.
+The record of the baseline of a chapter and of the library versions against which the editor checked its claims. If the chapter has device prompts, the stamp also names the emulator system image.
 _Avoid_: version, last updated
 
 **Baseline**:
