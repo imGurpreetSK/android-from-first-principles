@@ -202,10 +202,14 @@ The README and the site footer each have one line with a link: "Format inspired 
 
 ## AI disclosure
 
-- The README and an About page say plainly: most chapters are drafted with AI from a maintainer-approved source list, then edited and verified by a human; every claim links to its source; spot an error, challenge the claim.
-- `edited_by` names the person who verified every claim against its sources. On a contributor's chapter that is the contributor; the maintainer's review is the merge and is not credited.
-- `edited_by` means verified at the baseline. Later fixes and "Since Android N…" notes are checked in their own PR's review and live in git history; they don't change `edited_by`. Only a baseline move resets it.
-- Each chapter footer says which kind it is, from `drafted`: "Drafted with AI, edited by <name>" or "Written by <name>".
+- The README and an About page tell these facts in plain words:
+  - AI drafts most chapters from a source list that the maintainer approves.
+  - Then a human edits and checks each chapter.
+  - Each claim links to its source.
+  - If you find an error, challenge the claim.
+- `edited_by` names the editor: the person who checked each claim against its sources. On a contributor's chapter, the editor is the contributor. The maintainer's review is the merge, and it gets no credit.
+- `edited_by` means that the editor checked the chapter at its baseline. The review of its own PR checks each later fix and each "Since Android N…" note. Git history keeps them. They do not change `edited_by`. Only a baseline move resets it.
+- Each chapter footer shows its kind from `drafted`: "Drafted with AI, edited by <name>" or "Written by <name>".
 
 ## Open items
 
