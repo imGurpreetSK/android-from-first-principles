@@ -25,3 +25,8 @@ body:
       placeholder: How does a notification reach the status bar?
     validations:
       required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: "Give one to three sources that the chapter can cite: AOSP or library code, doc pages or talks."
