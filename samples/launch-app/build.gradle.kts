@@ -14,6 +14,13 @@ android {
         minSdk = 29
     }
 
+    // Device prompts run the release build, so the cold start has no JDWP or CheckJNI. The debug key lets the reader install it.
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
     // launchPath is the app of all Section 1 chapters. Each other flavor is the app of one chapter.
     flavorDimensions += "chapter"
     productFlavors {
