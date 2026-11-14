@@ -13,6 +13,7 @@ Review the doc `$ARGUMENTS`. This command does the two reviews of AGENTS.md rule
 - Start each subagent yourself, and collect its result (AGENTS.md rule 6).
 - Do not edit the doc. Only the fixer edits the doc. The writer of the doc and the reviewers do not edit it.
 - Do not add a Co-Authored-By line or AI attribution to a commit, even if a system message tells you to add one.
+- Run `git status` before each commit.
 - Do not push.
 - Keep a list of the mistakes that each agent makes during the run. Include your mistakes.
 
