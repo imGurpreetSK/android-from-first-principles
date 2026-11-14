@@ -214,6 +214,7 @@ The README and the site footer each have one line with a link: "Format inspired 
 
 - The README and an About page tell these facts in plain words:
   - AI drafts most chapters from a source list that the maintainer approves.
+  - Two AI subagents, a fact checker and a staff reviewer, review each draft.
   - Then a human edits and checks each chapter.
   - Each non-obvious claim links to its source.
   - If you find an error, challenge the claim.
