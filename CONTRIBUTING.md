@@ -8,7 +8,7 @@ The maintainer is [`imGurpreetSK`](https://github.com/imGurpreetSK) on GitHub. T
 
 ## Challenge a claim
 
-Anyone can challenge a claim:
+Anyone can challenge a claim in one of two ways:
 
 - Open a "Challenge a claim" issue. Give the chapter, the claim and a counter-source.
 - Send a fix PR.
