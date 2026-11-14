@@ -37,7 +37,7 @@ A reviewer returns findings. Give each reviewer this finding form:
 
 1. Start the fact checker. Brief:
 
-   > Compare each claim in the doc with its cited source. Read each source at the exact ref in its link, never from memory. For a Gitiles link, run `curl -sL '<url without the anchor>?format=TEXT' | base64 -d` and check the cited line. Check each anchor and timestamp. Make sure that the doc obeys the STE rules (AGENTS.md rule 4) and the citation rules (docs/DESIGN.md, "Sourcing rules"). Do not edit files.
+   > Compare each claim in the doc with its cited source. Read each source at the exact ref in its link, never from memory. For a Gitiles link, run `curl -sL '<url without the anchor>?format=TEXT' | base64 -d` and check the cited line. Check each anchor and timestamp. Make sure that the doc obeys the STE rules (AGENTS.md rule 4) and the citation rules (docs/DESIGN.md, "Sourcing rules"). If you cannot read a source or run a device prompt, do not judge the claim. Return it as unverified, with the reason. Do not edit files.
 
 2. Start a new subagent, the validator. Give it the findings. Brief:
 
@@ -54,7 +54,7 @@ A reviewer returns findings. Give each reviewer this finding form:
 
 5. Start the staff reviewer. Brief:
 
-   > You are a staff Android engineer with 10 years of experience. Make sure that the doc is technically correct and that its citations are correct. Do not edit files.
+   > You are a staff Android engineer with 10 years of experience. Make sure that the doc is technically correct and that its citations are correct. If you cannot read a source or run a device prompt, do not judge the claim. Return it as unverified, with the reason. Do not edit files.
 
    If the frontmatter of the doc has a `sources` key, the doc is a chapter. For a chapter, add to the brief:
 
@@ -69,3 +69,4 @@ A reviewer returns findings. Give each reviewer this finding form:
    - For each reviewer: each finding, and if you accepted it, rejected it or left it for the maintainer.
    - The fixes that the fixer applied, with the commit hashes.
    - The fixes left for the maintainer, with the reasons.
+   - The unverified claims, with the reasons.
