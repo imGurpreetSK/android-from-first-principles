@@ -34,12 +34,16 @@ test('no built HTML or CSS file loads a font or a stylesheet from another host',
   }
 });
 
-test.each(['Roboto', 'Roboto Mono'])('the built CSS has @font-face rules for %s with font files on the site', (family) => {
+test.each([
+  ['Roboto', ['400', '600', '700']],
+  ['Roboto Mono', ['400', '600']],
+])('the built CSS has @font-face rules for %s in weights %j with font files on the site', (family, weights) => {
   const css = files.filter(({ name }) => name.endsWith('.css')).map(({ text }) => text).join('\n');
   const rules = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)]
     .map(([, body]) => body)
     .filter((body) => new RegExp(`font-family:\\s*["']?${family}["']?\\s*(;|$)`).test(body));
   expect(rules).not.toHaveLength(0);
+  for (const weight of weights) expect(rules.some((body) => new RegExp(`font-weight:\\s*${weight}\\s*(;|$)`).test(body)), weight).toBe(true);
   for (const body of rules) {
     const urls = [...body.matchAll(/url\(\s*["']?([^"')]+)/g)].map(([, url]) => url);
     expect(urls, family).not.toHaveLength(0);
