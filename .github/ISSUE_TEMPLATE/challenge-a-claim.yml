@@ -33,3 +33,8 @@ body:
       description: "The URL of a source that shows that the claim is wrong. Code: a file and a line at a tag or a full SHA. Doc: an official doc page, not an archive snapshot. Talk: the URL and a timestamp."
     validations:
       required: true
+  - type: textarea
+    id: device-output
+    attributes:
+      label: Device output
+      description: If you challenge the output of a device prompt, paste your output. Give the command, the emulator system image and its revision.
