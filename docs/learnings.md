@@ -10,3 +10,5 @@ Entry format, one or two lines:
 `YYYY-MM-DD: <what went wrong>. Rule: <the rule that prevents it>.`
 
 ## Log
+
+2026-11-14: A subagent could not start its own subagents. Rule: The parent agent starts every reviewer and validator.
