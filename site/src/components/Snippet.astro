@@ -1,5 +1,5 @@
 ---
-// Shows one region of a file in samples/ as a code block, for example:
+// Shows one region of a samples/ file in a code block, for example:
 // <Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="loop" />
 import { Code } from '@astrojs/starlight/components';
 import { root } from 'astro:config/server';
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const { file, region } = Astro.props;
-// samples/ is next to the Astro root, as samples/ is next to site/ in the repo.
+// samples/ is next to the Astro root. In the repo, the Astro root is site/.
 const code = snippet(new URL('../samples/', root), file, region);
 ---
 
