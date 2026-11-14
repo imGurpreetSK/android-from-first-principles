@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: In an STE rewrite, a writer dropped the words "maps … to" from a table row. Rule: Before you commit a rewrite, compare each old line with its new line, fact by fact.
+
 2026-11-14: A writer put new pipeline steps after Edit. This broke the rule that Edit and Merge are one pass. Rule: Before you insert a step in a sequence, read each sentence that names the steps around it.
 
 2026-11-14: The parent agent gave the fix text `curl -sL '<url>?format=TEXT'` for Gitiles. The URL had a `#<line>` anchor, so curl sent no query and got HTML. Rule: Before you add `?format=TEXT` to a Gitiles URL, remove the `#` anchor.
