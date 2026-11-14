@@ -41,6 +41,10 @@ Sources             required   auto-listed from frontmatter
 - The chapter plan sets "Try it". If `rebuild` is true, "Try it" has prompts that change the rebuild. If `device` is true, it has device prompts. If both are false, the chapter has no "Try it".
 - The chapter plan sets the shape of the chapter at the Plan step. The Draft step does not change the shape.
 
+## Style
+
+All docs, chapters included, use Simplified Technical English (STE). [AGENTS.md](../AGENTS.md) rule 4 gives the rules.
+
 ## Sourcing rules
 
 - Each chapter starts from a **source list** that the maintainer approves. The sources are AOSP code, official docs, talks and library code.
