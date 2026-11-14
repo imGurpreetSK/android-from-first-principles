@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { z } from 'astro/zod';
 import { docsSchema } from '@astrojs/starlight/schema';
 import { frontmatter } from '../src/frontmatter';
+import { sections } from '../src/sections';
 
 // The same schema as the docs collection. The image helper is a stub, because no test page has an image.
 const schema = docsSchema({ extend: frontmatter })({ image: () => z.string() } as never);
@@ -43,6 +44,14 @@ describe('chapter frontmatter', () => {
 
   test('rejects an empty section', () => {
     expect(valid({ ...chapter, section: '' })).toBe(false);
+  });
+
+  test.each(sections.map((s) => s.label))('accepts the section %s', (section) => {
+    expect(valid({ ...chapter, section })).toBe(true);
+  });
+
+  test.each(['Launch Path', 'the launch path', 'launch-path'])('rejects the section %s, because it is not a section name', (section) => {
+    expect(valid({ ...chapter, section })).toBe(false);
   });
 
   test('rejects an AOSP tag of a different release', () => {

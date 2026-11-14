@@ -1,4 +1,5 @@
 import { z } from 'astro/zod';
+import { sections } from './sections';
 
 // The checked stamp, for example { android: 17, aosp: 'android-17.0.0_r1' }.
 const checked = z
@@ -16,7 +17,7 @@ const checked = z
 
 // docs/DESIGN.md "Chapter shape" and "Sourcing rules" give the chapter fields. Starlight gives `title`.
 const chapter = {
-  section: z.string().min(1),
+  section: z.enum(sections.map((s) => s.label)),
   checked,
   // CI removes the anchor from each citation, then needs an exact match with a source.
   sources: z.array(z.httpUrl().refine((url) => !url.includes('#'), 'A source has no anchor. Put the anchor in the citation.')).min(1),
