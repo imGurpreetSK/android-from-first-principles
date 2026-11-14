@@ -22,6 +22,6 @@ This repo holds Android from First Principles, a free online series on the machi
 5. Each doc gets two reviews. A different subagent does each review. The writer of the doc does not review it.
    1. Reviewer 1 compares each claim with its source. Reviewer 1 also makes sure that the doc obeys STE.
    2. Then reviewer 2, a staff Android engineer with 10 years of experience, makes sure that the doc and its citations are correct.
-6. Use subagents liberally. Subagents do creation, reviews and validations. The parent agent orchestrates.
+6. Use subagents to write, review and validate. The parent agent starts each subagent and collects its result.
 7. `docs/learnings.md` is a live log. When an agent or subagent makes a mistake, add an entry with the rule that prevents it.
 8. `.gitignore` keeps local state out of the remote. Run `git status` before each commit.
