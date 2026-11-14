@@ -58,7 +58,7 @@ A reviewer returns findings. Give each reviewer this finding form:
 
    If the frontmatter of the doc has a `sources` key, the doc is a chapter. For a chapter, add to the brief:
 
-   > Make sure that a mid-level reader (docs/DESIGN.md, "Reader") can skip each Go deeper box and still follow the chapter. Make sure that each claim is true at the baseline. If behavior differs in a release back to Android 10, make sure that a cited "Since Android N…" note shows it. Make sure that each OEM claim cites the CDD and each Play services claim cites only its docs. If `rebuild` is true, make sure that the breaking tests of the chapter, in `samples/<chapter slug>/`, obey docs/DESIGN.md, "Code samples".
+   > Make sure that a mid-level reader (docs/DESIGN.md, "Reader") can skip each Go deeper box and still follow the chapter. Make sure that each claim is true at the baseline. If behavior differs in a release back to Android 10, make sure that a cited "Since Android <version>…" note shows it. Make sure that each OEM claim cites the CDD and each Play services claim cites only its docs. If `rebuild` is true, make sure that the breaking tests of the chapter, in `samples/<chapter slug>/`, obey docs/DESIGN.md, "Code samples".
 
 6. Do steps 2, 3 and 4 again for the findings of the staff reviewer.
 7. Start a new subagent and give it your list of mistakes. Brief:
