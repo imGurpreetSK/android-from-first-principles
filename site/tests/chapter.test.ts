@@ -57,3 +57,14 @@ test('a chapter lists each of its sources at the end of its content', () => {
 test('a page without chapter fields lists no sources', () => {
   expect(notChapter.includes('<h2>Sources</h2>')).toBe(false);
 });
+
+test.each([
+  ['ai', 'chapter/index.html', 'Drafted with AI, edited by Gurpreet Singh'],
+  ['human', 'human/index.html', 'Written by Jane Doe'],
+])('a chapter with drafted: %s shows its line before the page footer', (_, page, line) => {
+  expect(read(page).includes(`<p>${line}</p><footer`), line).toBe(true);
+});
+
+test('a page without chapter fields shows no drafted line', () => {
+  expect(/Drafted with AI|Written by/.test(notChapter)).toBe(false);
+});

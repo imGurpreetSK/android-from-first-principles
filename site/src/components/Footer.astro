@@ -1,0 +1,9 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro';
+
+// Only a chapter has drafted and edited_by. The home page has no chapter fields.
+const { drafted, edited_by } = Astro.locals.starlightRoute.entry.data;
+---
+
+{drafted && <p>{drafted === 'ai' ? `Drafted with AI, edited by ${edited_by}` : `Written by ${edited_by}`}</p>}
+<Default />
