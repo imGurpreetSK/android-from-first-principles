@@ -17,7 +17,12 @@ All chapters have one skeleton. Some parts are required. The other parts are opt
 ---
 title: The main thread: Looper, Handler, MessageQueue
 section: The Launch Path
-checked: Android <version> (AOSP <tag>), <library versions>
+checked:
+  android: 17
+  aosp: android-17.0.0_r1
+  libraries: { kotlin: "2.4.21" }  # optional
+  play_services: "<version>"  # optional
+  emulator: { image: "system-images;android-37.0;google_apis;arm64-v8a", revision: 8 }  # optional
 sources: [ ...approved list... ]
 rebuild: true | false
 device: true | false
