@@ -5,7 +5,7 @@ This repo holds Android from First Principles, a free online series on the machi
 - `docs/learnings.md`: past mistakes and the rules that prevent them. Read it before you start work.
 - `docs/DESIGN.md`: the design decisions.
 - `CONTEXT.md`: the glossary.
-- Beads tracks the tasks. Run `bd ready --exclude-type epic,feature` to find work. Epics and chapter features never have direct work. `bd ready` always shows them as ready. Run `bd prime` for the full workflow.
+- Beads tracks the tasks. Run `bd ready --exclude-type epic,feature` to find work. Epics and chapter features never have direct work. Open children do not block them, so `bd ready` shows them. Run `bd prime` for the full workflow.
 
 ## Rules
 
