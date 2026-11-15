@@ -15,6 +15,10 @@ const snippetFixture = new URL('./fixtures/snippet/site/', import.meta.url);
 const duplicateSlug = fileURLToPath(new URL('./fixtures/duplicate-slug', import.meta.url));
 const duplicateId = fileURLToPath(new URL('./fixtures/duplicate-id', import.meta.url));
 const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
+const citation = fileURLToPath(new URL('./fixtures/citation', import.meta.url));
+const citationMismatch = fileURLToPath(new URL('./fixtures/citation-mismatch', import.meta.url));
+// Vitest sets process.env.MODE to test, and a child process inherits it. The default mode of astro build is production.
+const production = { ...process.env, MODE: 'production' };
 
 test('astro build fails on a chapter with invalid frontmatter', () => {
   // --force clears the content cache, so the build checks the fixture with the current schema.
@@ -98,6 +102,32 @@ test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the 
     expect(html).toContain('>02 Flow</span>');
     // The next link keeps the label without the number.
     expect(html).toMatch(/<span class="link-title[ "][^>]*>Flow<\/span>/);
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build passes on a chapter whose links cite its sources or are exempt', () => {
+  // An output directory outside site/, so astro check does not check the built JS files.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-'));
+  try {
+    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citation, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
+    expect(status, stdout + stderr).toBe(0);
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build fails on a chapter with links to pages that are not in its sources, and names the file and each link', () => {
+  // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-mismatch-'));
+  try {
+    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citationMismatch, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
+    expect(status).not.toBe(0);
+    // The inline link and the reference link. The link that cites a source is not in the list.
+    expect(stdout + stderr).toContain(
+      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links to pages that are not in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/reference/android/os/Looper#loop(). Without its anchor,`,
+    );
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }

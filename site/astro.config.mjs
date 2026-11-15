@@ -1,12 +1,40 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig, fontProviders } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { satteri } from '@astrojs/markdown-satteri';
+import { missingSource } from './src/citations.ts';
 import { sections } from './src/sections.ts';
 
 // Starlight resolves a path that starts with "." against the Astro root. A test fixture has its own root, so give absolute paths.
 const local = (path) => fileURLToPath(new URL(path, import.meta.url));
 
+// Fail the build if a link in a chapter body cites a page that is not in the sources of the chapter. A page without sources is not a chapter.
+// Sätteri calls this plugin factory one time for each .md and .mdx file. Astro puts the frontmatter in data.astro.
+function citations({ data, fileURL }) {
+  const sources = data.astro?.frontmatter?.sources;
+  if (!sources) return null;
+  const missing = [];
+  // A reference link gets its URL from a definition node.
+  const check = ({ url }) => {
+    if (missingSource(url, sources)) missing.push(url);
+  };
+  return {
+    name: 'citations',
+    link: check,
+    definition: check,
+    // After the visit, so that the error names each link of the chapter that cites no source.
+    after() {
+      if (missing.length > 0) {
+        throw new Error(`The chapter ${fileURLToPath(fileURL)} has links to pages that are not in its sources field: ${missing.join(', ')}. Without its anchor, each external link must be equal to an entry in sources. Change each link to cite a source, or add the page to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
+      }
+    },
+  };
+}
+
 export default defineConfig({
+  // Astro 7 renders .md and .mdx files with the Sätteri processor. markdown.remarkPlugins needs the unified processor of @astrojs/markdown-remark.
+  // Keep the version of @astrojs/markdown-satteri in package.json equal to the version that astro depends on.
+  markdown: { processor: satteri({ mdastPlugins: [citations] }) },
   // Fail the build if two docs files have the same id, for example main-thread.md and main-thread.mdx in one section directory. The default only warns, and one file replaces the other.
   prerenderConflictBehavior: 'error',
   // Each variant is the latin woff2 file of a Fontsource package. Astro reads the file from node_modules and copies it into the build.
