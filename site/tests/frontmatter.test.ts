@@ -107,11 +107,12 @@ describe('chapter frontmatter', () => {
   });
 
   test.each([
-    // A short ref of a tag, a short ref of a branch, a full ref of a branch, a short SHA and no ref.
+    // A short ref of a tag, a short ref of a branch, a full ref of a branch, a short SHA, a ref that only starts with a full SHA, and no ref.
     'https://android.googlesource.com/platform/frameworks/base/+/android-17.0.0_r1/core/java/android/os/Looper.java',
     'https://android.googlesource.com/platform/frameworks/base/+/main/core/java/android/os/Looper.java',
     'https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/os/Looper.java',
     'https://android.googlesource.com/platform/frameworks/base/+/0123456789ab/core/java/android/os/Looper.java',
+    'https://android.googlesource.com/platform/frameworks/base/+/0123456789abcdef0123456789abcdef01234567-fix/core/java/android/os/Looper.java',
     'https://android.googlesource.com/platform/frameworks/base/',
   ])('rejects the Gitiles source %s, because it is not pinned to a tag or a full SHA, and names the source', (source) => {
     expect(messages([source])).toEqual([expect.stringContaining(`${source}: Pin the Gitiles link to a tag or to a commit.`)]);
