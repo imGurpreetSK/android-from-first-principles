@@ -102,6 +102,8 @@ describe('chapter frontmatter', () => {
   test.each([
     'https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java',
     'https://android.googlesource.com/platform/frameworks/support/+/0123456789abcdef0123456789abcdef01234567/lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/ViewModel.kt',
+    // Kernel code from the Android Common Kernel at a release tag.
+    'https://android.googlesource.com/kernel/common/+/refs/tags/android16-6.12-2025-06_r1/kernel/sched/core.c',
   ])('accepts the pinned Gitiles source %s', (source) => {
     expect(messages([source])).toEqual([]);
   });
@@ -126,6 +128,8 @@ describe('chapter frontmatter', () => {
     'https://r8.googlesource.com/r8/+/refs/tags/8.5.35/src/resourceshrinker/java/com/android/build/shrinker/ResourceShrinkerImpl.kt',
     // A doc page of the AGP API is not code.
     'https://developer.android.com/reference/tools/gradle-api/8.7/com/android/build/api/dsl/ApplicationExtension',
+    // A kernel doc page is not on a code host.
+    'https://docs.kernel.org/scheduler/sched-design-CFS.html',
     // GitHub code outside the AOSP and AndroidX mirrors, and not R8 or AGP code. AndroidX Media (androidx/media) is not in platform/frameworks/support, so its home is GitHub. The GitHub tag check in CI checks its ref.
     'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/Builders.common.kt',
     'https://github.com/androidx/media/blob/1.5.0/README.md',
@@ -150,6 +154,14 @@ describe('chapter frontmatter', () => {
     ['https://github.com/example/agp/blob/0123456789abcdef0123456789abcdef01234567/build-system/gradle-core/src/main/java/com/android/builder/core/AbstractBuildType.kt', 'Cite AGP code in platform/tools/base'],
     // The AGP repo before platform/tools/base.
     ['https://android.googlesource.com/platform/tools/build/+/0123456789abcdef0123456789abcdef01234567/gradle/src/main/groovy/com/android/build/gradle/AppPlugin.groovy', 'Cite AGP code in platform/tools/base'],
+    // Code hosts other than Gitiles hosts and github.com. The rules reject a link on them, also at a tag.
+    ['https://elixir.bootlin.com/linux/latest/source/kernel/sched/core.c', 'Cite the file on its Gitiles host or on github.com'],
+    ['https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c', 'Cite the file on its Gitiles host or on github.com'],
+    ['https://gitlab.com/example/project/-/blob/v1.0.0/src/Main.kt', 'Cite the file on its Gitiles host or on github.com'],
+    ['https://bitbucket.org/example/project/src/v1.0.0/src/Main.kt', 'Cite the file on its Gitiles host or on github.com'],
+    ['https://sourcegraph.com/github.com/torvalds/linux/-/blob/kernel/sched/core.c', 'Cite the file on its Gitiles host or on github.com'],
+    ['https://cs.opensource.google/go/go/+/refs/tags/go1.23.0:src/runtime/proc.go', 'Cite the file on its Gitiles host or on github.com'],
+    ['https://searchfox.org/mozilla-central/source/xpcom/base/nsCOMPtr.h', 'Cite the file on its Gitiles host or on github.com'],
   ])('rejects the source %s, because it is not on the host of its project, and names the source', (source, fix) => {
     expect(messages([source])).toEqual([expect.stringContaining(`${source}: ${fix}`)]);
   });

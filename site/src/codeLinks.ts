@@ -4,9 +4,14 @@
 // The link is pinned only if the ref is refs/tags/<tag> or a full 40-character commit SHA. A short ref, for example +/main/, can resolve to a branch.
 const gitilesPin = /^[^+]*\/\+\/(refs\/tags\/[^/]+|[0-9a-f]{40})(\/|$)/;
 
+// docs/DESIGN.md "Sourcing rules": a chapter cites code only on Gitiles hosts and on github.com.
+// These hosts show code, and a link on them can follow a moving ref, for example elixir.bootlin.com/linux/latest/ or git.kernel.org/.../tree/<path>.
+// The rules reject each link on these hosts. A doc page on another host passes, for example on docs.kernel.org.
+const otherCodeHosts = new Set(['elixir.bootlin.com', 'git.kernel.org', 'gitlab.com', 'bitbucket.org', 'sourcegraph.com', 'cs.opensource.google', 'searchfox.org']);
+
 // Returns what to do if the source breaks a code link rule that needs no network. Returns undefined if the source obeys these rules.
 // The rules reject these URL forms. The first rule that the source breaks gives the return value.
-// 1. Each link on cs.android.com.
+// 1. Each link on cs.android.com or on a host in otherCodeHosts.
 // 2. Each link on raw.githubusercontent.com or on www.github.com. The other rules and the GitHub tag check read only links on github.com.
 // 3. Each link to a Gerrit change: on a Gerrit host, *-review.googlesource.com, or on r.android.com, which redirects to android-review.googlesource.com. A Gerrit change has no Gitiles ref, so the Gitiles rule gives the wrong fix.
 // 4. A link to a GitHub copy of AOSP or AndroidX: github.com/aosp-mirror/<repo>, a repo whose name starts with platform_ or android_ (for example android/platform_frameworks_base, which GitHub redirects to aosp-mirror, or the fork LineageOS/android_frameworks_base), or github.com/androidx/androidx.
@@ -21,6 +26,9 @@ export function codeLinkError(source: string) {
   const code = gitiles || host === 'github.com';
   if (host === 'cs.android.com') {
     return 'Do not cite cs.android.com. Cite the file on its Gitiles host, for example android.googlesource.com, at a tag or a full SHA.';
+  }
+  if (otherCodeHosts.has(host)) {
+    return 'Cite the file on its Gitiles host or on github.com, at a tag or a full SHA. Cite kernel code on android.googlesource.com, for example in kernel/common.';
   }
   if (host === 'raw.githubusercontent.com' || host === 'www.github.com') {
     return 'Cite the file on github.com: github.com/<owner>/<repo>/blob/<tag or full SHA>/<path>.';
