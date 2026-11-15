@@ -117,6 +117,31 @@ describe('chapter frontmatter', () => {
     expect(messages([source])).toEqual([expect.stringContaining(`${source}: Pin the Gitiles link to a tag or to a commit.`)]);
   });
 
+  test.each([
+    'https://r8.googlesource.com/r8/+/refs/tags/8.5.35/src/main/java/com/android/tools/r8/R8.java',
+    'https://android.googlesource.com/platform/tools/base/+/refs/tags/studio-2025.1.1/build-system/gradle-core/src/main/java/com/android/build/gradle/BaseExtension.kt',
+    // A doc page of the AGP API is not code.
+    'https://developer.android.com/reference/tools/gradle-api/8.7/com/android/build/api/dsl/ApplicationExtension',
+    // GitHub code that is not AOSP, AndroidX, R8 or AGP. The GitHub tag check in CI checks its ref.
+    'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/Builders.common.kt',
+    'https://github.com/androidx/media/blob/1.5.0/README.md',
+  ])('accepts the source %s on the host of its project', (source) => {
+    expect(messages([source])).toEqual([]);
+  });
+
+  test.each([
+    ['https://cs.android.com/android/platform/superproject/+/android-17.0.0_r1:frameworks/base/core/java/android/os/Looper.java', 'Do not cite cs.android.com.'],
+    ['https://github.com/aosp-mirror/platform_frameworks_base/blob/0123456789abcdef0123456789abcdef01234567/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],
+    ['https://github.com/androidx/androidx/blob/0123456789abcdef0123456789abcdef01234567/lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/ViewModel.kt', 'Cite AOSP and AndroidX code on android.googlesource.com'],
+    ['https://github.com/example/r8/blob/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/tools/r8/R8.java', 'Cite R8 code on r8.googlesource.com.'],
+    ['https://android.googlesource.com/platform/external/r8/+/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/tools/r8/R8.java', 'Cite R8 code on r8.googlesource.com.'],
+    ['https://github.com/example/agp/blob/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/build/gradle/BaseExtension.kt', 'Cite AGP code in platform/tools/base'],
+    // The AGP repo before platform/tools/base.
+    ['https://android.googlesource.com/platform/tools/build/+/0123456789abcdef0123456789abcdef01234567/gradle/src/main/groovy/com/android/build/gradle/AppPlugin.groovy', 'Cite AGP code in platform/tools/base'],
+  ])('rejects the source %s, because it is not on the host of its project, and names the source', (source, fix) => {
+    expect(messages([source])).toEqual([expect.stringContaining(`${source}: ${fix}`)]);
+  });
+
   test.each(['', ' '])('rejects the edited_by value "%s"', (edited_by) => {
     expect(valid({ ...chapter, edited_by })).toBe(false);
   });
