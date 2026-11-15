@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A writer ran `shasum -c` from a directory that did not hold the listed files, so the check verified no file. `shasum -c` finds each relative path in the list from the current directory. Rule: Run `shasum -c` from the directory that holds the files. Make sure that the output says "OK" for each file.
+
 2026-11-14: Two writers made a fixture use the site config, and the fixture build failed. Starlight resolves each `customCss` path that starts with `.` against the Astro root. The root of a fixture does not have the file. Rule: In an Astro config that a fixture uses, give each local `customCss` file as an absolute path. `site/astro.config.mjs` does this with `local()`.
 
 2026-11-14: Four writers left built files in the `dist/` directory of a fixture, for example `site/tests/fixtures/go-deeper/dist/`. Then `astro check` checked the built JS and gave warnings. Rule: Build a fixture into a new temporary directory outside `site/`. Give the directory to `astro build` with `--outDir`. Delete the directory after the test.
