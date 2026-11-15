@@ -18,10 +18,11 @@ function check(sources: string[]) {
   return { result, repos };
 }
 
-test('accepts a GitHub link at a tag, also an annotated tag', () => {
+test('accepts a GitHub link at a tag, also an annotated tag and the form refs/tags/<tag>', () => {
   const sources = [
     'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/Builders.common.kt',
     'https://github.com/square/okhttp/tree/parent-4.12.0/okhttp',
+    'https://github.com/Kotlin/kotlinx.coroutines/blob/refs/tags/1.10.2/README.md',
   ];
   expect(check(sources).result).toEqual([]);
 });
