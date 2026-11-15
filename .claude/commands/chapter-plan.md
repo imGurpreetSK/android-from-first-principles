@@ -116,10 +116,15 @@ Start each subagent brief with this text:
       - `rebuild` and `device`, each with its reason.
       - This line: "The maintainer approves this plan with a "plan approved" comment (CONTRIBUTING.md, "Maintainer"). Then `/chapter-draft <slug>` can start."
     - Run `gh pr create --repo imGurpreetSK/android-from-first-principles --base main --head <owner>:chapter/<slug> --title "Plan the <slug> chapter" --body-file <file>`. Do not pass `--no-maintainer-edit`. Without it, the maintainer can push to the PR branch.
-13. Stop. Do not start the draft. Give a short report:
+13. Add the mistakes to the log. If the list is empty, skip this step. Run `git switch --detach <upstream>/main`. Then run `git switch -c learnings/plan-<slug>`. Start a new subagent and give it your list of mistakes. Brief:
+
+    > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`. Do not push.
+
+    Then run `git switch chapter/<slug>`.
+14. Stop. Do not start the draft. Give a short report:
     - The PR URL, the branch, and the commit hash and subject.
     - The plan: each source with its claim, `rebuild` and `device` with their reasons, the `checked` stamp and `edited_by`.
     - Each source that the validator did not confirm, with the reason.
     - The result of each check.
-    - The list of mistakes. The branch has only the plan commit, so the person adds them to docs/learnings.md in a different PR (AGENTS.md rule 7).
+    - The list of mistakes, and the branch `learnings/plan-<slug>` that holds them. Do not push it.
     - The next step: after a "plan approved" comment from the maintainer, run `/chapter-draft <slug>`.
