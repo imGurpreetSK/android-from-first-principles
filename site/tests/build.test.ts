@@ -18,7 +18,7 @@ const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
 const citation = fileURLToPath(new URL('./fixtures/citation', import.meta.url));
 const citationMismatch = fileURLToPath(new URL('./fixtures/citation-mismatch', import.meta.url));
 const citationHtml = fileURLToPath(new URL('./fixtures/citation-html', import.meta.url));
-// Vitest sets process.env.MODE to test, and a child process inherits it. The default mode of astro build is production.
+// Run the citation fixture builds in production mode, as the CI build does. Vitest sets process.env.MODE to test, and a child process inherits it.
 const production = { ...process.env, MODE: 'production' };
 
 test('astro build fails on a chapter with invalid frontmatter', () => {
