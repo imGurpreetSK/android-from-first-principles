@@ -1,11 +1,10 @@
-import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
+import { build } from './astro';
 
-const astro = fileURLToPath(new URL('../node_modules/.bin/astro', import.meta.url));
 // Each fixture is a separate Astro root, so the built site does not get a page for a fixture.
 const fixture = fileURLToPath(new URL('./fixtures/invalid-chapter', import.meta.url));
 const goDeeper = fileURLToPath(new URL('./fixtures/go-deeper', import.meta.url));
@@ -18,13 +17,10 @@ const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
 const citation = fileURLToPath(new URL('./fixtures/citation', import.meta.url));
 const citationMismatch = fileURLToPath(new URL('./fixtures/citation-mismatch', import.meta.url));
 const citationHtml = fileURLToPath(new URL('./fixtures/citation-html', import.meta.url));
-// Run the citation fixture builds in production mode, as the CI build does. Vitest sets process.env.MODE to test, and a child process inherits it.
-const production = { ...process.env, MODE: 'production' };
 
 test('astro build fails on a chapter with invalid frontmatter', () => {
   // --force clears the content cache, so the build checks the fixture with the current schema.
-  // spawnSync blocks the thread, so the test timeout cannot stop a stuck build. The spawnSync timeout stops it.
-  const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', fixture, '--force'], { encoding: 'utf8', timeout: 60_000 });
+  const { status, stdout, stderr } = build('--root', fixture, '--force');
   expect(status).not.toBe(0);
   expect(stdout + stderr).toMatch(/InvalidContentEntryDataError[\s\S]*drafted/);
 }, 60_000);
@@ -33,7 +29,7 @@ test('a Go deeper box is a closed <details> element that starts with its <summar
   // The output directory is outside site/, so astro check does not check the built JavaScript.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-go-deeper-'));
   try {
-    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', goDeeper, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    const { status, stdout, stderr } = build('--root', goDeeper, '--outDir', outDir, '--force');
     expect(status, stdout + stderr).toBe(0);
     const html = readFileSync(join(outDir, 'go-deeper/index.html'), 'utf8');
     // The box is in the static HTML, so it works without JavaScript. Without the open attribute, <details> is closed: https://html.spec.whatwg.org/multipage/interactive-elements.html#attr-details-open
@@ -51,7 +47,7 @@ test('astro build fails on a Go deeper box without a title', () => {
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-go-deeper-no-title-'));
   try {
-    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', goDeeperNoTitle, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    const { status, stdout, stderr } = build('--root', goDeeperNoTitle, '--outDir', outDir, '--force');
     expect(status).not.toBe(0);
     expect(stdout + stderr).toContain('<GoDeeper> needs a title.');
   } finally {
@@ -63,7 +59,7 @@ test('astro build shows the region of a Snippet in a code block, without the mar
   // An output directory outside site/, so astro check does not check the built JS files.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-snippet-'));
   try {
-    const { status, stderr } = spawnSync(astro, ['build', '--root', snippetFixture, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    const { status, stderr } = build('--root', snippetFixture, '--outDir', outDir, '--force');
     expect(status, stderr).toBe(0);
     const html = readFileSync(join(outDir, 'snippet/index.html'), 'utf8');
     const pre = html.match(/<pre data-language="kt">([\s\S]*?)<\/pre>/)?.[1] ?? '';
@@ -76,7 +72,7 @@ test('astro build shows the region of a Snippet in a code block, without the mar
 }, 60_000);
 
 test('astro build fails on two chapters with the same chapter slug in different sections', () => {
-  const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', duplicateSlug, '--force'], { encoding: 'utf8', timeout: 60_000 });
+  const { status, stdout, stderr } = build('--root', duplicateSlug, '--force');
   expect(status).not.toBe(0);
   expect(stdout + stderr).toContain('same chapter slug "main-thread"');
 }, 60_000);
@@ -85,7 +81,7 @@ test('astro build fails on two files with the same chapter slug in one section',
   // If the build does not fail, it writes into an output directory outside site/, so astro check does not check the built JS files.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-duplicate-id-'));
   try {
-    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', duplicateId, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    const { status, stdout, stderr } = build('--root', duplicateId, '--outDir', outDir, '--force');
     expect(status).not.toBe(0);
     expect(stdout + stderr).toContain('DuplicateContentEntrySlugError');
   } finally {
@@ -97,7 +93,7 @@ test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the 
   // An output directory outside site/, so astro check does not check the built JS files.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-sidebar-'));
   try {
-    const { status, stderr } = spawnSync(astro, ['build', '--root', sidebar, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    const { status, stderr } = build('--root', sidebar, '--outDir', outDir, '--force');
     expect(status, stderr).toBe(0);
     expect(existsSync(join(outDir, 'concurrency/flow/index.html'))).toBe(true);
     const html = readFileSync(join(outDir, 'launch-path/main-thread/index.html'), 'utf8');
@@ -118,7 +114,7 @@ test('astro build passes on a chapter whose links cite its sources or are exempt
   // An output directory outside site/, so astro check does not check the built JS files.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-'));
   try {
-    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citation, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
+    const { status, stdout, stderr } = build('--root', citation, '--outDir', outDir, '--force');
     expect(status, stdout + stderr).toBe(0);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
@@ -129,7 +125,7 @@ test('astro build fails on a chapter with links that cite no entry in its source
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-mismatch-'));
   try {
-    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citationMismatch, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
+    const { status, stdout, stderr } = build('--root', citationMismatch, '--outDir', outDir, '--force');
     expect(status).not.toBe(0);
     // The inline link, the JSX <a> link, the JSX <a> link with an href in braces, the LinkCard and the two reference links. The link that cites a source is not in the list.
     expect(stdout + stderr).toContain(
@@ -144,7 +140,7 @@ test('astro build fails on a .md chapter with an HTML link that cites no entry i
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-html-'));
   try {
-    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citationHtml, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
+    const { status, stdout, stderr } = build('--root', citationHtml, '--outDir', outDir, '--force');
     expect(status).not.toBe(0);
     expect(stdout + stderr).toContain(
       `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has links that cite no entry in its sources field: https://developer.android.com/guide.`,

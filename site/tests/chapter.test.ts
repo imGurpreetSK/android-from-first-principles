@@ -1,12 +1,11 @@
-import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { afterAll, beforeAll, expect, test } from 'vitest';
+import { build } from './astro';
 
-const astro = fileURLToPath(new URL('../node_modules/.bin/astro', import.meta.url));
 // A separate Astro root, so the built site does not get a page for the fixture.
 const fixture = fileURLToPath(new URL('./fixtures/chapter', import.meta.url));
 // An output directory outside the site, so astro check does not check the built files.
@@ -18,9 +17,7 @@ let notChapter = '';
 
 beforeAll(() => {
   // --force clears the content cache, so the build uses the current fixture.
-  // spawnSync blocks the thread, so the hook timeout cannot stop a stuck build. The spawnSync timeout stops it.
-  // Vitest sets MODE to test, and Astro reads MODE from the environment. MODE production makes the build skip draft pages, as the site build does.
-  const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', fixture, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: { ...process.env, MODE: 'production' } });
+  const { status, stdout, stderr } = build('--root', fixture, '--outDir', outDir, '--force');
   expect(status, stdout + stderr).toBe(0);
   chapter = read('launch-path/chapter/index.html');
   notChapter = read('404.html');
@@ -100,6 +97,7 @@ test('a page without chapter fields shows no drafted line', () => {
 
 test('each page shows the license line and the credit line', () => {
   const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' }).filter((name) => name.endsWith('.html'));
+  // The build is a production build, so the draft chapter of the fixture has no page.
   expect(pages.sort()).toEqual(['404.html', 'index.html', 'launch-path/chapter/index.html', 'launch-path/human/index.html']);
   for (const page of pages) {
     const html = read(page);

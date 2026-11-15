@@ -1,11 +1,10 @@
-import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, expect, test } from 'vitest';
+import { build } from './astro';
 
-const astro = fileURLToPath(new URL('../node_modules/.bin/astro', import.meta.url));
 const root = fileURLToPath(new URL('..', import.meta.url));
 // A separate output directory, so the test does not change dist/.
 const outDir = mkdtempSync(join(tmpdir(), 'afp-site-'));
@@ -13,8 +12,7 @@ const outDir = mkdtempSync(join(tmpdir(), 'afp-site-'));
 let files: { name: string; text: string }[] = [];
 
 beforeAll(() => {
-  // spawnSync blocks the thread, so the hook timeout cannot stop a stuck build. The spawnSync timeout stops it.
-  const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', root, '--outDir', outDir], { encoding: 'utf8', timeout: 60_000 });
+  const { status, stdout, stderr } = build('--root', root, '--outDir', outDir);
   expect(status, stdout + stderr).toBe(0);
   files = readdirSync(outDir, { recursive: true, encoding: 'utf8' })
     .filter((name) => /\.(html|css)$/.test(name))
