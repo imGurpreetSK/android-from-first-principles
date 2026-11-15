@@ -17,7 +17,13 @@ export function checkChapters(entries: { id: string; data: Record<string, unknow
   const idBySlug = new Map<string, string>();
   for (const { id, data, filePath } of entries) {
     const section = sections.find((s) => s.label === data.section);
-    if (!section) continue;
+    if (!section) {
+      // The sidebar shows and numbers each page in the directory of a section. Thus each of these pages must be a chapter.
+      if (sections.some((s) => filePath?.startsWith(`src/content/docs/${s.slug}/`))) {
+        throw new Error(`The page ${filePath} is in the directory of a section, but it is not a chapter. Give it all the chapter fields, or move the file out of the directory.`);
+      }
+      continue;
+    }
     const [first, slug, ...rest] = id.split('/');
     // A slug field changes the id. Thus also check that the file is in the directory of its section.
     const directory = filePath?.split('/').at(-2);

@@ -29,6 +29,10 @@ describe('checkChapters', () => {
     expect(() => checkChapters([entry(id, 'The Launch Path', filePath)])).toThrow('Put the file in src/content/docs/launch-path/');
   });
 
+  test('rejects a page without chapter fields in the directory of a section', () => {
+    expect(() => checkChapters([entry('launch-path/about')])).toThrow('The page src/content/docs/launch-path/about.md is in the directory of a section');
+  });
+
   test('rejects two chapters with the same chapter slug in different sections', () => {
     expect(() =>
       checkChapters([entry('launch-path/main-thread', 'The Launch Path'), entry('concurrency/main-thread', 'Concurrency')]),
