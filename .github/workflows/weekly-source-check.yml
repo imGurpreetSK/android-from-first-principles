@@ -8,6 +8,11 @@ on:
     - cron: "17 6 * * 1"
   workflow_dispatch:
 
+# One run at a time. A second run waits, so it finds the issue that the first run opened.
+concurrency:
+  group: weekly-source-check
+  cancel-in-progress: false
+
 permissions:
   contents: read
   issues: write

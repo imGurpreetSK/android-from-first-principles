@@ -63,7 +63,7 @@ export interface Issues {
 
 // Reports the result of the weekly source check in the first open issue with the title issueTitle.
 // If a source does not load, it updates the body of that issue, or opens the issue if no open issue has the title.
-// If all sources load, it closes the issue. Thus an open issue always shows a source that does not load, and a later dead source opens a new issue.
+// If all sources load, it closes the issue. Thus an open issue shows only the sources that did not load at the last run. If a source does not load later, the run opens a new issue.
 export function reportDeadSources(dead: ReadonlyMap<string, string>, chapters: readonly { file: string; sources: readonly string[] }[], issues: Issues) {
   const issue = issues.open().find((open) => open.title === issueTitle);
   if (dead.size === 0) {
