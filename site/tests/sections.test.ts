@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest';
 import { checkChapters } from '../src/sections';
 
 // A docs entry as the docs loader stores it. If section is set, the entry is a chapter.
-const entry = (id: string, section?: string, filePath = `src/content/docs/${id}.md`) => ({
+const entry = (id: string, section?: string, filePath = `src/content/docs/${id}.md`, order?: number) => ({
   id,
-  data: section ? { title: id, section } : { title: id },
+  data: section ? { title: id, section, sidebar: { order } } : { title: id },
   filePath,
 });
 
@@ -37,5 +37,17 @@ describe('checkChapters', () => {
     expect(() =>
       checkChapters([entry('launch-path/main-thread', 'The Launch Path'), entry('concurrency/main-thread', 'Concurrency')]),
     ).toThrow('same chapter slug "main-thread"');
+  });
+
+  test('rejects two chapters with the same sidebar.order in one section', () => {
+    expect(() =>
+      checkChapters([entry('launch-path/main-thread', 'The Launch Path', undefined, 5), entry('launch-path/looper', 'The Launch Path', undefined, 5)]),
+    ).toThrow('same sidebar.order 5');
+  });
+
+  test('accepts chapters with the same sidebar.order in different sections', () => {
+    expect(() =>
+      checkChapters([entry('launch-path/main-thread', 'The Launch Path', undefined, 1), entry('state-survival/config-changes', 'State & Survival', undefined, 1)]),
+    ).not.toThrow();
   });
 });

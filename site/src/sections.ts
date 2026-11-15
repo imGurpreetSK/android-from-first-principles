@@ -15,6 +15,7 @@ export const sections = [
 // The chapter slug must be unique across the series, because the progress key and the samples/ module use it.
 export function checkChapters(entries: { id: string; data: Record<string, unknown>; filePath?: string }[]) {
   const idBySlug = new Map<string, string>();
+  const idByOrder = new Map<string, string>();
   for (const { id, data, filePath } of entries) {
     const section = sections.find((s) => s.label === data.section);
     if (!section) {
@@ -35,5 +36,14 @@ export function checkChapters(entries: { id: string; data: Record<string, unknow
       throw new Error(`The chapters /${other}/ and /${id}/ have the same chapter slug "${slug}". Each chapter slug must be unique across the series.`);
     }
     idBySlug.set(slug, id);
+    // Starlight sorts the chapters with the same sidebar.order by id. Then the display numbers follow the alphabet.
+    const order = (data.sidebar as { order?: number } | undefined)?.order;
+    // The frontmatter schema reports a chapter without sidebar.order.
+    if (order === undefined) continue;
+    const before = idByOrder.get(`${section.slug}/${order}`);
+    if (before) {
+      throw new Error(`The chapters /${before}/ and /${id}/ have the same sidebar.order ${order} in the section "${section.label}". Set sidebar.order to the position of each chapter in its section.`);
+    }
+    idByOrder.set(`${section.slug}/${order}`, id);
   }
 }
