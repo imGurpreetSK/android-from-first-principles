@@ -23,4 +23,7 @@ A link to a chapter: [Zygote](/launch-path/zygote/). A relative link to a chapte
 
 A link to a GitHub page of this repo: [Challenge a claim](https://github.com/imGurpreetSK/android-from-first-principles/issues/new?template=challenge-a-claim.yml).
 
+An image reference is not a citation: ![D][d].
+
 [looper]: https://developer.android.com/reference/android/os/Looper#loop()
+[d]: https://x.example/d.png

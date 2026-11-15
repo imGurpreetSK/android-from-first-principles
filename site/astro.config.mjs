@@ -14,10 +14,12 @@ function citations({ data, fileURL }) {
   const sources = data.astro?.frontmatter?.sources;
   if (!sources) return null;
   const missing = [];
-  // A reference link gets its URL from a definition node.
   const check = ({ url }) => {
     if (missingSource(url, sources)) missing.push(url);
   };
+  // A reference link gets its URL from a definition node. An image reference also uses a definition node, so check only the definitions of reference links.
+  const definitions = [];
+  const references = new Set();
   // A JSX element, for example <a> or LinkCard, gives its URL in the href attribute. An href value in braces is an expression, so the check cannot read the URL.
   const jsx = ({ attributes }) => {
     for (const a of attributes) if (a.name === 'href' && typeof a.value === 'string') check({ url: a.value });
@@ -25,7 +27,12 @@ function citations({ data, fileURL }) {
   return {
     name: 'citations',
     link: check,
-    definition: check,
+    linkReference: ({ identifier }) => {
+      references.add(identifier);
+    },
+    definition: (node) => {
+      definitions.push(node);
+    },
     // In a .md file, an HTML tag is an html node, for example <a href="https://...">. The check reads each href attribute of the node.
     html: ({ value }) => {
       for (const [, url] of value.matchAll(/\shref\s*=\s*["']?([^"'\s>]+)/gi)) check({ url });
@@ -34,6 +41,8 @@ function citations({ data, fileURL }) {
     mdxJsxTextElement: jsx,
     // After the visit, so that the error names each link of the chapter that cites no source.
     after() {
+      // A definition can come before or after its reference link, so check the definitions after the visit.
+      for (const d of definitions) if (references.has(d.identifier)) check(d);
       if (missing.length > 0) {
         throw new Error(`The chapter ${fileURLToPath(fileURL)} has links to pages that are not in its sources field: ${missing.join(', ')}. Without its anchor and timestamp, each external link must be equal to an entry in sources. Change each link to cite a source, or add the page to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
       }
