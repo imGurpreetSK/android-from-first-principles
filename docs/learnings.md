@@ -11,6 +11,9 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-15: The parent agent launched a workflow with an args object whose lists were all empty. It typed the keys, but not the data of `source-changes.json`. The validators of the run would have checked no source. The parent agent stopped the run before an agent changed a file. Rule: Before you launch a workflow with args, build the args from the data file. Make sure that the count of items in each list is the count in the data file.
+
+
 2026-11-15: A build test asserted on the text of the Astro output. On the GitHub runner, Astro put ANSI color codes in the text, so the first CI run failed. All local runs passed. GitHub Actions sets `CI=true`. In the Bash tool, stdout is not a TTY, and `CI` has no value. piccolore 0.1.3, the color library of Astro 7.4.4, turns color on if `CI` or `FORCE_COLOR` has a value, or if stdout is a TTY and `TERM` is not `dumb`. If `NO_COLOR` has a value, piccolore turns color off. Rule: If a test asserts on the text of a command output, set `NO_COLOR=1` in the `env` option of the child process in the test code, as `site/tests/astro.ts` does. Before you commit, run `CI=true npm test` in `site/`, and make sure that it passes.
 
 2026-11-15: Two doc fixers gave `git commit` a message with quotes or backslashes on the command line. In a double-quoted argument, zsh runs a command in backticks, expands `$NAME`, and removes the backslash before `"` and `\`. Rule: If a commit message has a quote, a backslash, a backtick or `$`, write the message with the Write tool to a file in your task directory of the session scratch directory. Then run `git commit -F <file>`.
