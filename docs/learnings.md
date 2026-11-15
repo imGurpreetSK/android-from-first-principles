@@ -15,7 +15,7 @@ Entry format, one or two lines:
 
 2026-11-14: A staff reviewer put an HTML comment in the markup of an `.astro` file, and Astro wrote the comment into the built page. The Astro docs say that HTML comments go into the browser DOM, and that Astro removes JS comments. Rule: In an `.astro` file, write each comment in the frontmatter or as `{/* */}`.
 
-2026-11-14: A staff reviewer called a deferred tool (`caveman_retrieve`) with a wrong parameter name. The schema of the tool was not loaded. Rule: Before the first call to a deferred tool, load its schema with ToolSearch.
+2026-11-14: A staff reviewer called a deferred tool (`caveman_retrieve`) with a wrong parameter name. The reviewer did not load the schema of the tool first. Rule: Before the first call to a deferred tool, load its schema with ToolSearch.
 
 2026-11-14: A staff reviewer ran an inline `python3 -c` script, and the script had a syntax error. Rule: Write a Python script of more than one line to a file in the session scratch directory with the Write tool. Then run the file.
 
