@@ -75,6 +75,8 @@ test('a chapter ends with a hidden progress tracker: a "Mark as read" button and
   expect(tracker).toContain(' data-slug="chapter" data-slugs="chapter human" data-pagefind-ignore hidden>');
   expect(tracker).toMatch(/<button type="button" aria-pressed="false"[^>]*>Mark as read<\/button>/);
   expect(tracker.replace(/<[^>]*>/g, '')).toBe('Mark as read0 / 2 chapters read');
+  // The script is inline, so the HTML of a chapter has the key prefix.
+  expect(chapter).toContain('read:');
 });
 
 test.each(['404.html', 'index.html'])('the page %s has no chapter fields, so it has no progress tracker and no tracker script', (page) => {
