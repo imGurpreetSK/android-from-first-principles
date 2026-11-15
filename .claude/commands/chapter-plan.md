@@ -84,7 +84,7 @@ Start each subagent brief with this text:
      - `revision`: if the image is in `$ANDROID_HOME/system-images/`, read `Pkg.Revision` in its `source.properties`. If not, run `$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list`. The tool prints a deprecation warning first, and it writes each path with `/` in place of `;`. Find the line `system-images/<platform>/google_apis/<ABI>` and read its version, for example `8.0.0`. The revision is the first number of the version, for example 8. If the output has no line for the image, say "No system image `<image>`." and stop.
 9. Run `git switch -c chapter/<slug>`. Start a new subagent, the writer. Give it the values of steps 3 to 8, the frontmatter template below, and this brief:
 
-   > Write the chapter file with only this frontmatter. Put the title in double quotes, because YAML reads `: ` in a title as a key. Leave out each optional line of `checked` that step 8 leaves out. Do not commit. Return the path of the file.
+   > Write the chapter file with only this frontmatter. Put the title in double quotes, because YAML reads `: ` in a title as a key and ` #` as the start of a comment. Write each `"` in the title as `\"`. Leave out each optional line of `checked` that step 8 leaves out. Do not commit. Return the path of the file.
 
    ```yaml
    ---

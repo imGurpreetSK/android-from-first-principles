@@ -43,7 +43,7 @@ edited_by: <name>
 Sources             required   auto-listed from frontmatter
 ```
 
-- If a title has `: `, put the title in double quotes, because YAML does not allow `: ` in an unquoted value.
+- Put the title in double quotes. Without quotes, YAML does not allow `: ` in the title, and it reads ` #` as the start of a comment. In the title, write each `"` as `\"`.
 - "Build it naive" and "Where it breaks" are a pair. Each chapter with a rebuild has a breaking test.
 - A chapter without a rebuild has no `samples/` module.
 - The chapter plan sets "Try it". If `rebuild` is true, "Try it" has prompts that change the rebuild. If `device` is true, it has device prompts. If both are false, the chapter has no "Try it".
