@@ -51,7 +51,7 @@ Start each subagent brief with this text:
    > Propose the chapter plan of this chapter. Obey docs/DESIGN.md, "Reader", "Chapter shape", "Sourcing rules" and "Code samples".
    > - Propose the sources that the chapter needs: AOSP code, official docs, talks and library code. One source is one code file at a pinned ref, one doc page or one talk. Give no line number, anchor or timestamp.
    > - Pin each code link as "Sourcing rules" says. For AOSP code, write `https://android.googlesource.com/<project>/+/refs/tags/<aosp>/<path>`. For AndroidX code, use android.googlesource.com at a full commit SHA of the release branch of the library, at the version that you give for the library. For R8 code, use r8.googlesource.com at its tag. For AGP code, use `android.googlesource.com/platform/tools/base` at the `studio-<version>` tag of the Android Studio release that pairs with the AGP version, or at a full SHA. For other code with GitHub release tags, use github.com at the tag.
-   > - For each release `<N>` from Android 10 (API 29) to the baseline, read the two behavior-changes pages of the release: `https://developer.android.com/about/versions/<N>/behavior-changes-all` (changes for all apps) and `https://developer.android.com/about/versions/<N>/behavior-changes-<N>` (changes only for apps that target Android <N> or higher). Find each change to the mechanism of the chapter in the two pages. For each change, propose a source for a "Since Android <version>…" note (docs/DESIGN.md, "Sourcing rules"). The source is the behavior-changes page of that release, or the AOSP code at the first release tag of that release. The tag is `android-<N>.0.0_r1`, where `<N>` is the release number of the note. For Android 12L, the tag is `android-12.1.0_r1`. Write the link as `https://android.googlesource.com/<project>/+/refs/tags/<tag>/<path>`. Read the file at that tag. Give the version of the note for each such source.
+   > - For each release `<N>` from Android 10 (API 29) to the baseline, read the two behavior-changes pages of the release: `https://developer.android.com/about/versions/<N>/behavior-changes-all` (changes for all apps) and `https://developer.android.com/about/versions/<N>/behavior-changes-<N>` (changes only for apps that target Android <N> or higher). Find each change to the mechanism of the chapter in the two pages. For each change, propose a source for a "Since Android <version>…" note (docs/DESIGN.md, "Sourcing rules"). The source is the behavior-changes page of that release, or the AOSP code at the first release tag of that release. The tag is `android-<N>.0.0_r1`, where `<N>` is the release number of the note. For Android 12L, the tag is `android-12.1.0_r1`. Write the link as `https://android.googlesource.com/<project>/+/refs/tags/<tag>/<path>`. Read the file at that tag.
    > - Before you add a source, read it at its pinned ref. A file can move between releases. If a file does not exist at the ref, find its path at the ref, or do not add it. To list a Gitiles directory, run `curl -sL '<directory URL>?format=JSON'`. Remove the first line, `)]}'`, before you parse the output.
    > - Propose `rebuild`. Set it to true if a rebuild of the mechanism, with a deterministic breaking test, obeys "Code samples".
    > - Propose `device`. Set it to true if device prompts on the launch app can show the mechanism.
@@ -60,13 +60,14 @@ Start each subagent brief with this text:
    > - Each source, with the claim of the chapter that it supports, and the line or heading that you read.
    > - `rebuild` and `device`, each with a one-sentence reason.
    > - For each source that is library code, the library name and its version.
+   > - For each source of a "Since Android <version>…" note, the version of the note.
    > - If the chapter depends on Play services, say so.
    >
    > Do not edit files.
 
-7. Start a new subagent, the validator. Give it the sources and the lines or headings of the planner. Brief:
+7. Start a new subagent, the validator. Give it each source of the planner, with its claim, the line or heading that the planner read, and the version of each "Since Android <version>…" note. Brief:
 
-   > For each source, read it at its pinned ref. Make sure that the source exists, that it has the line or heading that the planner gives, and that its link obeys docs/DESIGN.md, "Sourcing rules". Make sure that each source for a "Since Android <version>…" note is at a release tag of that version. Return each source as confirmed or not confirmed, with the reason. Do not edit files.
+   > For each source, read it at its pinned ref. Make sure that the source exists, that it has the line or heading that the planner gives, and that its link obeys docs/DESIGN.md, "Sourcing rules". Make sure that the line or heading supports the claim. Make sure that each source of a "Since Android <version>…" note is a behavior-changes page of that version, or code at the first release tag of that version: `android-<N>.0.0_r1`, or `android-12.1.0_r1` for Android 12L. Return each source as confirmed or not confirmed, with the reason. Do not edit files.
 
    Remove each source that the validator does not confirm. If no source is left, say "No source is confirmed." and stop.
 8. Set the other fields of `checked`:
@@ -112,7 +113,7 @@ Start each subagent brief with this text:
 12. Push the branch and open the PR.
     - Find the remote that you can push to: your fork, or `<upstream>` if you are the maintainer. `<owner>` is the owner in its URL. Run `git push -u <remote> chapter/<slug>`.
     - Write the PR body to a file in the session scratch directory. Put in the body:
-      - Each source, with the claim that it supports.
+      - Each source, with the claim that it supports. For each source of a "Since Android <version>…" note, also give the version of the note.
       - `rebuild` and `device`, each with its reason.
       - This line: "The maintainer approves this plan with a "plan approved" comment (CONTRIBUTING.md, "Maintainer"). Then `/chapter-draft <slug>` can start."
     - Run `gh pr create --repo imGurpreetSK/android-from-first-principles --base main --head <owner>:chapter/<slug> --title "Plan the <slug> chapter" --body-file <file>`. Do not pass `--no-maintainer-edit`. Without it, the maintainer can push to the PR branch.
