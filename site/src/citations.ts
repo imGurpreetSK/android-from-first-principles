@@ -8,10 +8,15 @@ const repo = /^https:\/\/github\.com\/imGurpreetSK\/android-from-first-principle
 const youtube = /^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//i;
 const timestamp = /([?&])t=[^&]*&?/;
 
+// Returns the link without its anchor and timestamp.
+export function source(link: string) {
+  const s = link.split('#')[0];
+  return youtube.test(s) ? s.replace(timestamp, '$1').replace(/[?&]$/, '') : s;
+}
+
 // Returns the link without its anchor and timestamp, if the link must cite a source and sources does not have it.
 export function missingSource(link: string, sources: readonly string[]) {
   if (!external.test(link) || repo.test(link)) return undefined;
-  let source = link.split('#')[0];
-  if (youtube.test(source)) source = source.replace(timestamp, '$1').replace(/[?&]$/, '');
-  return sources.includes(source) ? undefined : source;
+  const s = source(link);
+  return sources.includes(s) ? undefined : s;
 }

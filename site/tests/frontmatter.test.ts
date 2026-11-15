@@ -87,9 +87,13 @@ describe('chapter frontmatter', () => {
     },
   );
 
-  // CI removes the anchor from each citation, then needs an exact match with a source.
+  // CI removes the anchor and the timestamp from each citation, then needs an exact match with a source (src/citations.ts).
   test('rejects a source with an anchor', () => {
     expect(valid({ ...chapter, sources: [`${chapter.sources[0]}#42`] })).toBe(false);
+  });
+
+  test('rejects a talk source with a timestamp', () => {
+    expect(valid({ ...chapter, sources: ['https://www.youtube.com/watch?v=abc123&t=95s'] })).toBe(false);
   });
 
   test.each(['', ' '])('rejects the edited_by value "%s"', (edited_by) => {

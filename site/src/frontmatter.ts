@@ -1,4 +1,5 @@
 import { z } from 'astro/zod';
+import { source } from './citations';
 import { sections } from './sections';
 
 // The checked stamp, for example { android: 17, aosp: 'android-17.0.0_r1' }.
@@ -19,8 +20,8 @@ const checked = z
 const chapter = {
   section: z.enum(sections.map((s) => s.label)),
   checked,
-  // CI removes the anchor from each citation, then needs an exact match with a source.
-  sources: z.array(z.httpUrl().refine((url) => !url.includes('#'), 'A source has no anchor. Put the anchor in the citation.')).min(1),
+  // CI removes the anchor and the timestamp from each citation, then needs an exact match with a source (src/citations.ts).
+  sources: z.array(z.httpUrl().refine((url) => source(url) === url, 'A source has no anchor or timestamp. Put them in the citation.')).min(1),
   rebuild: z.boolean(),
   device: z.boolean(),
   drafted: z.enum(['ai', 'human']),
