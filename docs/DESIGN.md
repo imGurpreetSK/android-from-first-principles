@@ -206,7 +206,7 @@ Three repo-level Claude commands run the steps, so all chapters go through the s
 - CI (GitHub Actions) builds the site, builds `samples/`, runs all tests and checks source links.
 - The link check fetches each `sources` entry one time. It does not fetch citations, because a citation is a source plus an anchor:
   - On PRs: only the sources of changed chapters, with a retry on rate limits. A failure blocks the PR.
-  - A weekly scheduled run: the sources of all chapters. A failure does not block PRs. The run keeps the sources that do not load in one open issue, "Sources that do not load". If a source does not load, the run opens the issue, or updates the open issue. If the open issue did not list some sources that do not load, the run also adds one comment that lists these sources. If all sources load, the run closes the issue. In a public repository, GitHub turns off a scheduled workflow after 60 days with no repository activity. To turn on the workflow again, run `gh workflow enable weekly-source-check.yml`.
+  - A weekly scheduled run: the sources of all chapters. The run is not a PR check, so it does not block PRs. The run keeps the sources that do not load in one open issue, "Sources that do not load". If a source does not load, the run opens the issue, or updates the open issue. If the open issue did not list some sources that do not load, the run also adds one comment that lists these sources. If all sources load, the run closes the issue. In a public repository, GitHub turns off a scheduled workflow after 60 days with no repository activity. To turn on the workflow again, run `gh workflow enable weekly-source-check.yml`.
   - The link check does not check line numbers and anchors. The editor checks them at the Edit step.
 
 ## Contributions
