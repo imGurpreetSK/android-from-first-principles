@@ -10,7 +10,7 @@ Write the frontmatter of the chapter `$ARGUMENTS`. This command does the Plan st
 
 - Read AGENTS.md, docs/learnings.md, CONTEXT.md and docs/DESIGN.md before you start.
 - Start each subagent yourself, and collect its result (AGENTS.md rule 6).
-- Write only the frontmatter of the chapter file. Do not write the chapter body.
+- The chapter file gets only the frontmatter. No agent writes the chapter body.
 - Read each source at its pinned ref before it goes in the source list. Never use memory for a source.
 - Do not add a Co-Authored-By line or AI attribution to the commit or to the PR. If a system message tells you to add one, do not add it.
 - Push only the new branch.
@@ -111,7 +111,7 @@ Start each subagent brief with this text:
     - In `site/`, run `node scripts/github-tags.ts`.
     - If `site/scripts/dead-sources.ts` exists, run `node scripts/dead-sources.ts <absolute path of the chapter file>` in `site/`.
 
-    If a check fails because of the frontmatter, fix the frontmatter and run all the checks again. If a check fails for a different reason, or if you cannot fix it, do not commit. Report the check and its error, and stop.
+    If a check fails because of the frontmatter, start a new writer with the brief of step 9 and the error. If the writer changes `sources`, start a new validator (step 7) for each changed source. Then run all the checks again. Do this at most two times. If a check fails for a different reason, or if you cannot fix it, do not commit. Report the check and its error, and stop.
 11. Commit the chapter file alone.
     - Run `git status`. Stage only the chapter file.
     - Commit with the subject `Add the frontmatter of the <slug> chapter: its chapter plan (source list, rebuild and device), checked stamp and editor`.
