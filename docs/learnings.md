@@ -13,7 +13,7 @@ Entry format, one or two lines:
 
 2026-11-14: A fixer ran the tests with the filter `-t "cite|missingSource"`. The filter skipped a test whose name did not match. Rule: After a filtered test run, read the "Tests" line of the summary. Make sure that the count of passed tests is the count of tests that you expect, and read the count of skipped tests.
 
-2026-11-14: A staff reviewer copied an ignored file into the worktree for one check. The reviewer brief says "Do not edit files". Rule: If a reviewer needs an extra file for a check, run the check on a copy in the session scratch directory. Do not add files to the worktree.
+2026-11-14: A staff reviewer copied an ignored file into the worktree for one check. The reviewer brief says "Do not edit files". Rule: If a fact checker, staff reviewer or validator needs an extra file for a check, copy the files of the check to a new directory in the session scratch directory. Add the extra file there, and run the check there. To copy `node_modules`, obey the `node_modules` entry. Do not add files to the worktree.
 
 2026-11-14: A writer ran `git ls-remote --tags` with a broad pattern and got 42 lines. `git ls-remote` matches each pattern as a glob against the full ref name, or against the part after a `/`. Rule: Give `git ls-remote` the exact tag name, for example `git ls-remote --tags <url> android-16.0.0_r1`.
 
