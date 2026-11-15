@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A staff reviewer ran a build on JDK 26. Gradle took `:build-logic:test` from the build cache, so the run proved nothing. Rule: If a run must prove that a test passes on a given JDK, pass `--rerun-tasks`. Then check that the test task ran.
+
 2026-11-14: A staff reviewer searched a Gradle `--info` log, and the matches printed full classpath lines. The output was about 5,000 tokens. Rule: Before you print lines of a Gradle `--info` log, cut each line to a fixed width, for example with `cut -c1-200`.
 
 2026-11-14: A fixer printed the full `gradlew --help` to check one flag. The fixer also ran the samples build without `-q`. The two outputs were about 5,000 tokens. Rule: Run `samples/gradlew -q -p samples build`. With `-q`, Gradle logs only errors. A pass prints nothing, or only the paths of the lint reports. To check one flag, save the help output to a file, and read only the line that you need.
