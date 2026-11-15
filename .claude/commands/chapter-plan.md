@@ -40,6 +40,7 @@ Start each subagent brief with this text:
    - Run `git fetch <upstream> main`. Then run `git switch --detach <upstream>/main`.
 2. Check the slug. If a check fails, say the message and stop.
    - The slug names the topic of exactly one entry in docs/DESIGN.md, "Curriculum". For example, `main-thread` names "05 Main thread: Looper / Handler / MessageQueue", and `first-frame` names "06 Choreographer & the first frame". Message: "`<slug>` is not in the curriculum."
+   - If docs/DESIGN.md gives no slug for the entry, ask in the chat: "`<slug>` is permanent. The URL, the progress key and the samples module use it. Is it the slug of "<entry>"?" Wait for the answer. If the answer is not yes, say "Run `/chapter-plan` with the slug that you want." and stop.
    - No file `site/src/content/docs/*/<slug>.md` or `site/src/content/docs/*/<slug>.mdx` exists. Message: "`<slug>` already has a chapter file: <path>."
    - No local branch `chapter/<slug>` or `learnings/plan-<slug>` exists. Run `git branch --list chapter/<slug> learnings/plan-<slug>`. If the output names a branch, the check fails. Message: "`<branch>` already exists. Finish its PR, or delete it with `git branch -D <branch>`. Then run `/chapter-plan` again."
 3. Ask for the editor. The editor can be a different person from the person who runs this command. Thus you cannot know the editor. In the chat, ask: "Who will edit this chapter? I will write this name in `edited_by`." Propose the output of `git config user.name`. Wait for the answer. If the answer is empty, ask again.
