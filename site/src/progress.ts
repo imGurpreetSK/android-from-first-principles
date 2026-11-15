@@ -30,3 +30,14 @@ export function toggle(storage: () => Store, slugs: string[], slug: string): Pro
   }
   return progress(storage, slugs, slug);
 }
+
+// The elements of the tracker: the tracker, its button and its counter.
+type Ui = { tracker: Pick<HTMLElement, 'hidden'>; button: Pick<Element, 'setAttribute'>; count: Pick<Node, 'textContent'> };
+
+// Without storage, the tracker cannot keep the progress, so the page does not show it.
+export function show(p: Progress | undefined, { tracker, button, count }: Ui) {
+  tracker.hidden = !p;
+  if (!p) return;
+  button.setAttribute('aria-pressed', String(p.read));
+  count.textContent = String(p.count);
+}

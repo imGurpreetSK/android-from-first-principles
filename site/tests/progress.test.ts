@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { progress, toggle } from '../src/progress';
+import { progress, show, toggle } from '../src/progress';
 
 // A fake localStorage in memory.
 const fake = () => {
@@ -66,4 +66,24 @@ test('if a write to storage fails, toggle returns undefined and the chapter stay
   };
   expect(toggle(() => full, slugs, 'apk')).toBeUndefined();
   expect(progress(() => storage, slugs, 'apk')).toEqual({ read: false, count: 0 });
+});
+
+// The elements of the tracker as plain objects. As in the built page, the tracker is hidden at the start.
+const elements = () => {
+  const attributes = new Map<string, string>();
+  return { tracker: { hidden: true }, button: { setAttribute: (name: string, value: string) => void attributes.set(name, value) }, count: { textContent: '0' }, attributes };
+};
+
+test('without storage, show keeps the tracker hidden', () => {
+  const ui = elements();
+  show(undefined, ui);
+  expect(ui.tracker.hidden).toBe(true);
+});
+
+test('with storage, show shows the tracker, the state of the button and the count', () => {
+  const ui = elements();
+  show({ read: true, count: 1 }, ui);
+  expect(ui.tracker.hidden).toBe(false);
+  expect(ui.attributes.get('aria-pressed')).toBe('true');
+  expect(ui.count.textContent).toBe('1');
 });

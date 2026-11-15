@@ -16,7 +16,7 @@ const slugOf = (id: string) => id.split('/')[1];
 </p>
 
 <script>
-  import { progress, toggle, type Progress } from '../progress';
+  import { progress, show, toggle } from '../progress';
 
   const tracker = document.querySelector<HTMLElement>('.progress')!;
   const button = tracker.querySelector('button')!;
@@ -24,17 +24,10 @@ const slugOf = (id: string) => id.split('/')[1];
   const slugs = tracker.dataset.slugs!.split(' ');
   const slug = tracker.dataset.slug!;
   const storage = () => localStorage;
+  const ui = { tracker, button, count };
 
-  // Without storage, the tracker cannot keep the progress, so the page does not show it.
-  function show(p: Progress | undefined) {
-    tracker.hidden = !p;
-    if (!p) return;
-    button.setAttribute('aria-pressed', String(p.read));
-    count.textContent = String(p.count);
-  }
-
-  show(progress(storage, slugs, slug));
-  button.addEventListener('click', () => show(toggle(storage, slugs, slug)));
+  show(progress(storage, slugs, slug), ui);
+  button.addEventListener('click', () => show(toggle(storage, slugs, slug), ui));
 </script>
 
 <style>
