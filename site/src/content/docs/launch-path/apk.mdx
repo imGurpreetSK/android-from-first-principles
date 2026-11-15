@@ -78,7 +78,7 @@ The rebuild is an APK writer in plain Kotlin, in the module `samples/apk`. It do
 
 A ZIP file has three parts. The platform ZIP reader, libziparchive, has one struct for each part:
 
-1. For each entry: a local file header, the name of the entry, and then the data ([zip_archive_common.h, lines 129–163](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive_common.h#129)).
+1. For each entry: a local file header and then the data. The local file header has fixed fields, the name of the entry and an optional extra field ([zip_archive_common.h, lines 129–163](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive_common.h#129)).
 2. The Central Directory: one record for each entry. Each record holds the offset of the local file header of its entry ([zip_archive_common.h, lines 75–123](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive_common.h#75)).
 3. The End of Central Directory record. It holds the offset of the Central Directory ([zip_archive_common.h, lines 31–67](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive_common.h#31)).
 
