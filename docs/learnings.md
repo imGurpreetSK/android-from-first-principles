@@ -89,7 +89,7 @@ Entry format, one or two lines:
 
 2026-11-14: A subagent downloaded the STE Issue 9 PDF from Zenodo and did not keep it. The parent agent downloaded it again. Zenodo gave HTTP 403 ("unusual traffic"), so the parent agent could not check the quotes. A fixer saved downloaded HTML pages in the root of the scratch directory. An agent redirected output into a scratch directory that did not exist. Rule: Each time that you download files, save them in a new, empty directory in the session scratch directory. Before you write into a directory, create it. Report the path of each file. If a saved copy exists, do not download the file again.
 
-2026-11-14: In the Bash tool shell, `grep` is `ugrep`. A pattern with several bounded repeats (for example three `[^<]{0,80}`) failed with "exceeds complexity limits". One bounded repeat passes. Rule: For a complex pattern, use Python `re`.
+2026-11-14: In the Bash tool shell, `grep` is a shell function that runs `ugrep`. A pattern with several bounded repeats (for example three `[^<]{0,80}`) failed with "exceeds complexity limits". One bounded repeat passes. If a hook changes a Bash call to `caveman shrink -- <command>`, caveman runs the macOS BSD `grep`, not the shell function. A pattern with `.{0,700}` failed there with "maximum repetition exceeds 255". Rule: For a complex pattern or a bounded repeat over 255, use Python `re`.
 
 2026-11-14: AGENTS.md stated an STE rule that did not match the STE FAQ. A subagent guessed page paths on asd-ste100.org. Each path gave HTTP 404. WebFetch got HTTP 403 from the site. Rule: Before you write an STE rule, compare it with asd-ste100.org. Read that site with `curl -sL`. Get page links from the home page. The pages are files, for example `STE_faq.html` and `about_STE.html`.
 
