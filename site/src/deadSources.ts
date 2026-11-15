@@ -73,6 +73,7 @@ export function reportDeadSources(dead: ReadonlyMap<string, string>, chapters: r
     return;
   }
   const lines = chapters.flatMap(({ file, sources }) => sources.filter((source) => dead.has(source)).map((source) => `- \`${file}\`: ${source} (${dead.get(source)})`));
+  // shortcut: GitHub refuses an issue body of more than 65,536 characters, so the run fails if about 300 sources do not load. If the chapters have that many sources, cut the list.
   const body = [
     'The weekly source check found sources that do not load. Each line gives the chapter, the source and the reason.',
     lines.join('\n'),
