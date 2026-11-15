@@ -125,7 +125,7 @@ describe('chapter frontmatter', () => {
     'https://r8.googlesource.com/r8/+/refs/tags/8.5.35/src/resourceshrinker/java/com/android/build/shrinker/ResourceShrinkerImpl.kt',
     // A doc page of the AGP API is not code.
     'https://developer.android.com/reference/tools/gradle-api/8.7/com/android/build/api/dsl/ApplicationExtension',
-    // GitHub code that is not AOSP, AndroidX, R8 or AGP. The GitHub tag check in CI checks its ref.
+    // GitHub code outside the AOSP and AndroidX mirrors, and not R8 or AGP code. AndroidX Media (androidx/media) is not in platform/frameworks/support, so its home is GitHub. The GitHub tag check in CI checks its ref.
     'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/Builders.common.kt',
     'https://github.com/androidx/media/blob/1.5.0/README.md',
     'https://github.com/android/nowinandroid/blob/0123456789abcdef0123456789abcdef01234567/README.md',
