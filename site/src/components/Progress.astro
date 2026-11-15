@@ -28,6 +28,8 @@ const slugOf = (id: string) => id.split('/')[1];
 
   show(progress(storage, slugs, slug), ui);
   button.addEventListener('click', () => show(toggle(storage, slugs, slug), ui));
+  // If the browser restores the page from the back/forward cache, the script does not run again. Thus the listener reads the storage again.
+  addEventListener('pageshow', (e) => e.persisted && show(progress(storage, slugs, slug), ui));
 </script>
 
 <style>
