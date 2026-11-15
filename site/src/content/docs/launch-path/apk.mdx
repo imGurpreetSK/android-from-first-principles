@@ -216,3 +216,91 @@ flowchart LR
   apk --> art["ART maps classes.dex"]
   apk --> fw["libandroidfw maps resources.arsc"]
 ```
+
+## Try it
+
+### 1. Fix the rebuild
+
+Change `NaiveApkWriter` so that the data of each stored entry starts at a multiple of 4. Use the fix of `zipalign`: before you write a local file header, calculate where the data will start. If the offset is not a multiple of 4, write padding bytes after the name, for example zero bytes. Put the number of padding bytes in the extra field length of the header. From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :apk:test
+```
+
+The breaking test fails, because the flaw is gone. The other tests pass, so the output is still a valid ZIP file. The Gradle output includes these lines:
+
+```
+NaiveApkWriterTest > naiveApkWriter_putsStoredDexAtUnalignedOffset() FAILED
+    org.opentest4j.AssertionFailedError at NaiveApkWriterTest.kt:35
+
+5 tests completed, 1 failed
+```
+
+### 2. List the entries of the installed APK
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installLaunchPathRelease
+```
+
+Find the APK on the device:
+
+```sh
+adb shell pm path io.github.imgurpreetsk.afp.launchapp
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+package:/data/app/~~…/io.github.imgurpreetsk.afp.launchapp-…/base.apk
+```
+
+The output has one line. `pm path` prints `package:` and the path of the APK. The installer keeps the APK as one file, `base.apk`, in a directory `<package>-<random>` inside a directory `~~<random>` ([PackageManagerServiceUtils.java, lines 1140–1168](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/pm/PackageManagerServiceUtils.java#1140)).
+
+List the entries of `base.apk`:
+
+```sh
+adb shell 'unzip -lv $(pm path io.github.imgurpreetsk.afp.launchapp | cut -d: -f2)'
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+Archive:  /data/app/~~…/io.github.imgurpreetsk.afp.launchapp-…/base.apk
+ Length   Method    Size  Cmpr    Date    Time   CRC-32   Name
+--------  ------  ------- ---- ---------- ----- --------  ----
+       …  Defl:N        …   …% …          …     …         META-INF/com/android/build/gradle/app-metadata.properties
+       …  Defl:N        …   …% …          …     …         META-INF/version-control-info.textproto
+       …  Stored        …   0% …          …     …         classes.dex
+       …  Defl:N        …   …% …          …     …         AndroidManifest.xml
+       …  Stored        …   0% …          …     …         resources.arsc
+--------          -------  ---                            -------
+       …                …   …%                            5 files
+```
+
+`ziptool` of libziparchive acts as `unzip` if its program name is `unzip`, for example through a symlink ([ziptool.cpp, lines 490–499](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/ziptool.cpp#490)). With `-lv`, it prints a row for each entry: the length, the method (`Stored` or `Defl:N`), the size, the compression ratio, the date, the time, the CRC-32 and the name ([ziptool.cpp, lines 128–130](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/ziptool.cpp#128); [lines 313–316](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/ziptool.cpp#313)). The order of the rows can be different from the order in the ZIP file ([ziptool.cpp, lines 410–411](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/ziptool.cpp#410)).
+
+- `classes.dex` is `Stored`. The launch app has `minSdk` 29, so AGP stores its DEX files uncompressed ([DexPackaging](https://developer.android.com/reference/tools/gradle-api/9.5/com/android/build/api/dsl/DexPackaging#useLegacyPackaging())).
+- `resources.arsc` is `Stored`. The launch app targets API level 37, and the installer rejects a compressed table ([ParsingPackageUtils.java, lines 622–631](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/pm/pkg/parsing/ParsingPackageUtils.java#622)).
+- The output has no `lib/` entry, so the launch app has no native code ([ABIs, "Native code in app packages"](https://developer.android.com/ndk/guides/abis#native-code-in-app-packages)).
+
+### 3. Read the first bytes of two entries
+
+Print the first 8 bytes of the manifest and of `classes.dex`:
+
+```sh
+adb shell 'p=$(pm path io.github.imgurpreetsk.afp.launchapp | cut -d: -f2); unzip -p $p AndroidManifest.xml | xxd -l 8; unzip -p $p classes.dex | xxd -l 8'
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+00000000: 0300 0800 …                           ....…
+00000000: 6465 780a 30.. ..00                      dex.…
+```
+
+In the second line, each `.` in the hex is one hex digit of the DEX format version.
+
+- The manifest starts with `0300 0800`: the chunk type `0x0003` (`RES_XML_TYPE`) and the header size 8, in little-endian order. Then comes the chunk size. Thus the manifest in the APK is binary XML, not text ([ResourceTypes.h, lines 219–242](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/androidfw/include/androidfw/ResourceTypes.h#219)).
+- `classes.dex` starts with `6465 780a 30.. ..00`. These bytes are `dex\n`, a three-digit version and `\0`: the `DEX_FILE_MAGIC` ([DEX format, "DEX_FILE_MAGIC"](https://source.android.com/docs/core/runtime/dex-format#dex-file-magic)). ART accepts only the versions `035`, `037`, `038`, `039`, `040` and `041` ([standard_dex_file.cc, lines 26–41](https://android.googlesource.com/platform/art/+/refs/tags/android-17.0.0_r1/libdexfile/dex/standard_dex_file.cc#26)). Thus the APK holds DEX bytecode.
