@@ -73,8 +73,9 @@ test('a chapter ends with a hidden progress tracker: a "Mark as read" button and
   // The fixture has the chapters "chapter" and "human", a draft chapter and a home page without chapter fields. Thus N is 2.
   // The script shows the tracker only if it can read the storage. Thus without JavaScript, the tracker stays hidden.
   expect(tracker).toContain(' data-slug="chapter" data-slugs="chapter human" data-pagefind-ignore hidden>');
-  expect(tracker).toMatch(/<button type="button" aria-pressed="false"[^>]*>Mark as read<\/button>/);
-  expect(tracker.replace(/<[^>]*>/g, '')).toBe('Mark as read0 / 2 chapters read');
+  // aria-hidden keeps the check mark out of the name of the button.
+  expect(tracker).toMatch(/<button type="button" aria-pressed="false"[^>]*><span class="(?:[^"]* )?check[ "][^>]* aria-hidden="true"[^>]*>✓ <\/span>Mark as read<\/button>/);
+  expect(tracker.replace(/<[^>]*>/g, '')).toBe('✓ Mark as read0 / 2 chapters read');
   // The script is inline, so the HTML of a chapter has the key prefix.
   expect(chapter).toContain('read:');
 });

@@ -11,7 +11,7 @@ const slugOf = (id: string) => id.split('/')[1];
 ---
 
 <p class="progress" data-slug={slugOf(Astro.locals.starlightRoute.entry.id)} data-slugs={chapters.map(({ id }) => slugOf(id)).join(' ')} data-pagefind-ignore hidden>
-  <button type="button" aria-pressed="false">Mark as read</button>
+  <button type="button" aria-pressed="false"><span class="check" aria-hidden="true">✓ </span>Mark as read</button>
   <span class="count">0</span> / {chapters.length} chapters read
 </p>
 
@@ -46,5 +46,9 @@ const slugOf = (id: string) => id.split('/')[1];
   button[aria-pressed='true'] {
     background: var(--sl-color-text-accent);
     color: var(--sl-color-black);
+  }
+  /* A check mark shows a read chapter, so the state does not depend only on the colors. aria-hidden keeps the check mark out of the name of the button. */
+  button[aria-pressed='false'] .check {
+    display: none;
   }
 </style>
