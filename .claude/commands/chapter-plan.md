@@ -75,7 +75,9 @@ Start each subagent brief with this text:
    - `emulator`: if `device` is true, add `emulator`. Otherwise, leave it out.
      - `image`: `system-images;<platform>;google_apis;<ABI>`, as in the example of docs/DESIGN.md, "Chapter shape". `<platform>` is the platform of the baseline, as `sdkmanager --list` names it, for example `android-37.0` for Android 17. `<ABI>` is the ABI of the editor's computer (docs/DESIGN.md, "Code samples"). Ask in the chat: "What is the CPU of the editor's computer: arm64-v8a or x86_64?" Propose the value from `uname -m`: `arm64` or `aarch64` gives `arm64-v8a`, and `x86_64` gives `x86_64`. Wait for the answer.
      - `revision`: if the image is in `$ANDROID_HOME/system-images/`, read `Pkg.Revision` in its `source.properties`. If not, read the version of the image in `sdkmanager --list`. The revision is the first number of the version, for example 8 for `8.0.0`.
-9. Run `git switch -c chapter/<slug>`. Write the chapter file with only this frontmatter. Put the title in double quotes, because YAML reads `: ` in a title as a key. Leave out each optional line of `checked` that step 8 leaves out.
+9. Run `git switch -c chapter/<slug>`. Start a new subagent, the writer. Give it the values of steps 3 to 8, the frontmatter template below, and this brief:
+
+   > Write the chapter file with only this frontmatter. Put the title in double quotes, because YAML reads `: ` in a title as a key. Leave out each optional line of `checked` that step 8 leaves out. Do not commit. Return the path of the file.
 
    ```yaml
    ---
