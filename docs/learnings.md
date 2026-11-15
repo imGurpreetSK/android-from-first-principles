@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: Two fact checkers gave an Astro root outside the worktree a `node_modules` symlink to `site/node_modules`. The default Astro `cacheDir` is `./node_modules/.astro`, so Astro wrote the page of a scratch root into `site/node_modules/.astro/data-store.json`. Rule: Do not link the `node_modules` of an Astro root to `site/node_modules`. To run the site tests of a commit outside the worktree, copy `node_modules` with `cp -cR`. To prove what a build does, use a fixture in `site/tests/fixtures/`, or read the Astro source.
+
 2026-11-14: A validator wrote temporary files into a directory of saved pages. Rule: Write temporary files in a new directory in the session scratch directory. Do not write them into a directory of downloaded files.
 
 2026-11-14: A validator searched a saved HTML spec page for `id="..."` and got no result. The page writes most ids without quotes, for example `id=the-details-element`. Rule: Before you trust a search with no result on saved HTML, check how the file writes the attribute.
