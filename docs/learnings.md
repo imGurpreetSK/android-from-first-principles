@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A staff reviewer ran an inline `python3 -c` script, and the script had a syntax error. Rule: Write a Python script of more than one line to a file in the session scratch directory with the Write tool. Then run the file.
+
 2026-11-14: A staff reviewer ran a build on JDK 26. Gradle took `:build-logic:test` from the build cache, so the run proved nothing. Rule: If a run must prove that a test passes on a given JDK, pass `--rerun-tasks`. Then check that the test task ran.
 
 2026-11-14: A staff reviewer searched a Gradle `--info` log, and the matches printed full classpath lines. The output was about 5,000 tokens. Rule: Before you print lines of a Gradle `--info` log, cut each line to a fixed width, for example with `cut -c1-200`.
