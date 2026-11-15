@@ -106,7 +106,7 @@ The writer puts the data of each entry immediately after its local file header. 
 
 The local file header starts at offset 0. The fixed fields use 30 bytes, and the name `classes.dex` uses 11 bytes. Thus the data starts at offset 41, and 41 is not a multiple of 4. The test passes, so the flaw occurs.
 
-The JDK reads this file with no error. But the platform cannot use an entry at such an offset in place:
+The JDK reads such a file with no error. In the output of the JDK test, the data of `classes.dex` starts at offset 98, and 98 is not a multiple of 4. But the platform cannot use an entry at such an offset in place:
 
 - ART maps a stored DEX entry directly from the APK only if the entry is aligned to the alignment of the DEX header. Otherwise, ART logs "please zipalign" and extracts the DEX file into memory. A comment in ART says that the map prevents a dirty copy ([dex_file_loader.cc, lines 548–572](https://android.googlesource.com/platform/art/+/refs/tags/android-17.0.0_r1/libdexfile/dex/dex_file_loader.cc#548)). The DEX format gives the header an alignment of 4 bytes ([DEX format, "header_item"](https://source.android.com/docs/core/runtime/dex-format#header-item)).
 - If the data of `resources.arsc` does not start on a 4-byte boundary, `libandroidfw` copies the table into a new buffer on the heap ([Asset.cpp, lines 698–726](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/androidfw/Asset.cpp#698)).
