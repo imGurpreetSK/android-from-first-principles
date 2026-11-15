@@ -64,7 +64,7 @@ test.each([
 test.each([
   ['--sl-font', '--font-roboto', 'Roboto'],
   ['--sl-font-mono', '--font-roboto-mono', 'Roboto Mono'],
-])('%s is var(%s): %s, then a local font with metric overrides', (property, variable, family) => {
+])('%s is var(%s), which holds %s, then a local font with metric overrides', (property, variable, family) => {
   const text = files.map(({ text }) => text).join('\n');
   expect(new RegExp(`${property}:\\s*var\\(${variable}\\)\\s*[;}]`).test(text), property).toBe(true);
   const [font, fallback] = (text.match(new RegExp(`${variable}:([^;}]+)`))?.[1] ?? '').split(',').map((name) => name.trim().replace(/^"|"$/g, ''));
