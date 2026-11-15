@@ -7,6 +7,7 @@ import { chapters } from './chapters.ts';
 
 const files = new Set(process.argv.slice(2).map((file) => resolve(file)));
 const given = chapters.filter((chapter) => files.has(chapter.file));
+console.log(`The check fetches ${new Set(given.flatMap((chapter) => chapter.sources)).size} sources of ${given.length} chapters.`);
 // The default fetch waits 300 s for the headers of a host that does not answer.
 const dead = await deadSources(given.flatMap((chapter) => chapter.sources), (url) => fetch(url, { signal: AbortSignal.timeout(30_000) }), setTimeout);
 for (const { file, sources } of given) {
