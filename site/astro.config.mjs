@@ -11,6 +11,7 @@ export default defineConfig({
   prerenderConflictBehavior: 'error',
   // Each variant is the latin woff2 file of a Fontsource package. Astro reads the file from node_modules and copies it into the build.
   // Use the local provider. The npm provider of Astro 7.4.4 (unifont 1.0.3) does not filter subsets. With remote: false, the build cannot fetch its file: URLs.
+  // The fontsource provider gets the file URLs from the Fontsource API during each build, so the build needs the network.
   // For each family, Astro adds fallback faces with the metrics of the font, so the font swap moves less text. optimizedFallbacks is true by default.
   // Only the font files that the site uses: 400 and 400 italic for text, 600 for headings and labels, 700 for bold text.
   // The Night Owl code themes use italic only for the italic and Markdown italic scopes.
