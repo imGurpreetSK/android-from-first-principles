@@ -39,8 +39,6 @@ Entry format, one or two lines:
 
 2026-11-14: Four writers left built files in the `dist/` directory of a fixture, for example `site/tests/fixtures/go-deeper/dist/`. Then `astro check` checked the built JS and gave warnings. Rule: Build a fixture into a new temporary directory outside `site/`. Give the directory to `astro build` with `--outDir`. Delete the directory after the test.
 
-2026-11-14: A writer wrote a regex for the Go deeper box. The regex also matched the mobile table of contents of Starlight, `<details id="starlight__mobile-toc">`. An earlier search with `.{0,300}` missed that element. Rule: Before you assert on build output, search the full file with a pattern that has no length limit.
-
 2026-11-14: The user said "launch the app". The parent agent started the Android emulator, but the user meant the site. Rule: In this project, "the app" and "the web app" mean the site, unless the user names the launch app. If you are not sure, ask.
 
 2026-11-14: The parent agent opened the site in the browser while work was not done. The user wants the site open only when the whole task is done. Rule: Start the site dev server and open the site only when the whole task is done.
@@ -49,7 +47,7 @@ Entry format, one or two lines:
 
 2026-11-14: A fixer inserted a sentence. Then the pronoun "It" in the next sentence pointed to the wrong noun. A fixer cut text at the end of a file with the Edit tool. The cut also removed the final newline. Rule: After you insert a sentence, read the next sentence again. Check each pronoun. After you cut text at the end of a file, run `git diff` and look for "No newline at end of file".
 
-2026-11-14: A test assumed that each font URL in the built CSS is a file. Vite puts small fonts inline as data URLs. Rule: Before you assert on build output, read the build output.
+2026-11-14: A test assumed that each font URL in the built CSS is a file. Vite puts small fonts inline as data URLs. A writer wrote a regex for the Go deeper box. The regex also matched the mobile table of contents of Starlight, `<details id="starlight__mobile-toc">`. An earlier search with `.{0,300}` missed that element. Rule: Before you assert on build output, read the build output. Search the full file with a pattern that has no length limit.
 
 2026-11-14: A reviewer read a file in parallel with the command that wrote it. A subagent ran a pypdf script in parallel with the check for pypdf. The script failed. An agent ran `npm test` in parallel with `npm run check`. Rule: Start a call only after each call whose result it needs ends. Run the "Build and test" commands one after the other. They share `node_modules` and the build caches. On this machine, `gs -sDEVICE=txtwrite` extracts text from a PDF.
 
