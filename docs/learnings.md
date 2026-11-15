@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: The parent agent suggested a remark plugin from memory in a writer brief. By default, Astro 7.4.4 uses the Sätteri Markdown processor. `markdown.remarkPlugins` needs the package `@astrojs/markdown-remark`, and the site does not install it. Rule: In Astro 7.4.4, write a Markdown plugin as a Sätteri plugin. Give it to `satteri()` in the `mdastPlugins` or `hastPlugins` option.
+
 2026-11-14: A fact checker ran a recursive `grep` on the whole session scratch directory. The directory holds Gradle caches, so the search ran past the 120-second timeout. A writer ran `ls -R` on the `system-images` directory of the Android SDK, and the output was about 11,000 tokens. Rule: Before a recursive search or list, list one level with `find <dir> -maxdepth 1`. Then search or list only the subdirectories that you need.
 
 2026-11-14: A fixer ran `git add` on the old path after `git mv`, and `git add` failed. `git mv` stages the rename. A writer ran `git mv -k` on an untracked file. `git mv -k` does not move the file, shows no error and exits 0. Rule: After `git mv`, run `git add` only on the new path. To move an untracked file, use `mv`. Do not use `git mv -k`.
