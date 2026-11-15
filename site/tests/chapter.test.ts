@@ -30,6 +30,10 @@ test('the build is a production build, so a chapter has the search box', () => {
   expect(chapter.includes('id="starlight__search"')).toBe(true);
 });
 
+test('the build is a production build, so a draft chapter has no page', () => {
+  expect(readdirSync(join(outDir, 'launch-path')).sort()).toEqual(['chapter', 'human']);
+});
+
 test('a chapter shows the checked stamp at the top of its content', () => {
   const stamp = chapter.match(/<div class="sl-markdown-content"><div class="checked-stamp">([\s\S]*?)<\/div>/)?.[1];
   for (const text of [
