@@ -14,9 +14,15 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
+import { LinkCard } from '@astrojs/starlight/components';
+
 A citation of a source: [Looper.java](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160).
 
 A file that is not a source: [Handler.java](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100).
+
+A JSX link to a page that is not a source: <a href="https://developer.android.com/guide">Guide</a>.
+
+<LinkCard title="Processes" href="https://developer.android.com/guide/components/processes-and-threads" />
 
 A reference link to a page that is not a source: [Looper][looper].
 

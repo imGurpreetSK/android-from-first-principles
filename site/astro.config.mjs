@@ -18,10 +18,20 @@ function citations({ data, fileURL }) {
   const check = ({ url }) => {
     if (missingSource(url, sources)) missing.push(url);
   };
+  // A JSX element, for example <a> or LinkCard, gives its URL in the href attribute. An href value in braces is an expression, so the check cannot read the URL.
+  const jsx = ({ attributes }) => {
+    for (const a of attributes) if (a.name === 'href' && typeof a.value === 'string') check({ url: a.value });
+  };
   return {
     name: 'citations',
     link: check,
     definition: check,
+    // In a .md file, an HTML tag is an html node, for example <a href="https://...">. The check reads each href attribute of the node.
+    html: ({ value }) => {
+      for (const [, url] of value.matchAll(/\shref\s*=\s*["']?([^"'\s>]+)/gi)) check({ url });
+    },
+    mdxJsxFlowElement: jsx,
+    mdxJsxTextElement: jsx,
     // After the visit, so that the error names each link of the chapter that cites no source.
     after() {
       if (missing.length > 0) {

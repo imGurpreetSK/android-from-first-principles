@@ -1,6 +1,6 @@
 // docs/DESIGN.md "Sourcing rules": a chapter body cites only the sources in its sources field. Links between chapters and links to the GitHub pages of this repo are exempt.
-// A link between chapters has no scheme, for example /launch-path/main-thread/.
-const external = /^https?:\/\//i;
+// A link between chapters has no scheme and does not start with //, for example /launch-path/main-thread/.
+const external = /^(https?:)?\/\//i;
 const repo = /^https:\/\/github\.com\/imGurpreetSK\/android-from-first-principles([/?#]|$)/i;
 
 // A citation is a source plus a line, a heading or a timestamp (docs/DESIGN.md "Sourcing rules").

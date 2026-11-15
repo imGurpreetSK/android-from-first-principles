@@ -17,6 +17,7 @@ const duplicateId = fileURLToPath(new URL('./fixtures/duplicate-id', import.meta
 const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
 const citation = fileURLToPath(new URL('./fixtures/citation', import.meta.url));
 const citationMismatch = fileURLToPath(new URL('./fixtures/citation-mismatch', import.meta.url));
+const citationHtml = fileURLToPath(new URL('./fixtures/citation-html', import.meta.url));
 // Vitest sets process.env.MODE to test, and a child process inherits it. The default mode of astro build is production.
 const production = { ...process.env, MODE: 'production' };
 
@@ -124,9 +125,23 @@ test('astro build fails on a chapter with links to pages that are not in its sou
   try {
     const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citationMismatch, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
     expect(status).not.toBe(0);
-    // The inline link and the reference link. The link that cites a source is not in the list.
+    // The inline link, the JSX <a> link, the LinkCard and the reference link. The link that cites a source is not in the list.
     expect(stdout + stderr).toContain(
-      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links to pages that are not in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/reference/android/os/Looper#loop(). Without its anchor and timestamp,`,
+      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links to pages that are not in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(). Without its anchor and timestamp,`,
+    );
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build fails on a .md chapter with an HTML link that cites no entry in its sources, and names the link', () => {
+  // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-html-'));
+  try {
+    const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citationHtml, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
+    expect(status).not.toBe(0);
+    expect(stdout + stderr).toContain(
+      `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has links to pages that are not in its sources field: https://developer.android.com/guide.`,
     );
   } finally {
     rmSync(outDir, { recursive: true, force: true });

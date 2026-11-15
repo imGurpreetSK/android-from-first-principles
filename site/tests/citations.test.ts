@@ -27,6 +27,7 @@ describe('missingSource', () => {
     ['a source with a trailing slash', `${page}/`, `${page}/`],
     ['a source over http', looper.replace('https', 'http'), looper.replace('https', 'http')],
     ['a t query parameter on a host that is not YouTube', 'https://example.com/p?t=5', 'https://example.com/p?t=5'],
+    ['a protocol-relative link', '//developer.android.com/guide', '//developer.android.com/guide'],
   ])('returns the link without its anchor and timestamp for %s', (_, link, source) => {
     expect(missingSource(link, sources)).toBe(source);
   });
