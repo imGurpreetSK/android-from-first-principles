@@ -3,6 +3,8 @@ name: Weekly source check
 # Each week, fetch the sources of all chapters. If a source does not load, open an issue, or update the open issue. If all sources load, close the open issue.
 # This workflow is not a PR check, so it does not block PRs. If a source does not load, the job still passes, because the issue tells the maintainer.
 on:
+  # In a public repository, GitHub disables this schedule after 60 days with no repository activity.
+  # To enable it again, run: gh workflow enable weekly-source-check.yml
   schedule:
     # Each Monday at 06:17 UTC. GitHub can delay a scheduled run at the start of each hour.
     - cron: "17 6 * * 1"
