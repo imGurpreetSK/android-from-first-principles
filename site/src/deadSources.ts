@@ -49,3 +49,34 @@ export async function deadSources(sources: readonly string[], fetch: (url: strin
   }
   return dead;
 }
+
+// The weekly source check keeps the sources that do not load in one open issue with this title.
+const issueTitle = 'Sources that do not load';
+
+// The GitHub issue calls of the weekly source check. open() gives the open issues of the repo.
+export interface Issues {
+  open(): { number: number; title: string }[];
+  create(title: string, body: string): void;
+  edit(number: number, body: string): void;
+  close(number: number, comment: string): void;
+}
+
+// Reports the result of the weekly source check in the first open issue with the title issueTitle.
+// If a source does not load, it updates the body of that issue, or opens the issue if no open issue has the title.
+// If all sources load, it closes the issue. Thus an open issue always shows a source that does not load, and a later dead source opens a new issue.
+export function reportDeadSources(dead: ReadonlyMap<string, string>, chapters: readonly { file: string; sources: readonly string[] }[], issues: Issues) {
+  const issue = issues.open().find((open) => open.title === issueTitle);
+  if (dead.size === 0) {
+    if (issue) issues.close(issue.number, 'All sources load. The weekly source check closes this issue.');
+    return;
+  }
+  const lines = chapters.flatMap(({ file, sources }) => sources.filter((source) => dead.has(source)).map((source) => `- \`${file}\`: ${source} (${dead.get(source)})`));
+  const body = [
+    'The weekly source check found sources that do not load. Each line gives the chapter, the source and the reason.',
+    lines.join('\n'),
+    'If a source loads in a browser, do not change the chapter. If a source moved, make a fix PR. In the PR, make a plan amendment with the new URL, and change each citation of the source to the new URL. If a source does not exist, make a fix PR. In the PR, make a plan amendment with a new source, and cite the new source for each claim.',
+    'Each run of the weekly source check updates this issue. If all sources load, the run closes this issue.',
+  ].join('\n\n');
+  if (issue) issues.edit(issue.number, body);
+  else issues.create(issueTitle, body);
+}

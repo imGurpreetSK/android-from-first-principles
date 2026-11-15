@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { deadSources } from '../src/deadSources';
+import { deadSources, reportDeadSources } from '../src/deadSources';
 
 const page = 'https://developer.android.com/guide/components/activities/activity-lifecycle';
 const code = 'https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java';
@@ -80,4 +80,49 @@ test('fetches a YouTube video through the YouTube oEmbed endpoint, because the w
 test('does not fetch a YouTube page that is not a video through the oEmbed endpoint', async () => {
   const channel = 'https://www.youtube.com/@AndroidDevelopers';
   expect(await check([channel], { [channel]: [status(200)] })).toEqual({ dead: {}, fetched: [channel], waits: [] });
+});
+
+const title = 'Sources that do not load';
+
+// Runs reportDeadSources for two chapters with a fake of the issue calls. The fake gives the open issues, and records each other call.
+function report(dead: Record<string, string>, open: { number: number; title: string }[]) {
+  const calls: unknown[][] = [];
+  const chapters = [
+    { file: 'site/src/content/docs/a.md', sources: [page, code] },
+    { file: 'site/src/content/docs/b.md', sources: [code] },
+  ];
+  reportDeadSources(new Map(Object.entries(dead)), chapters, {
+    open: () => open,
+    create: (...args) => calls.push(['create', ...args]),
+    edit: (...args) => calls.push(['edit', ...args]),
+    close: (...args) => calls.push(['close', ...args]),
+  });
+  return calls;
+}
+
+const body = (lines: string) => `The weekly source check found sources that do not load. Each line gives the chapter, the source and the reason.
+
+${lines}
+
+If a source loads in a browser, do not change the chapter. If a source moved, make a fix PR. In the PR, make a plan amendment with the new URL, and change each citation of the source to the new URL. If a source does not exist, make a fix PR. In the PR, make a plan amendment with a new source, and cite the new source for each claim.
+
+Each run of the weekly source check updates this issue. If all sources load, the run closes this issue.`;
+
+test('opens one issue with each chapter that has a dead source, if no open issue has the title', () => {
+  expect(report({ [code]: 'status 404' }, [{ number: 3, title: 'Challenge a claim' }])).toEqual([
+    ['create', title, body(`- \`site/src/content/docs/a.md\`: ${code} (status 404)\n- \`site/src/content/docs/b.md\`: ${code} (status 404)`)],
+  ]);
+});
+
+test('updates the body of the first open issue with the title, and opens no issue', () => {
+  const open = [{ number: 3, title: 'Challenge a claim' }, { number: 9, title }, { number: 7, title }];
+  expect(report({ [page]: 'status 410' }, open)).toEqual([['edit', 9, body(`- \`site/src/content/docs/a.md\`: ${page} (status 410)`)]]);
+});
+
+test('closes the open issue with a comment if all sources load', () => {
+  expect(report({}, [{ number: 9, title }])).toEqual([['close', 9, 'All sources load. The weekly source check closes this issue.']]);
+});
+
+test('changes no issue if all sources load and no open issue has the title', () => {
+  expect(report({}, [{ number: 3, title: 'Challenge a claim' }])).toEqual([]);
 });
