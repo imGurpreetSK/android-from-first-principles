@@ -137,6 +137,7 @@ describe('chapter frontmatter', () => {
     ['https://raw.githubusercontent.com/Kotlin/kotlinx.coroutines/master/README.md', 'Cite the file on github.com'],
     ['https://www.github.com/Kotlin/kotlinx.coroutines/blob/master/README.md', 'Cite the file on github.com'],
     ['https://github.com/aosp-mirror/platform_frameworks_base/blob/0123456789abcdef0123456789abcdef01234567/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],
+    ['https://github.com/android/platform_frameworks_base/blob/0123456789abcdef0123456789abcdef01234567/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],
     ['https://github.com/androidx/androidx/blob/0123456789abcdef0123456789abcdef01234567/lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/ViewModel.kt', 'Cite AOSP and AndroidX code on android.googlesource.com'],
     ['https://github.com/example/r8/blob/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/tools/r8/R8.java', 'Cite R8 code on r8.googlesource.com.'],
     ['https://android.googlesource.com/platform/external/r8/+/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/tools/r8/R8.java', 'Cite R8 code on r8.googlesource.com.'],
