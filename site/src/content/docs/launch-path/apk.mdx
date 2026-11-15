@@ -46,6 +46,8 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
+import Snippet from '../../../components/Snippet.astro';
+
 ## The problem
 
 Section 1 follows one cold start of the launch app, from the launcher tap to the first frame. The cold start begins with one file on the device: the APK that the build wrote.
@@ -68,3 +70,29 @@ With `mmap`, a process reads the bytes of a file directly, with no copy in RAM (
 - The data of the entry starts at an aligned offset. For a DEX file and for the resource table, the offset must be a multiple of 4 ([DEX format, "header_item"](https://source.android.com/docs/core/runtime/dex-format#header-item); [Asset.cpp, lines 698–726](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/androidfw/Asset.cpp#698)).
 
 If an entry does not meet the two conditions, the platform copies the entry into RAM, or the install fails. A ZIP file can be valid and not meet them. This chapter builds such a ZIP file, shows where it breaks, and then shows how the real build prevents the problem.
+
+## Build it naive
+
+The rebuild is an APK writer in plain Kotlin, in the module `samples/apk`. It does not compile code or resources. It takes each entry as a name and a byte array, and it writes the ZIP file around the entries. The tests give it placeholder bytes with the names `AndroidManifest.xml`, `classes.dex` and `resources.arsc`.
+
+A ZIP file has three parts. The platform ZIP reader, libziparchive, has one struct for each part:
+
+1. For each entry: a local file header, the name of the entry, and then the data ([zip_archive_common.h, lines 129–163](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive_common.h#129)).
+2. The Central Directory: one record for each entry. Each record holds the offset of the local file header of its entry ([zip_archive_common.h, lines 75–123](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive_common.h#75)).
+3. The End of Central Directory record. It holds the offset of the Central Directory ([zip_archive_common.h, lines 31–67](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive_common.h#31)).
+
+The writer stores each entry. For each entry, it writes the local file header and then the data. At the end, it writes the Central Directory and the End of Central Directory record:
+
+<Snippet file="apk/src/main/kotlin/NaiveApkWriter.kt" region="write" />
+
+The local file header has 30 bytes of fixed fields. The last two fields give the length of the name and the length of the extra field. The name comes immediately after the fixed fields. The extra field comes after the name ([zip_archive_common.h, lines 129–163](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive_common.h#129)). The writer sets the time and the date to 0, so that each run writes the same bytes. It writes no extra field:
+
+<Snippet file="apk/src/main/kotlin/NaiveApkWriter.kt" region="header" />
+
+To read an entry, libziparchive finds the name of the entry in the Central Directory ([zip_archive.cc, lines 1121–1128](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive.cc#1121)). It reads the offset of the local file header from the Central Directory record ([zip_archive.cc, lines 827–830](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive.cc#827)). Then it reads the local file header. The data starts at this offset: the header offset + the size of the fixed fields + the name length + the extra field length ([zip_archive.cc, lines 1017–1018](https://android.googlesource.com/platform/system/libziparchive/+/refs/tags/android-17.0.0_r1/zip_archive.cc#1017)).
+
+The rebuild has a small reader, `dataOffset`, with the same formula. To keep the code short, it does not use the Central Directory. It reads the local file headers one after the other, from the start of the file:
+
+<Snippet file="apk/src/main/kotlin/DataOffset.kt" region="offset" />
+
+A test opens the output of the writer with `java.util.zip.ZipFile` from the JDK. The JDK reads each entry, its method (stored), its CRC-32 and its bytes. Thus the output is a valid ZIP file.
