@@ -1,6 +1,6 @@
 // The progress tracker of the reader (docs/DESIGN.md, "Site").
 // The key of a chapter is read:<chapter-slug>, not its URL, because a chapter can move to another section (docs/DESIGN.md, "Curriculum").
-// Each storage access can throw, for example if the browser blocks storage. Then these functions return undefined.
+// The localStorage getter and setItem can throw, for example if the browser blocks storage. Then progress and toggle return undefined.
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 // read: the reader marked the chapter as read. count: the number of chapters on the site that the reader marked as read.
