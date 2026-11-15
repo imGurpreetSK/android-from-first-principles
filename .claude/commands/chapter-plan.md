@@ -44,7 +44,7 @@ Start each subagent brief with this text:
    - No local branch `chapter/<slug>` or `learnings/plan-<slug>` exists. Run `git branch --list chapter/<slug> learnings/plan-<slug>`. If the output names a branch, the check fails. Message: "`<branch>` already exists. Finish its PR, or delete it with `git branch -D <branch>`. Then run `/chapter-plan` again."
 3. Ask for the editor. The editor can be a different person from the person who runs this command. Thus you cannot know the editor. In the chat, ask: "Who will edit this chapter? I will write this name in `edited_by`." Propose the output of `git config user.name`. Wait for the answer. If the answer is empty, ask again. Then ask: "What is the CPU of the editor's computer: arm64-v8a or x86_64?" Propose the value from `uname -m`: `arm64` or `aarch64` gives `arm64-v8a`, and `x86_64` gives `x86_64`. Wait for the answer. Step 8 uses it only if `device` is true.
 4. Get these values from the curriculum entry:
-   - `title`: the name of the entry without its number and its slug.
+   - `title`: the name of the entry without its number and without its last parentheses, which hold the slug. For example, the title of 14 is "Flow (cold/hot, StateFlow)".
    - `section`: the label of the section of the entry, as in `site/src/sections.ts`.
    - `sidebar.order`: the position of the entry in its section, from 1. For example, `main-thread` (05) gets 5, and Config changes & ViewModel (07) gets 1.
    - The path of the chapter file: `site/src/content/docs/<section slug>/<slug>.md`. `site/src/sections.ts` gives the section slug.
