@@ -124,7 +124,7 @@ When dex2oat compiles an app, it can copy the DEX files of the app into the vdex
 
 ### The build makes the entries
 
-Android Studio and AGP run the build tools of the SDK:
+Android Studio and AGP run these build tools:
 
 1. AAPT2 compiles each resource file into a binary format, a `.flat` file ([AAPT2, "Compile"](https://developer.android.com/tools/aapt2#compile)).
 2. AAPT2 links the compiled files and the manifest into one APK. This APK has no DEX bytecode and has no signature ([AAPT2, "Link"](https://developer.android.com/tools/aapt2#link)). AAPT2 can also generate `R.java`, which holds the resource IDs ([AAPT2, "Link options"](https://developer.android.com/tools/aapt2#link_options)).
