@@ -7,7 +7,7 @@ const retries = 3;
 // The longest wait before a retry. A Retry-After value can be one hour or more, for example 3600 in RFC 6585, section 4.
 const maxWait = 60_000;
 // A YouTube watch page gives status 200 also for a video that does not exist. The YouTube oEmbed endpoint gives a 4xx status for it.
-const video = /^https:\/\/((www|m)\.)?youtube\.com\/watch\?|^https:\/\/youtu\.be\//i;
+const video = /^https?:\/\/((www|m)\.)?youtube\.com\/(watch\?|live\/)|^https?:\/\/youtu\.be\//i;
 
 // Returns the wait in ms before the retry after the given attempt (0 for the first fetch).
 // Retry-After (RFC 9110, section 10.2.3) is a number of seconds or an HTTP date. Without a valid Retry-After, the waits are 1 s, 2 s and 4 s.

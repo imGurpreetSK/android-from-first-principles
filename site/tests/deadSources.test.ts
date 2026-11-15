@@ -66,10 +66,18 @@ test('fetches a YouTube video through the YouTube oEmbed endpoint, because the w
   const watch = 'https://www.youtube.com/watch?v=zzzzzzzzzzz';
   const short = 'https://youtu.be/zzzzzzzzzzz';
   const mobile = 'https://m.youtube.com/watch?v=zzzzzzzzzzz';
+  const plain = 'http://www.youtube.com/watch?v=zzzzzzzzzzz';
+  const live = 'https://www.youtube.com/live/zzzzzzzzzzz';
   const oembed = (url: string) => `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-  expect(await check([watch, short, mobile], { [oembed(watch)]: [status(400)], [oembed(short)]: [status(404)], [oembed(mobile)]: [status(400)] })).toEqual({
-    dead: { [watch]: 'status 400', [short]: 'status 404', [mobile]: 'status 400' },
-    fetched: [oembed(watch), oembed(short), oembed(mobile)],
+  const sources = [watch, short, mobile, plain, live];
+  expect(await check(sources, Object.fromEntries(sources.map((source, i) => [oembed(source), [status(i === 1 ? 404 : 400)]])))).toEqual({
+    dead: { [watch]: 'status 400', [short]: 'status 404', [mobile]: 'status 400', [plain]: 'status 400', [live]: 'status 400' },
+    fetched: sources.map(oembed),
     waits: [],
   });
+});
+
+test('does not fetch a YouTube page that is not a video through the oEmbed endpoint', async () => {
+  const channel = 'https://www.youtube.com/@AndroidDevelopers';
+  expect(await check([channel], { [channel]: [status(200)] })).toEqual({ dead: {}, fetched: [channel], waits: [] });
 });
