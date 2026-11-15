@@ -17,6 +17,7 @@ const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
 const citation = fileURLToPath(new URL('./fixtures/citation', import.meta.url));
 const citationMismatch = fileURLToPath(new URL('./fixtures/citation-mismatch', import.meta.url));
 const citationHtml = fileURLToPath(new URL('./fixtures/citation-html', import.meta.url));
+const codeLink = fileURLToPath(new URL('./fixtures/code-link', import.meta.url));
 
 test('astro build fails on a chapter with invalid frontmatter', () => {
   // --force clears the content cache, so the build checks the fixture with the current schema.
@@ -144,6 +145,20 @@ test('astro build fails on a .md chapter with an HTML link that cites no entry i
     expect(status).not.toBe(0);
     expect(stdout + stderr).toContain(
       `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has links that cite no entry in its sources field: https://developer.android.com/guide.`,
+    );
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build fails on a chapter with a source that breaks a code link rule, and names the source and the fix', () => {
+  // If the build does not fail, it writes into an output directory outside site/, so astro check does not check the built JS files.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-code-link-'));
+  try {
+    const { status, stdout, stderr } = build('--root', codeLink, '--outDir', outDir, '--force');
+    expect(status).not.toBe(0);
+    expect(stdout + stderr).toContain(
+      'sources.0: https://android.googlesource.com/platform/frameworks/base/+/main/core/java/android/os/Looper.java: Pin the Gitiles link to a tag or to a commit.',
     );
   } finally {
     rmSync(outDir, { recursive: true, force: true });

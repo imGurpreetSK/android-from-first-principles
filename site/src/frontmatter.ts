@@ -1,5 +1,6 @@
 import { z } from 'astro/zod';
 import { source } from './citations';
+import { codeLinkError } from './codeLinks';
 import { sections } from './sections';
 
 // The checked stamp, for example { android: 17, aosp: 'android-17.0.0_r1' }.
@@ -21,7 +22,18 @@ const chapter = {
   section: z.enum(sections.map((s) => s.label)),
   checked,
   // CI removes the anchor and the timestamp from each citation, then needs an exact match with a source (src/citations.ts).
-  sources: z.array(z.httpUrl().refine((url) => source(url) === url, 'A source has no anchor or timestamp. Put them in the citation.')).min(1),
+  // So a code link rule on each source applies to each citation too.
+  sources: z
+    .array(
+      z
+        .httpUrl()
+        .refine((url) => source(url) === url, 'A source has no anchor or timestamp. Put them in the citation.')
+        .superRefine((url, ctx) => {
+          const error = codeLinkError(url);
+          if (error) ctx.addIssue({ code: 'custom', message: `${url}: ${error}` });
+        }),
+    )
+    .min(1),
   rebuild: z.boolean(),
   device: z.boolean(),
   drafted: z.enum(['ai', 'human']),

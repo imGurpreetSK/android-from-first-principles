@@ -22,6 +22,8 @@ const chapter = {
 const emulator = { image: 'system-images;android-37.0;google_apis;arm64-v8a', revision: 8 };
 
 const valid = (data: object) => schema.safeParse(data).success;
+// The issue messages of the chapter with these sources.
+const messages = (sources: string[]) => schema.safeParse({ ...chapter, sources }).error?.issues.map((issue) => issue.message) ?? [];
 // The chapter with these fields changed in checked.
 const checked = (fields: object) => ({ ...chapter, checked: { ...chapter.checked, ...fields } });
 
@@ -94,6 +96,25 @@ describe('chapter frontmatter', () => {
 
   test('rejects a talk source with a timestamp', () => {
     expect(valid({ ...chapter, sources: ['https://www.youtube.com/watch?v=abc123&t=95s'] })).toBe(false);
+  });
+
+  // docs/DESIGN.md "Sourcing rules": a code link points to a pinned ref.
+  test.each([
+    'https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java',
+    'https://android.googlesource.com/platform/frameworks/support/+/0123456789abcdef0123456789abcdef01234567/lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/ViewModel.kt',
+  ])('accepts the pinned Gitiles source %s', (source) => {
+    expect(messages([source])).toEqual([]);
+  });
+
+  test.each([
+    // A short ref of a tag, a short ref of a branch, a full ref of a branch, a short SHA and no ref.
+    'https://android.googlesource.com/platform/frameworks/base/+/android-17.0.0_r1/core/java/android/os/Looper.java',
+    'https://android.googlesource.com/platform/frameworks/base/+/main/core/java/android/os/Looper.java',
+    'https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/os/Looper.java',
+    'https://android.googlesource.com/platform/frameworks/base/+/0123456789ab/core/java/android/os/Looper.java',
+    'https://android.googlesource.com/platform/frameworks/base/',
+  ])('rejects the Gitiles source %s, because it is not pinned to a tag or a full SHA, and names the source', (source) => {
+    expect(messages([source])).toEqual([expect.stringContaining(`${source}: Pin the Gitiles link to a tag or to a commit.`)]);
   });
 
   test.each(['', ' '])('rejects the edited_by value "%s"', (edited_by) => {
