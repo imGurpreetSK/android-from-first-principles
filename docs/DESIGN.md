@@ -59,7 +59,7 @@ All docs, chapters included, use Simplified Technical English (STE). [AGENTS.md]
 - A draft cites **only** sources from that list. A source is one entry: one code file at a pinned ref, one doc page or one talk.
 - CI enforces this rule. CI removes the line number, anchor or timestamp from each external link in a chapter body. The result must exactly match an entry in `sources`. Links between chapters and links to the GitHub pages of this repo are exempt.
 - Each non-obvious claim has a citation:
-  - Code: a pinned ref, a file and a line. A branch moves, so never cite a branch. A chapter cites code only on Gitiles hosts and on `github.com`. CI rejects each link on a list of other code hosts, for example `elixir.bootlin.com` and `git.kernel.org`. If CI cannot prove that a code link is pinned, CI rejects the link:
+  - Code: a pinned ref, a file and a line. A branch moves, so never cite a branch. A chapter cites code only on Gitiles hosts and on `github.com`. CI rejects each link on a list of other code hosts, for example `elixir.bootlin.com` and `git.kernel.org`. CI also rejects code links on `kernel.googlesource.com` and `github.com/torvalds/linux`. If CI cannot prove that a code link is pinned, CI rejects the link:
     - Gitiles: `+/refs/tags/<tag>/` or a full 40-character SHA. CI rejects the short `+/<ref>/` form, because it can resolve to a branch.
     - GitHub: a full SHA, or a ref that `git ls-remote --tags` shows is a tag. The link check runs `git ls-remote` one time for each repo.
     - AOSP: a release tag. Section 1 uses `android-17.0.0_r1`.

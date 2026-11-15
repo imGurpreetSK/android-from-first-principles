@@ -134,6 +134,8 @@ describe('chapter frontmatter', () => {
     'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/Builders.common.kt',
     'https://github.com/androidx/media/blob/1.5.0/README.md',
     'https://github.com/android/nowinandroid/blob/0123456789abcdef0123456789abcdef01234567/README.md',
+    // A repo whose name only starts with linux is not the kernel.
+    'https://github.com/torvalds/linux-foo/blob/0123456789abcdef0123456789abcdef01234567/README.md',
   ])('accepts the source %s on the host of its project', (source) => {
     expect(messages([source])).toEqual([]);
   });
@@ -154,6 +156,9 @@ describe('chapter frontmatter', () => {
     ['https://github.com/example/agp/blob/0123456789abcdef0123456789abcdef01234567/build-system/gradle-core/src/main/java/com/android/builder/core/AbstractBuildType.kt', 'Cite AGP code in platform/tools/base'],
     // The AGP repo before platform/tools/base.
     ['https://android.googlesource.com/platform/tools/build/+/0123456789abcdef0123456789abcdef01234567/gradle/src/main/groovy/com/android/build/gradle/AppPlugin.groovy', 'Cite AGP code in platform/tools/base'],
+    ['https://github.com/torvalds/linux/blob/v6.12/kernel/sched/core.c', 'Cite kernel code on android.googlesource.com in kernel/common'],
+    ['https://github.com/torvalds/linux', 'Cite kernel code on android.googlesource.com in kernel/common'],
+    ['https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux/+/refs/tags/v6.12/kernel/sched/core.c', 'Cite kernel code on android.googlesource.com in kernel/common'],
   ])('rejects the source %s, because it is not on the host of its project, and names the source', (source, fix) => {
     expect(messages([source])).toEqual([expect.stringContaining(`${source}: ${fix}`)]);
   });
