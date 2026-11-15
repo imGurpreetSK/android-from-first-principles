@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: The parent agent told a subagent that a doc-only commit needs no "Build and test" run. AGENTS.md has no such exception. An STE fixer returned the report "placeholder". It made 2 commits with 7 tool calls. With one command in each Bash call, the "Build and test" commands of 2 commits need 10 calls. Rule: Before each commit, run all "Build and test" commands, also for a doc-only commit. Do not write an exception to an AGENTS.md rule into a brief. Return the full report.
+
 2026-11-14: The parent agent merged two parallel branches onto `main`. Each branch passed alone, but the merge broke the tests. Git kept two import lines from `node:fs`. A new build rule of one branch made the fixture chapters of the other branch invalid. Rule: After you merge a branch onto `main`, run all "Build and test" commands on `main`. Then run them on each merged commit in a scratch worktree. If a merged commit fails, stage the fix and run `git commit --fixup=<commit>`. Then, before you push, run `git rebase --autosquash <commit>~1`. Then run the commands again on the commits after it.
 
 2026-11-14: A staff reviewer put an HTML comment in the markup of an `.astro` file, and Astro wrote the comment into the built page. The Astro docs say that HTML comments go into the browser DOM, and that Astro removes JS comments. Rule: In the markup of an `.astro` file, write each comment in the frontmatter or as `{/* */}`. In a `<style>` element, write CSS comments (`/* */`). In a `<script>` element, write JS comments (`//`).
