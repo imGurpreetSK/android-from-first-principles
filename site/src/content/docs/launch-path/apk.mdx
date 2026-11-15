@@ -221,7 +221,7 @@ flowchart LR
 
 ### 1. Fix the rebuild
 
-Change `NaiveApkWriter` so that the data of each stored entry starts at a multiple of 4. Use the fix of `zipalign`: before you write a local file header, calculate where the data will start. If the offset is not a multiple of 4, write padding bytes after the name, for example zero bytes. Put the number of padding bytes in the extra field length of the header. From the repo root, run the tests of the rebuild:
+Change `NaiveApkWriter` so that the data of each stored entry starts at a multiple of 4. Use the fix of `zipalign`: before you write a local file header, calculate where the data will start. If the offset is not a multiple of 4, write padding bytes after the name, for example zero bytes. Put the number of padding bytes in the extra field length of the local file header. `entryFields` writes the fields of the local file header and of the Central Directory record. Keep the extra field length 0 in the Central Directory record, because the record has no padding bytes. From the repo root, run the tests of the rebuild:
 
 ```sh
 samples/gradlew -p samples :apk:test
