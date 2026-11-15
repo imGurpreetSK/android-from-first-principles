@@ -16,26 +16,30 @@ function wait(retryAfter: string | null, attempt: number) {
   return Math.min(Number.isNaN(ms) ? 1000 * 2 ** attempt : Math.max(ms, 0), maxWait);
 }
 
-// Returns why the URL does not load: the last HTTP status, or the error of fetch. Returns undefined if the URL gives a 2xx status.
+// Returns why the URL does not load: the last HTTP status, or the last error of fetch. Returns undefined if the URL gives a 2xx status.
 async function failure(url: string, fetch: (url: string) => Promise<Response>, sleep: (ms: number) => Promise<unknown>) {
   for (let attempt = 0; ; attempt++) {
-    let response: Response;
+    let reason: string;
+    let retryAfter: string | null = null;
     try {
-      response = await fetch(url);
+      const response = await fetch(url);
+      // The check needs only the status. It cancels the body, so that fetch frees the connection.
+      await response.body?.cancel();
+      if (response.ok) return undefined;
+      reason = `status ${response.status}`;
+      if (!retry(response.status)) return reason;
+      retryAfter = response.headers.get('retry-after');
     } catch (error) {
-      // Node fetch gives the error "fetch failed". Its cause has the system error, for example ENOTFOUND for a host that DNS does not know.
-      return String((error as Error).cause ?? error);
+      // Node fetch gives the error "fetch failed". Its cause has the system error, for example ECONNRESET. A network error can be temporary, so the check fetches again.
+      reason = String((error as Error).cause ?? error);
     }
-    // The check needs only the status. It cancels the body, so that fetch frees the connection.
-    await response.body?.cancel();
-    if (response.ok) return undefined;
-    if (attempt === retries || !retry(response.status)) return `status ${response.status}`;
-    await sleep(wait(response.headers.get('retry-after'), attempt));
+    if (attempt === retries) return reason;
+    await sleep(wait(retryAfter, attempt));
   }
 }
 
 // Returns each source that does not load, with the reason. It fetches each source one time, one source after the other.
-// After a 429 or a 5xx status, it waits and fetches the source again, up to 3 times.
+// After a 429, a 5xx status or an error of fetch, it waits and fetches the source again, up to 3 times.
 export async function deadSources(sources: readonly string[], fetch: (url: string) => Promise<Response>, sleep: (ms: number) => Promise<unknown>) {
   const dead = new Map<string, string>();
   for (const source of new Set(sources)) {

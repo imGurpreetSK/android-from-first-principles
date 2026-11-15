@@ -47,10 +47,19 @@ test('rejects a source that still has a rate limit after 3 retries', async () =>
   });
 });
 
-test('rejects a source whose fetch fails, for example a host that DNS does not know', async () => {
+test('rejects a source whose fetch fails each time, for example a host that DNS does not know', async () => {
   const host = 'https://no-such-host.example.invalid/';
-  const error = new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND no-such-host.example.invalid') });
-  expect(await check([host], { [host]: [error] })).toEqual({ dead: { [host]: 'Error: getaddrinfo ENOTFOUND no-such-host.example.invalid' }, fetched: [host], waits: [] });
+  const error = () => new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND no-such-host.example.invalid') });
+  expect(await check([host], { [host]: [error(), error(), error(), error()] })).toEqual({
+    dead: { [host]: 'Error: getaddrinfo ENOTFOUND no-such-host.example.invalid' },
+    fetched: [host, host, host, host],
+    waits: [1000, 2000, 4000],
+  });
+});
+
+test('accepts a source whose first fetch fails with ECONNRESET and whose second fetch gives 200', async () => {
+  const error = new TypeError('fetch failed', { cause: new Error('read ECONNRESET') });
+  expect(await check([page], { [page]: [error, status(200)] })).toEqual({ dead: {}, fetched: [page, page], waits: [1000] });
 });
 
 test('fetches a YouTube video through the YouTube oEmbed endpoint, because the watch page gives 200 for a video that does not exist', async () => {
