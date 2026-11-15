@@ -8,9 +8,9 @@ import { parseFrontmatter } from 'astro/markdown';
 import { unpinned } from '../src/codeLinks.ts';
 
 const docs = fileURLToPath(new URL('../src/content/docs/', import.meta.url));
-// The file extensions that the Starlight docs loader reads.
+// The files that the Starlight docs loader reads: these extensions, and no file name that starts with _.
 const chapters = readdirSync(docs, { recursive: true, encoding: 'utf8' })
-  .filter((file) => /\.(markdown|mdown|mkdn|mkd|mdwn|md|mdx)$/.test(file))
+  .filter((file) => /(^|\/)[^_/][^/]*\.(markdown|mdown|mkdn|mkd|mdwn|md|mdx)$/.test(file))
   .map((file) => {
     const { sources } = parseFrontmatter(readFileSync(join(docs, file), 'utf8')).frontmatter;
     return { file: join(docs, file), sources: Array.isArray(sources) ? (sources as string[]) : [] };
