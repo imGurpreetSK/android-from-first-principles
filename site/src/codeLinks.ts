@@ -9,7 +9,7 @@ const gitilesPin = /^[^+]*\/\+\/(refs\/tags\/[^/]+|[0-9a-f]{40})(\/|$)/;
 // 1. Each link on cs.android.com.
 // 2. A link to the GitHub mirror of AOSP (github.com/aosp-mirror/<repo>) or of AndroidX (github.com/androidx/androidx).
 // 3. A link to R8 code on github.com or on a Gitiles host other than r8.googlesource.com. R8 code has the package path com/android/tools/r8/.
-// 4. A link to AGP code on github.com or on a Gitiles host, outside android.googlesource.com/platform/tools/base. AGP code has the package path com/android/build/ (com.android.build.gradle and com.android.build.api).
+// 4. A link to AGP code on github.com or on a Gitiles host, outside android.googlesource.com/platform/tools/base. AGP code has the package paths com/android/build/ and com/android/builder/. R8 on r8.googlesource.com also has com/android/build/shrinker/, so the rule skips r8.googlesource.com.
 // 5. A Gitiles link without +/refs/tags/<tag>/ or +/<40-character SHA>/.
 export function codeLinkError(source: string) {
   const url = URL.parse(source);
@@ -26,7 +26,7 @@ export function codeLinkError(source: string) {
   if (code && path.includes('/com/android/tools/r8/') && host !== 'r8.googlesource.com') {
     return 'Cite R8 code on r8.googlesource.com.';
   }
-  if (code && path.includes('/com/android/build/') && !(host === 'android.googlesource.com' && path.startsWith('/platform/tools/base/+/'))) {
+  if (code && /\/com\/android\/build(er)?\//.test(path) && host !== 'r8.googlesource.com' && !(host === 'android.googlesource.com' && path.startsWith('/platform/tools/base/+/'))) {
     return 'Cite AGP code in platform/tools/base on android.googlesource.com.';
   }
   if (gitiles && !gitilesPin.test(path)) {

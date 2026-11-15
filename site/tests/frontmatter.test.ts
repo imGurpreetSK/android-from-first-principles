@@ -120,6 +120,9 @@ describe('chapter frontmatter', () => {
   test.each([
     'https://r8.googlesource.com/r8/+/refs/tags/8.5.35/src/main/java/com/android/tools/r8/R8.java',
     'https://android.googlesource.com/platform/tools/base/+/refs/tags/studio-2025.1.1/build-system/gradle-core/src/main/java/com/android/build/gradle/BaseExtension.kt',
+    'https://android.googlesource.com/platform/tools/base/+/refs/tags/studio-2025.1.1/build-system/gradle-core/src/main/java/com/android/builder/core/AbstractBuildType.kt',
+    // The resource shrinker of R8 has the AGP package path com/android/build/.
+    'https://r8.googlesource.com/r8/+/refs/tags/8.5.35/src/resourceshrinker/java/com/android/build/shrinker/ResourceShrinkerImpl.kt',
     // A doc page of the AGP API is not code.
     'https://developer.android.com/reference/tools/gradle-api/8.7/com/android/build/api/dsl/ApplicationExtension',
     // GitHub code that is not AOSP, AndroidX, R8 or AGP. The GitHub tag check in CI checks its ref.
@@ -136,6 +139,7 @@ describe('chapter frontmatter', () => {
     ['https://github.com/example/r8/blob/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/tools/r8/R8.java', 'Cite R8 code on r8.googlesource.com.'],
     ['https://android.googlesource.com/platform/external/r8/+/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/tools/r8/R8.java', 'Cite R8 code on r8.googlesource.com.'],
     ['https://github.com/example/agp/blob/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/build/gradle/BaseExtension.kt', 'Cite AGP code in platform/tools/base'],
+    ['https://github.com/example/agp/blob/0123456789abcdef0123456789abcdef01234567/build-system/gradle-core/src/main/java/com/android/builder/core/AbstractBuildType.kt', 'Cite AGP code in platform/tools/base'],
     // The AGP repo before platform/tools/base.
     ['https://android.googlesource.com/platform/tools/build/+/0123456789abcdef0123456789abcdef01234567/gradle/src/main/groovy/com/android/build/gradle/AppPlugin.groovy', 'Cite AGP code in platform/tools/base'],
   ])('rejects the source %s, because it is not on the host of its project, and names the source', (source, fix) => {
