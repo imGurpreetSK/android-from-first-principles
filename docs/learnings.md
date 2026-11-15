@@ -23,7 +23,7 @@ Entry format, one or two lines:
 
 2026-11-14: A staff reviewer searched a Gradle `--info` log, and the search printed full classpath lines. The output was about 5,000 tokens. Rule: Before you print lines of a Gradle `--info` log, cut each line to a fixed width, for example with `cut -c1-200`.
 
-2026-11-14: A fixer printed the full `gradlew --help` to check one flag. The fixer also ran the samples build without `-q`. The two outputs were about 5,000 tokens. Rule: Run `samples/gradlew -q -p samples build`. With `-q`, Gradle logs only errors. A pass prints nothing, or only the paths of the lint reports. To check one flag, save the help output to a file, and read only the line that you need.
+2026-11-14: A fixer printed the full `gradlew --help` to check one flag. The fixer also ran the samples build with the default log level. The two outputs were about 5,000 tokens. Rule: For the samples command of "Build and test", run `samples/gradlew -w -p samples build`. With `-w`, Gradle logs only warnings and errors. Do not use `-q`, because it hides the deprecation warnings. A pass prints nothing, or only the paths of the lint reports. To check one flag, save the help output to a file, and read only the line that you need.
 
 2026-11-14: Two fact checkers gave an Astro root outside the worktree a `node_modules` symlink to `site/node_modules`. The default Astro `cacheDir` is `./node_modules/.astro`, so Astro wrote the page of a scratch root into `site/node_modules/.astro/data-store.json`. Rule: Do not link the `node_modules` of an Astro root to `site/node_modules`. To run the site tests of a commit outside the worktree, copy `node_modules` with `cp -cR`. To prove what a build does, use a fixture in `site/tests/fixtures/`, or read the Astro source.
 
