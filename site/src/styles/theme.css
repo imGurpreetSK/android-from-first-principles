@@ -1,7 +1,7 @@
-/* The Fontsource files in customCss give Roboto and Roboto Mono. Starlight adds the system fonts as a fallback. */
+/* The fonts config in astro.config.mjs gives these variables. Each holds the font, its size-matched fallback fonts and a generic family. */
 :root {
-  --sl-font: 'Roboto';
-  --sl-font-mono: 'Roboto Mono';
+  --sl-font: var(--font-roboto);
+  --sl-font-mono: var(--font-roboto-mono);
 }
 
 /* Dark mode. #3ddc84 is the Android green of the Android brand guidelines. Link text (accent-high) on the page background: 9.9:1. */

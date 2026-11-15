@@ -1,0 +1,9 @@
+---
+import { Font } from 'astro:assets';
+import Default from '@astrojs/starlight/components/Head.astro';
+// Each <Font /> adds the @font-face rules and the CSS variable of one family in the fonts config of astro.config.mjs.
+---
+
+<Default />
+<Font cssVariable="--font-roboto" />
+<Font cssVariable="--font-roboto-mono" />

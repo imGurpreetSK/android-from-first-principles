@@ -34,30 +34,45 @@ test('no built HTML or CSS file loads a font or a stylesheet from another host',
   }
 });
 
+// The <Font /> component puts the @font-face rules into the head of each page. Keep one copy of each rule.
+const fontFaces = () => [...new Set(files.flatMap(({ text }) => [...text.matchAll(/@font-face\s*\{([^}]*)\}/g)].map(([, body]) => body)))];
+
+test('the build has only latin woff2 font files from the Fontsource packages', () => {
+  const latin = new Set(['roboto', 'roboto-mono'].flatMap((pkg) => {
+    const dir = join(root, 'node_modules/@fontsource', pkg, 'files');
+    return readdirSync(dir).filter((name) => /-latin-\d+-(normal|italic)\.woff2$/.test(name)).map((name) => readFileSync(join(dir, name)).toString('base64'));
+  }));
+  const fonts = readdirSync(outDir, { recursive: true, encoding: 'utf8' }).filter((name) => /\.(woff2?|ttf|otf|eot)$/.test(name));
+  expect(fonts).not.toHaveLength(0);
+  for (const name of fonts) expect(latin.has(readFileSync(join(outDir, name)).toString('base64')), name).toBe(true);
+});
+
 test.each([
-  ['Roboto', ['400', '600', '700']],
-  ['Roboto Mono', ['400', '600']],
-])('the built CSS has @font-face rules for %s in weights %j with font files on the site', (family, weights) => {
-  const css = files.filter(({ name }) => name.endsWith('.css')).map(({ text }) => text).join('\n');
-  const rules = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)]
-    .map(([, body]) => body)
-    .filter((body) => new RegExp(`font-family:\\s*["']?${family}["']?\\s*(;|$)`).test(body));
-  expect(rules).not.toHaveLength(0);
-  for (const weight of weights) expect(rules.some((body) => new RegExp(`font-weight:\\s*${weight}\\s*(;|$)`).test(body)), weight).toBe(true);
+  ['Roboto', ['400 italic', '400 normal', '600 normal', '700 normal']],
+  ['Roboto Mono', ['400 normal', '600 normal']],
+])('the built pages have @font-face rules for %s in %j with font files on the site', (family, faces) => {
+  // Astro adds a hash to the family name, for example Roboto-b55900a43a44a289.
+  const rules = fontFaces().filter((body) => new RegExp(`font-family:\\s*["']?${family}-[0-9a-f]+["']?\\s*(;|$)`).test(body));
+  expect(rules.map((body) => `${body.match(/font-weight:\s*(\d+)/)?.[1]} ${body.match(/font-style:\s*(\w+)/)?.[1]}`).sort()).toEqual(faces);
   for (const body of rules) {
     const urls = [...body.matchAll(/url\(\s*["']?([^"')]+)/g)].map(([, url]) => url);
     expect(urls, family).not.toHaveLength(0);
-    // Vite puts a small font file into the CSS as a data URL.
-    for (const url of urls) expect(url.startsWith('data:') || existsSync(join(outDir, url)), url.slice(0, 80)).toBe(true);
+    for (const url of urls) expect(existsSync(join(outDir, url)), url.slice(0, 80)).toBe(true);
   }
 });
 
 test.each([
-  ['--sl-font', 'Roboto'],
-  ['--sl-font-mono', 'Roboto Mono'],
-])('the built CSS sets %s to %s', (property, family) => {
-  const css = files.filter(({ name }) => name.endsWith('.css')).map(({ text }) => text).join('\n');
-  expect(new RegExp(`${property}:\\s*["']?${family}["']?\\s*[;}]`).test(css), property).toBe(true);
+  ['--sl-font', '--font-roboto', 'Roboto'],
+  ['--sl-font-mono', '--font-roboto-mono', 'Roboto Mono'],
+])('%s is var(%s): %s, then a local font with metric overrides', (property, variable, family) => {
+  const text = files.map(({ text }) => text).join('\n');
+  expect(new RegExp(`${property}:\\s*var\\(${variable}\\)\\s*[;}]`).test(text), property).toBe(true);
+  const [font, fallback] = (text.match(new RegExp(`${variable}:([^;}]+)`))?.[1] ?? '').split(',').map((name) => name.trim().replace(/^"|"$/g, ''));
+  expect(font).toMatch(new RegExp(`^${family}-[0-9a-f]+$`));
+  expect(fallback).toMatch(new RegExp(`^${font} fallback: `));
+  const face = fontFaces().find((body) => body.includes(`font-family:"${fallback}"`));
+  expect(face).toMatch(/src:\s*local\(/);
+  expect(face).toMatch(/ascent-override:/);
 });
 
 test('a printed page gets the light accent color in each theme', () => {
