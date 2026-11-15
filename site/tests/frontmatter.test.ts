@@ -102,8 +102,8 @@ describe('chapter frontmatter', () => {
   test.each([
     'https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java',
     'https://android.googlesource.com/platform/frameworks/support/+/0123456789abcdef0123456789abcdef01234567/lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/ViewModel.kt',
-    // Kernel code from the Android Common Kernel at a release tag.
-    'https://android.googlesource.com/kernel/common/+/refs/tags/android16-6.12-2025-06_r1/kernel/sched/core.c',
+    // Kernel code from the Android Common Kernel at a GKI release tag.
+    'https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r1/kernel/sched/core.c',
   ])('accepts the pinned Gitiles source %s', (source) => {
     expect(messages([source])).toEqual([]);
   });
