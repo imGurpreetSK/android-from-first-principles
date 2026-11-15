@@ -19,6 +19,8 @@ sources:
   - https://developer.android.com/reference/android/os/Handler
   - https://developer.android.com/reference/android/os/MessageQueue
   - https://developer.android.com/guide/components/processes-and-threads
+  - https://developer.android.com/about/versions/17/behavior-changes-17
+  - https://developer.android.com/about/versions/17/changes/messagequeue
 rebuild: true
 device: true
 drafted: ai
