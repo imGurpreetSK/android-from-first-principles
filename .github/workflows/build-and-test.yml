@@ -28,6 +28,8 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run check
+      # Each GitHub source must point to a full SHA or a tag. The check runs git ls-remote --tags, so it needs the network, and astro build does not run it.
+      - run: node scripts/github-tags.ts
 
   samples:
     # The ubuntu-24.04 image has the Android SDK, the platform and the build tools that samples/ needs. It also sets ANDROID_HOME.

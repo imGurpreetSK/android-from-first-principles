@@ -34,3 +34,22 @@ export function codeLinkError(source: string) {
   }
   return undefined;
 }
+
+// A GitHub link to code, for example https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/README.md. The ref is the path segment after blob, tree, blame or raw.
+const github = /^https?:\/\/github\.com\/([^/]+\/[^/]+)\/(?:blob|tree|blame|raw)\/([^/?#]+)/i;
+const sha = /^[0-9a-f]{40}$/;
+// Each line of git ls-remote --tags is "<SHA>\trefs/tags/<tag>". An annotated tag also has a line that ends in ^{}.
+const tag = /\trefs\/tags\/(.+?)(\^\{\})?$/gm;
+
+// Returns each GitHub code link in sources whose ref is not a full 40-character SHA and not a tag.
+// lsRemote(repo) returns the output of git ls-remote --tags <repo>. This function calls it one time for each repo, and only for a repo with a link that has no full SHA.
+export function unpinned(sources: readonly string[], lsRemote: (repo: string) => string) {
+  const tags = new Map<string, Set<string>>();
+  return sources.filter((source) => {
+    const [, repo, ref] = github.exec(source) ?? [];
+    if (!repo || sha.test(ref)) return false;
+    let repoTags = tags.get(repo);
+    if (!repoTags) tags.set(repo, (repoTags = new Set(Array.from(lsRemote(`https://github.com/${repo}`).matchAll(tag), (m) => m[1]))));
+    return !repoTags.has(ref);
+  });
+}
