@@ -33,6 +33,8 @@ Start each subagent brief with this text:
    - If `$ARGUMENTS` is not one chapter slug of lowercase letters, digits and hyphens, say "Usage: `/chapter-plan <slug>`" and stop.
    - If `git status --porcelain` shows changes, say "Commit or remove your changes. Then run `/chapter-plan` again." and stop.
    - In `git remote -v`, find the remote whose URL has `imGurpreetSK/android-from-first-principles`. This text calls it `<upstream>`.
+   - If no remote has this URL, say "Add the upstream remote: `git remote add upstream https://github.com/imGurpreetSK/android-from-first-principles.git`." and stop.
+   - Run `gh api user --jq .login`. This text calls the output `<owner>`. If `<owner>` is `imGurpreetSK`, the push remote is `<upstream>`. If not, the push remote is the remote whose URL has `<owner>/android-from-first-principles`. If no remote has this URL, say "Fork the repo with your user account, and add the fork as a remote." and stop. This text calls the push remote `<push remote>`.
    - Run `git fetch <upstream> main`. Then run `git switch --detach <upstream>/main`.
 2. Check the slug. If a check fails, say the message and stop.
    - The slug names the topic of exactly one entry in docs/DESIGN.md, "Curriculum". For example, `main-thread` names "05 Main thread: Looper / Handler / MessageQueue", and `first-frame` names "06 Choreographer & the first frame". Message: "`<slug>` is not in the curriculum."
@@ -111,7 +113,7 @@ Start each subagent brief with this text:
     - Run `git status`. Stage only the chapter file.
     - Commit with the subject `Add the frontmatter of the <slug> chapter: its chapter plan (source list, rebuild and device), checked stamp and editor`.
 12. Push the branch and open the PR.
-    - Find the remote that you can push to: your fork, or `<upstream>` if you are the maintainer. `<owner>` is the owner in its URL. Run `git push -u <remote> chapter/<slug>`.
+    - Run `git push -u <push remote> chapter/<slug>`.
     - Write the PR body to a file in the session scratch directory. Put in the body:
       - Each source, with the claim that it supports. For each source of a "Since Android <version>…" note, also give the version of the note.
       - `rebuild` and `device`, each with its reason.
