@@ -26,7 +26,7 @@ async function failure(url: string, fetch: (url: string) => Promise<Response>, s
       // Node fetch gives the error "fetch failed". Its cause has the system error, for example ENOTFOUND for a host that DNS does not know.
       return String((error as Error).cause ?? error);
     }
-    // The check needs only the status, so it does not download the body.
+    // The check needs only the status. It cancels the body, so that fetch frees the connection.
     await response.body?.cancel();
     if (response.ok) return undefined;
     if (attempt === retries || !retry(response.status)) return `status ${response.status}`;
