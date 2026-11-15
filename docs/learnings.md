@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A writer ran `curl -s -o /dev/null -w … <url1> <url2> <url3>`. The `-o` option applies only to the first URL, so curl printed 746 KB of pages. Rule: Give curl one URL in each call, or one `-o` for each URL.
+
 2026-11-14: Two agents put a `console.log` in a scratch Vitest test, and the run printed nothing. In the Bash tool, Vitest 5.0.5 printed the `console.log` output of a failed test, but not of a passed test. Rule: To read a value from a Vitest run, put the value in an assertion message or a thrown error.
 
 2026-11-14: The parent agent started a long check with `&` in a Bash call. A command that `&` starts gives no notification when it ends. A staff reviewer read the output file of a background command several times while the command ran. If a foreground Bash call passes its timeout, the Bash tool does not stop the command. The tool moves the command to the background. Rule: Start a long command with the `run_in_background` option of the Bash tool, not with `&`. Then wait for its notification. Do not read its output file while it runs. To wait for a condition, run an until-loop with the `run_in_background` option.
