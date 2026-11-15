@@ -108,7 +108,7 @@ Start each subagent brief with this text:
     If a check fails because of the frontmatter, fix the frontmatter and run all the checks again. If a check fails for a different reason, or if you cannot fix it, do not commit. Report the check and its error, and stop.
 11. Commit the chapter file alone.
     - Run `git status`. Stage only the chapter file.
-    - Commit with the subject `Add the chapter plan of <slug>: its source list, rebuild and device`.
+    - Commit with the subject `Add the frontmatter of the <slug> chapter: its chapter plan (source list, rebuild and device), checked stamp and editor`.
 12. Push the branch and open the PR.
     - Find the remote that you can push to: your fork, or `<upstream>` if you are the maintainer. `<owner>` is the owner in its URL. Run `git push -u <remote> chapter/<slug>`.
     - Write the PR body to a file in the session scratch directory. Put in the body:
