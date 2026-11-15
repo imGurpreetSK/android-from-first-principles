@@ -51,7 +51,7 @@ Start each subagent brief with this text:
    - The path of the chapter file: `site/src/content/docs/<section slug>/<slug>.md`. `site/src/sections.ts` gives the section slug.
 5. Get the baseline (docs/DESIGN.md, "Sourcing rules").
    - If the section is The Launch Path, set `android` to `17` and `aosp` to `android-17.0.0_r1`.
-   - If the section is a different section, run `git ls-remote --tags https://android.googlesource.com/platform/manifest`. Read only the tags of the form `android-<N>.<n>.<n>_r<n>`. Set `android` to the largest `<N>`. Set `aosp` to the tag of that release with the largest `_r<n>`.
+   - If the section is a different section, run `git ls-remote --tags https://android.googlesource.com/platform/manifest`. Read only the tags of the form `android-<N>.<n>.<n>_r<n>`. Set `android` to the largest `<N>`. Set `aosp` to `android-<N>.0.0_r1`, where `<N>` is the value of `android`.
 6. Start the planner. Brief:
 
    > Propose the chapter plan of this chapter. Obey docs/DESIGN.md, "Reader", "Chapter shape", "Sourcing rules" and "Code samples".
