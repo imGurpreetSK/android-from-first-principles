@@ -8,6 +8,8 @@ const astro = fileURLToPath(new URL('../node_modules/.bin/astro', import.meta.ur
 // Without these keys, astro build uses its default mode, production, as the CI build does.
 const env = { ...process.env };
 for (const key of ['MODE', 'NODE_ENV', 'DEV', 'PROD', 'SSR', 'BASE_URL']) delete env[key];
+// NO_COLOR turns off the color of piccolore (Astro) and picocolors (Vite). Without it, CI or FORCE_COLOR turns color on, and ANSI codes break the text assertions on the build output.
+env.NO_COLOR = '1';
 
 // Runs astro build with these arguments in production mode.
 // spawnSync blocks the thread, so the Vitest timeout cannot stop a stuck build. The spawnSync timeout stops it.
