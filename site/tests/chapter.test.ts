@@ -25,6 +25,11 @@ beforeAll(() => {
 
 afterAll(() => rmSync(outDir, { recursive: true, force: true }));
 
+test('the build is a production build, so a chapter has the search box', () => {
+  // In a dev build, Starlight shows a warning in place of the search box.
+  expect(chapter.includes('id="starlight__search"')).toBe(true);
+});
+
 test('a chapter shows the checked stamp at the top of its content', () => {
   const stamp = chapter.match(/<div class="sl-markdown-content"><div class="checked-stamp">([\s\S]*?)<\/div>/)?.[1];
   for (const text of [
