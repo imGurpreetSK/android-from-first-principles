@@ -53,7 +53,7 @@ export async function deadSources(sources: readonly string[], fetch: (url: strin
 // The weekly source check keeps the sources that do not load in one open issue with this title.
 const issueTitle = 'Sources that do not load';
 
-// The GitHub issue calls of the weekly source check. open() gives the open issues of the repo.
+// The GitHub issue calls of the weekly source check. open() gives the open issues of the repo, the newest issue first.
 export interface Issues {
   open(): { number: number; title: string }[];
   create(title: string, body: string): void;
@@ -61,7 +61,7 @@ export interface Issues {
   close(number: number, comment: string): void;
 }
 
-// Reports the result of the weekly source check in the first open issue with the title issueTitle.
+// Reports the result of the weekly source check in the newest open issue with the title issueTitle.
 // If a source does not load, it updates the body of that issue, or opens the issue if no open issue has the title.
 // If all sources load, it closes the issue. Thus an open issue shows only the sources that did not load at the last run. If a source does not load later, the run opens a new issue.
 export function reportDeadSources(dead: ReadonlyMap<string, string>, chapters: readonly { file: string; sources: readonly string[] }[], issues: Issues) {

@@ -114,7 +114,7 @@ test('opens one issue with each source that does not load in each chapter, if no
   ]);
 });
 
-test('updates the body of the first open issue with the title, and opens no issue', () => {
+test('updates the body of the newest open issue with the title, and opens no issue', () => {
   const open = [{ number: 3, title: 'Challenge a claim' }, { number: 9, title }, { number: 7, title }];
   expect(report({ [page]: 'status 410' }, open)).toEqual([['edit', 9, body(`- \`site/src/content/docs/a.md\`: ${page} (status 410)`)]]);
 });
