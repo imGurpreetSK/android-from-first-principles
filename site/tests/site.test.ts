@@ -23,6 +23,22 @@ beforeAll(() => {
 
 afterAll(() => rmSync(outDir, { recursive: true, force: true }));
 
+test('astro build makes a home page with the page title, the hero title and the tagline', () => {
+  const html = readFileSync(join(outDir, 'index.html'), 'utf8');
+  expect(html).toContain('<title>Android from First Principles</title>');
+  // Without a hero, Starlight also renders the page title as an h1. Thus look for the h1 and the tagline in the hero.
+  expect(html).toMatch(/<div class="hero[ "][^>]*>[\s\S]*?<h1[^>]*>Android from First Principles<\/h1>[\s\S]*?<div class="tagline[ "][^>]*>The machinery under Android app development\.<\/div>/);
+});
+
+test('astro build makes an About page with each sentence of the AI disclosure in docs/DESIGN.md', () => {
+  // The disclosure is the nested list in the "AI disclosure" section of docs/DESIGN.md.
+  const section = readFileSync(new URL('../../docs/DESIGN.md', import.meta.url), 'utf8').match(/^## AI disclosure\n([\s\S]*?)^## /m)![1];
+  const sentences = [...section.matchAll(/^  - (.+)$/gm)].map(([, sentence]) => sentence);
+  expect(sentences).not.toHaveLength(0);
+  const main = readFileSync(join(outDir, 'about/index.html'), 'utf8').match(/<main[\s\S]*<\/main>/)![0];
+  for (const sentence of sentences) expect(main.includes(sentence), sentence).toBe(true);
+});
+
 test('no built HTML or CSS file loads a font or a stylesheet from another host', () => {
   expect(files.length).toBeGreaterThan(0);
   for (const { name, text } of files) {
