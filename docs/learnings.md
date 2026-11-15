@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-15: Two doc fixers gave `git commit` a message with quotes or backslashes on the command line. In a double-quoted argument, zsh runs a command in backticks, expands `$NAME`, and removes the backslash before `"` and `\`. Rule: If a commit message has a quote, a backslash, a backtick or `$`, write the message with the Write tool to a file in your task directory of the session scratch directory. Then run `git commit -F <file>`.
+
 2026-11-15: A learnings writer ran `find <dir> -not -path '*/node_modules/*'` with a start directory inside `node_modules`. `find` printed nothing and exited 0. `-path` matches the full path, and each path starts with the start directory, so the filter removed each path. Rule: Before you trust an empty `find` result, make sure that no `-path` filter matches the start directory.
 
 2026-11-15: A subagent ran `git rebase -i` on `main` in the main checkout, with an edit stop, and left the rebase in progress. The main checkout had a detached HEAD on an old commit, and the dev server served old files. The parent agent ran `cd` into a worktree in a Bash call. In the main session, a `cd` to a directory in the working directories carries to the next Bash call. Later git commands without `-C` ran in that worktree. A merge failed, and the parent agent closed a task before its merge. Rule: If you are a subagent, do not run a git command that changes state in the main checkout, for example `rebase`, `checkout`, `switch`, `commit` or `reset`. Do not `cd` into a worktree. Give each git command `-C` and the absolute path of its checkout or worktree. Before you close a task, check the result of each step.
