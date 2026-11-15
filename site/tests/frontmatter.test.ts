@@ -165,6 +165,7 @@ describe('chapter frontmatter', () => {
     ['https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux/+/refs/tags/v6.12/kernel/sched/core.c', 'Cite kernel code on android.googlesource.com in kernel/common'],
     ['https://sqlite.org/src/file?name=src/wal.c&ci=trunk', 'Cite SQLite code on github.com/sqlite/sqlite'],
     ['https://www.sqlite.org/src/file?name=src/wal.c&ci=trunk', 'Cite SQLite code on github.com/sqlite/sqlite'],
+    ['https://www.sqlite.org/cgi/src/file/src/wal.c', 'Cite SQLite code on github.com/sqlite/sqlite'],
   ])('rejects the source %s, because it is not on the host of its project, and names the source', (source, fix) => {
     expect(messages([source])).toEqual([expect.stringContaining(`${source}: ${fix}`)]);
   });
