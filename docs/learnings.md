@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-15: A learnings writer ran `find <dir> -not -path '*/node_modules/*'` with a start directory inside `node_modules`. `find` printed nothing and exited 0. `-path` matches the full path, and each path starts with the start directory, so the filter removed each path. Rule: Before you trust an empty `find` result, make sure that no `-path` filter matches the start directory.
+
 2026-11-15: A subagent ran `git rebase -i` on `main` in the main checkout, with an edit stop, and left the rebase in progress. The main checkout had a detached HEAD on an old commit, and the dev server served old files. The parent agent ran `cd` into a worktree in a Bash call. In the main session, a `cd` to a directory in the working directories carries to the next Bash call. Later git commands without `-C` ran in that worktree. A merge failed, and the parent agent closed a task before its merge. Rule: If you are a subagent, do not run a git command that changes state in the main checkout, for example `rebase`, `checkout`, `switch`, `commit` or `reset`. Do not `cd` into a worktree. Give each git command `-C` and the absolute path of its checkout or worktree. Before you close a task, check the result of each step.
 
 2026-11-14: A fixer ran the tests with the filter `-t "cite|missingSource"`. The filter skipped a test whose name did not match. Rule: After a filtered test run, read the "Tests" line of the summary. Make sure that the count of passed tests is the count of tests that you expect to match the filter. A filtered run does not replace the full `npm test` of "Build and test".
