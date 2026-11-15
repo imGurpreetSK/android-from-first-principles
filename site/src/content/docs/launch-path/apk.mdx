@@ -45,3 +45,26 @@ device: true
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+## The problem
+
+Section 1 follows one cold start of the launch app, from the launcher tap to the first frame. The cold start begins with one file on the device: the APK that the build wrote.
+
+An APK is a ZIP file ([ABIs, "Native code in app packages"](https://developer.android.com/ndk/guides/abis#native-code-in-app-packages)). The build puts the code, the resources and the manifest into it as ZIP entries:
+
+- `classes.dex` holds the code as DEX bytecode. D8 compiles the Java bytecode of the project into DEX bytecode ([d8](https://developer.android.com/tools/d8)).
+- `resources.arsc` holds the resource table. `AndroidManifest.xml` holds the manifest. AAPT2 compiles the resources into a binary format, and then links them and the manifest into the APK ([AAPT2](https://developer.android.com/tools/aapt2)).
+
+The signature is not a ZIP entry. It is in the APK Signing Block, immediately before the ZIP Central Directory ([APK signature scheme v2, "APK signing block"](https://source.android.com/docs/security/features/apksigning/v2#apk-signing-block)).
+
+The platform does not unpack the APK. It reads the entries in place, from the APK file:
+
+- ART maps `classes.dex` directly from the APK file ([dex_file_loader.cc, lines 548–572](https://android.googlesource.com/platform/art/+/refs/tags/android-17.0.0_r1/libdexfile/dex/dex_file_loader.cc#548)).
+- `libandroidfw` opens `resources.arsc` with `mmap` ([ApkAssets.cpp, lines 118–120](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/androidfw/ApkAssets.cpp#118)).
+
+With `mmap`, a process reads the bytes of a file directly, with no copy in RAM ([zipalign](https://developer.android.com/tools/zipalign)). ART and `libandroidfw` map an entry only if two conditions are true:
+
+- The entry is stored. The ZIP file holds a stored entry with no compression, so the bytes in the APK are the bytes of the file.
+- The data of the entry starts at an aligned offset. For a DEX file and for the resource table, the offset must be a multiple of 4 ([DEX format, "header_item"](https://source.android.com/docs/core/runtime/dex-format#header-item); [Asset.cpp, lines 698–726](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/androidfw/Asset.cpp#698)).
+
+If an entry does not meet the two conditions, the platform copies the entry into RAM, or the install fails. A ZIP file can be valid and not meet them. This chapter builds such a ZIP file, shows where it breaks, and then shows how the real build prevents the problem.
