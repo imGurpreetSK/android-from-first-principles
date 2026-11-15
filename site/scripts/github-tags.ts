@@ -17,8 +17,9 @@ const chapters = readdirSync(docs, { recursive: true, encoding: 'utf8' })
   });
 
 // With GIT_TERMINAL_PROMPT=0, git fails on a repo that does not exist. It does not ask for a user name.
+// The tag list of a large repo is larger than the default buffer of 1 MiB. For example, JetBrains/kotlin has about 7 MB.
 const lsRemote = (repo: string) =>
-  execFileSync('git', ['ls-remote', '--tags', repo], { encoding: 'utf8', timeout: 60_000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
+  execFileSync('git', ['ls-remote', '--tags', repo], { encoding: 'utf8', timeout: 60_000, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
 
 const bad = new Set(unpinned(chapters.flatMap((chapter) => chapter.sources), lsRemote));
 for (const { file, sources } of chapters) {
