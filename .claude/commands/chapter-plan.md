@@ -51,6 +51,7 @@ Start each subagent brief with this text:
    > Propose the chapter plan of this chapter. Obey docs/DESIGN.md, "Reader", "Chapter shape", "Sourcing rules" and "Code samples".
    > - Propose the sources that the chapter needs: AOSP code, official docs, talks and library code. One source is one code file at a pinned ref, one doc page or one talk. Give no line number, anchor or timestamp.
    > - Pin each code link as "Sourcing rules" says. For AOSP code, write `https://android.googlesource.com/<project>/+/refs/tags/<aosp>/<path>`. For AndroidX code, use android.googlesource.com at a full commit SHA of the release branch of the library, at the version that you give for the library. For other code with GitHub release tags, use github.com at the tag.
+   > - If the behavior of the chapter differs in a release back to Android 10 (API 29), propose a source for each "Since Android <version>…" note (docs/DESIGN.md, "Sourcing rules"). The source is the behavior-changes page of that release, or the AOSP code at the tag of that release. The tag is `android-<N>.0.0_r1`, where `<N>` is the release number of the note. Write the link as `https://android.googlesource.com/<project>/+/refs/tags/android-<N>.0.0_r1/<path>`. Read the file at that tag. Do not use the tag `<aosp>` for it. Give the version of the note for each such source.
    > - Before you add a source, read it at its pinned ref. A file can move between releases. If a file does not exist at the ref, find its path at the ref, or do not add it. To list a Gitiles directory, run `curl -sL '<directory URL>?format=JSON'`.
    > - Propose `rebuild`. Set it to true if a small Kotlin toy of the mechanism, with a deterministic breaking test, obeys "Code samples".
    > - Propose `device`. Set it to true if device prompts on the launch app can show the mechanism.
@@ -65,7 +66,7 @@ Start each subagent brief with this text:
 
 7. Start a new subagent, the validator. Give it the sources and the lines or headings of the planner. Brief:
 
-   > For each source, read it at its pinned ref. Make sure that the source exists, that it has the line or heading that the planner gives, and that its link obeys docs/DESIGN.md, "Sourcing rules". Return each source as confirmed or not confirmed, with the reason. Do not edit files.
+   > For each source, read it at its pinned ref. Make sure that the source exists, that it has the line or heading that the planner gives, and that its link obeys docs/DESIGN.md, "Sourcing rules". Make sure that each source for a "Since Android <version>…" note is at a release tag of that version. Return each source as confirmed or not confirmed, with the reason. Do not edit files.
 
    Remove each source that the validator does not confirm. If no source is left, say "No source is confirmed." and stop.
 8. Set the other fields of `checked`:
