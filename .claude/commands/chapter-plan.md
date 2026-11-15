@@ -122,7 +122,8 @@ Start each subagent brief with this text:
       - Each source, with the claim that it supports. For each source of a "Since Android <version>…" note, also give the version of the note.
       - `rebuild` and `device`, each with its reason and its details from the planner.
       - This line: "The maintainer approves this plan with a "plan approved" comment (CONTRIBUTING.md, "Maintainer"). Then `/chapter-draft <slug>` can start."
-    - Run `gh pr create --repo imGurpreetSK/android-from-first-principles --base main --head <owner>:chapter/<slug> --title "Plan the <slug> chapter" --body-file <file>`. Do not pass `--no-maintainer-edit`. Without it, the maintainer can push to the PR branch.
+      - This line: "This PR is a draft, so nobody can merge it before the chapter is done. The maintainer marks it ready at the Merge step."
+    - Run `gh pr create --repo imGurpreetSK/android-from-first-principles --base main --head <owner>:chapter/<slug> --title "Plan the <slug> chapter" --body-file <file> --draft`. Do not pass `--no-maintainer-edit`. Without it, the maintainer can push to the PR branch.
 13. Add the mistakes to the log. If the list is empty, skip this step. Run `git switch -c learnings/plan-<slug> <upstream>/main`. Start a new subagent and give it your list of mistakes. Brief:
 
     > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the commits in `git log --oneline -15 -- docs/learnings.md`. Do not push.
