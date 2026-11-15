@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: The parent agent started a long check with `&` in a Bash call. A command that `&` starts gives no notification when it ends. A staff reviewer read the output file of a background command several times while the command ran. If a foreground Bash call passes its timeout, the Bash tool does not stop the command. The tool moves the command to the background. Rule: Start a long command with the `run_in_background` option of the Bash tool, not with `&`. Then wait for its notification. Do not read its output file while it runs. To wait for a condition, run an until-loop with the `run_in_background` option.
+
 2026-11-14: The parent agent suggested a remark plugin from memory in a writer brief. By default, Astro 7.4.4 uses the Sätteri Markdown processor. `markdown.remarkPlugins` needs the package `@astrojs/markdown-remark`, and the site does not install it. Rule: In Astro 7.4.4, write a Markdown plugin as a Sätteri plugin. Give it to `satteri()` in the `mdastPlugins` or `hastPlugins` option.
 
 2026-11-14: A fact checker ran a recursive `grep` on the whole session scratch directory. The directory holds Gradle caches, so the search ran past the 120-second timeout. A writer ran `ls -R` on the `system-images` directory of the Android SDK, and the output was about 11,000 tokens. Rule: Before a recursive search or list, list one level with `find <dir> -maxdepth 1`. Then search or list only the subdirectories that you need.
