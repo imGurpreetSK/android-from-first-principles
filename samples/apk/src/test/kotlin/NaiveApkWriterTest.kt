@@ -4,6 +4,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 
@@ -25,6 +26,15 @@ class NaiveApkWriterTest {
             }
         }
     }
+
+    // region flaw
+    @Test
+    fun naiveApkWriter_putsStoredDexAtUnalignedOffset() {
+        val apk = NaiveApkWriter.write(mapOf("classes.dex" to "dex".toByteArray()))
+        // 30 bytes of fixed fields + 11 bytes of name: the data starts at 41.
+        assertNotEquals(0, dataOffset(apk, "classes.dex") % 4)
+    }
+    // endregion
 }
 
 // The writer does not parse the bytes, so placeholders are enough.
