@@ -74,8 +74,9 @@ const elements = () => {
   return { tracker: { hidden: true }, button: { setAttribute: (name: string, value: string) => void attributes.set(name, value) }, count: { textContent: '0' }, attributes };
 };
 
-test('without storage, show keeps the tracker hidden', () => {
+test('without storage, show hides the tracker', () => {
   const ui = elements();
+  ui.tracker.hidden = false;
   show(undefined, ui);
   expect(ui.tracker.hidden).toBe(true);
 });
@@ -86,4 +87,7 @@ test('with storage, show shows the tracker, the state of the button and the coun
   expect(ui.tracker.hidden).toBe(false);
   expect(ui.attributes.get('aria-pressed')).toBe('true');
   expect(ui.count.textContent).toBe('1');
+  show({ read: false, count: 0 }, ui);
+  expect(ui.attributes.get('aria-pressed')).toBe('false');
+  expect(ui.count.textContent).toBe('0');
 });
