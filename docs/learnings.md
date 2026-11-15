@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-15: A subagent ran `git rebase -i` on `main` in the main checkout, with an edit stop, and left the rebase in progress. The main checkout had a detached HEAD on an old commit, and the dev server served old files. The parent agent ran `cd` into a worktree in a Bash call. In the main session, a `cd` to a directory in the working directories carries to the next Bash call. Later git commands without `-C` ran in that worktree. A merge failed, and the parent agent closed a task before its merge. Rule: If you are a subagent, do not run a git command that changes state in the main checkout, for example `rebase`, `checkout`, `switch`, `commit` or `reset`. Do not `cd` into a worktree. Give each git command `-C` and the absolute path of its checkout or worktree. Before you close a task, check the result of each step.
+
 2026-11-14: A fixer ran the tests with the filter `-t "cite|missingSource"`. The filter skipped a test whose name did not match. Rule: After a filtered test run, read the "Tests" line of the summary. Make sure that the count of passed tests is the count of tests that you expect to match the filter. A filtered run does not replace the full `npm test` of "Build and test".
 
 2026-11-14: A staff reviewer copied an ignored file into the worktree for one check. The reviewer brief says "Do not edit files". Rule: If a fact checker, staff reviewer or validator needs an extra file for a check, copy the files of the check to a new directory in the session scratch directory. Add the extra file there, and run the check there. To copy `node_modules`, obey the `node_modules` entry. Do not add files to the worktree.
