@@ -65,7 +65,7 @@ The platform does not unpack the APK. It reads the entries in place, from the AP
 - ART maps `classes.dex` directly from the APK file ([dex_file_loader.cc, lines 548–572](https://android.googlesource.com/platform/art/+/refs/tags/android-17.0.0_r1/libdexfile/dex/dex_file_loader.cc#548)).
 - `libandroidfw` opens `resources.arsc` with `mmap` ([ApkAssets.cpp, lines 118–120](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/androidfw/ApkAssets.cpp#118)).
 
-With `mmap`, a process reads the bytes of a file directly, with no copy in RAM ([zipalign](https://developer.android.com/tools/zipalign)). ART and `libandroidfw` map an entry only if two conditions are true:
+With `mmap`, a process reads the bytes of a file directly, with no copy in RAM ([zipalign](https://developer.android.com/tools/zipalign)). ART and `libandroidfw` use an entry in place, with no copy, only if two conditions are true:
 
 - The entry is stored. The ZIP file holds a stored entry with no compression, so the bytes in the APK are the bytes of the file.
 - The data of the entry starts at an aligned offset. For a DEX file and for the resource table, the offset must be a multiple of 4 ([DEX format, "header_item"](https://source.android.com/docs/core/runtime/dex-format#header-item); [Asset.cpp, lines 698–726](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/androidfw/Asset.cpp#698)).
@@ -106,7 +106,7 @@ The writer puts the data of each entry immediately after its local file header. 
 
 The local file header starts at offset 0. The fixed fields use 30 bytes, and the name `classes.dex` uses 11 bytes. Thus the data starts at offset 41, and 41 is not a multiple of 4. The test passes, so the flaw occurs.
 
-The JDK reads this file with no error. But the platform cannot map an entry at such an offset:
+The JDK reads this file with no error. But the platform cannot use an entry at such an offset in place:
 
 - ART maps a stored DEX entry directly from the APK only if the entry is aligned to the alignment of the DEX header. Otherwise, ART logs "please zipalign" and extracts the DEX file into memory. A comment in ART says that the map prevents a dirty copy ([dex_file_loader.cc, lines 548–572](https://android.googlesource.com/platform/art/+/refs/tags/android-17.0.0_r1/libdexfile/dex/dex_file_loader.cc#548)). The DEX format gives the header an alignment of 4 bytes ([DEX format, "header_item"](https://source.android.com/docs/core/runtime/dex-format#header-item)).
 - If the data of `resources.arsc` does not start on a 4-byte boundary, `libandroidfw` copies the table into a new buffer on the heap ([Asset.cpp, lines 698–726](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/androidfw/Asset.cpp#698)).
