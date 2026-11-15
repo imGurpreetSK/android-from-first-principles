@@ -1,0 +1,55 @@
+---
+import { getCollection } from 'astro:content';
+
+// The chapters on the site. A chapter is an entry with a section.
+const chapters = await getCollection('docs', ({ data }) => data.section !== undefined);
+// The id of a chapter is <section-slug>/<chapter-slug> (src/sections.ts).
+const slugOf = (id: string) => id.split('/')[1];
+
+// The page shows the tracker only after the script reads the storage. Without JavaScript or storage, the page shows no button that does nothing.
+// data-pagefind-ignore keeps the tracker out of the search index.
+---
+
+<p class="progress" data-slug={slugOf(Astro.locals.starlightRoute.entry.id)} data-slugs={chapters.map(({ id }) => slugOf(id)).join(' ')} data-pagefind-ignore hidden>
+  <button type="button" aria-pressed="false">Mark as read</button>
+  <span class="count">0</span> / {chapters.length} chapters read
+</p>
+
+<script>
+  import { progress, toggle, type Progress } from '../progress';
+
+  const tracker = document.querySelector<HTMLElement>('.progress')!;
+  const button = tracker.querySelector('button')!;
+  const count = tracker.querySelector('.count')!;
+  const slugs = tracker.dataset.slugs!.split(' ');
+  const slug = tracker.dataset.slug!;
+  const storage = () => localStorage;
+
+  // Without storage, the tracker cannot keep the progress, so the page does not show it.
+  function show(p: Progress | undefined) {
+    tracker.hidden = !p;
+    if (!p) return;
+    button.setAttribute('aria-pressed', String(p.read));
+    count.textContent = String(p.count);
+  }
+
+  show(progress(storage, slugs, slug));
+  button.addEventListener('click', () => show(toggle(storage, slugs, slug)));
+</script>
+
+<style>
+  button {
+    border: 1px solid var(--sl-color-text-accent);
+    border-radius: 999rem;
+    padding: 0.4375rem 1.125rem;
+    margin-inline-end: 1rem;
+    background: none;
+    color: var(--sl-color-white);
+    cursor: pointer;
+  }
+  /* A read chapter gets the colors of the primary Starlight link button. */
+  button[aria-pressed='true'] {
+    background: var(--sl-color-text-accent);
+    color: var(--sl-color-black);
+  }
+</style>

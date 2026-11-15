@@ -1,6 +1,7 @@
 ---
 import AnchorHeading from '@astrojs/starlight/components/AnchorHeading.astro';
 import Default from '@astrojs/starlight/components/MarkdownContent.astro';
+import Progress from './Progress.astro';
 
 // Only a chapter has the checked stamp and sources. The home page has no chapter fields.
 const { checked, sources } = Astro.locals.starlightRoute.entry.data;
@@ -46,3 +47,4 @@ const { checked, sources } = Astro.locals.starlightRoute.entry.data;
     )
   }
 </Default>
+{sources && <Progress />}

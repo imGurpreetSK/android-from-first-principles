@@ -64,6 +64,25 @@ test('a page without chapter fields lists no sources', () => {
   expect(notChapter.includes('id="sources"')).toBe(false);
 });
 
+test('a chapter ends with a hidden progress tracker: a "Mark as read" button and an "X / N" counter, where N is the number of chapters on the site', () => {
+  const tracker = chapter.match(/<p class="progress[ "][^>]*>[\s\S]*?<\/p>/)?.[0] ?? '';
+  // After the sources list, before the page footer.
+  expect(chapter.indexOf('id="sources"')).toBeLessThan(chapter.indexOf(tracker));
+  expect(chapter.indexOf(tracker)).toBeLessThan(chapter.indexOf('<footer'));
+  // The fixture has the chapters "chapter" and "human", and a home page without chapter fields. Thus N is 2.
+  // The script shows the tracker only if it can read the storage. Thus without JavaScript, the tracker stays hidden.
+  expect(tracker).toContain(' data-slug="chapter" data-slugs="chapter human" data-pagefind-ignore hidden>');
+  expect(tracker).toMatch(/<button type="button" aria-pressed="false"[^>]*>Mark as read<\/button>/);
+  expect(tracker.replace(/<[^>]*>/g, '')).toBe('Mark as read0 / 2 chapters read');
+});
+
+test.each(['404.html', 'index.html'])('the page %s has no chapter fields, so it has no progress tracker and no tracker script', (page) => {
+  const html = read(page);
+  expect(html).not.toContain('Mark as read');
+  // The script stores each chapter under the key read:<chapter-slug>.
+  expect(html).not.toContain('read:');
+});
+
 test.each([
   ['ai', 'launch-path/chapter/index.html', 'Drafted with AI, edited by Gurpreet Singh'],
   ['human', 'launch-path/human/index.html', 'Written by Jane Doe'],
@@ -77,7 +96,7 @@ test('a page without chapter fields shows no drafted line', () => {
 
 test('each page shows the license line and the credit line', () => {
   const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' }).filter((name) => name.endsWith('.html'));
-  expect(pages.sort()).toEqual(['404.html', 'launch-path/chapter/index.html', 'launch-path/human/index.html']);
+  expect(pages.sort()).toEqual(['404.html', 'index.html', 'launch-path/chapter/index.html', 'launch-path/human/index.html']);
   for (const page of pages) {
     const html = read(page);
     const text = html.replace(/<[^>]*>/g, '');
@@ -97,12 +116,12 @@ test('each page shows the license line and the credit line', () => {
   }
 });
 
-test('the search index has no drafted line, license line or credit line', () => {
+test('the search index has no drafted line, license line, credit line or progress tracker', () => {
   const dir = join(outDir, 'pagefind', 'fragment');
   const fragments = readdirSync(dir).map((name) => gunzipSync(readFileSync(join(dir, name))).toString('utf8'));
   expect(fragments).toHaveLength(2);
   for (const fragment of fragments) {
     expect(fragment).toMatch(/The body of the fixture chapter/);
-    expect(fragment).not.toMatch(/Drafted with AI|Written by|license|Format inspired by/);
+    expect(fragment).not.toMatch(/Drafted with AI|Written by|license|Format inspired by|Mark as read|chapters read/);
   }
 });
