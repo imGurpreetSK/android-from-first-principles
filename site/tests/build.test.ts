@@ -119,7 +119,7 @@ test('astro build passes on a chapter whose links cite its sources or are exempt
   }
 }, 60_000);
 
-test('astro build fails on a chapter with links to pages that are not in its sources, and names the file and each link', () => {
+test('astro build fails on a chapter with links that cite no entry in its sources, and names the file and each link', () => {
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-mismatch-'));
   try {
@@ -127,7 +127,7 @@ test('astro build fails on a chapter with links to pages that are not in its sou
     expect(status).not.toBe(0);
     // The inline link, the JSX <a> link, the LinkCard and the two reference links. The link that cites a source is not in the list.
     expect(stdout + stderr).toContain(
-      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links to pages that are not in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(), https://x.example/d.png. Without its anchor and timestamp,`,
+      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links that cite no entry in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(), https://x.example/d.png. The check removes the anchor and the timestamp`,
     );
   } finally {
     rmSync(outDir, { recursive: true, force: true });
@@ -141,7 +141,7 @@ test('astro build fails on a .md chapter with an HTML link that cites no entry i
     const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citationHtml, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
     expect(status).not.toBe(0);
     expect(stdout + stderr).toContain(
-      `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has links to pages that are not in its sources field: https://developer.android.com/guide.`,
+      `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has links that cite no entry in its sources field: https://developer.android.com/guide.`,
     );
   } finally {
     rmSync(outDir, { recursive: true, force: true });

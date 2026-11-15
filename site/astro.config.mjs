@@ -8,7 +8,7 @@ import { sections } from './src/sections.ts';
 // Starlight resolves a path that starts with "." against the Astro root. A test fixture has its own root, so give absolute paths.
 const local = (path) => fileURLToPath(new URL(path, import.meta.url));
 
-// Fail the build if a link in a chapter body cites a page that is not in the sources of the chapter. A page without sources is not a chapter.
+// Fail the build if a link in a chapter body cites no entry in the sources of the chapter. A page without sources is not a chapter.
 // Sätteri calls this plugin factory one time for each .md and .mdx file. Astro puts the frontmatter in data.astro.
 function citations({ data, fileURL }) {
   const sources = data.astro?.frontmatter?.sources;
@@ -44,7 +44,7 @@ function citations({ data, fileURL }) {
       // A definition can come before or after its reference link, so check the definitions after the visit.
       for (const d of definitions) if (references.has(d.identifier)) check(d);
       if (missing.length > 0) {
-        throw new Error(`The chapter ${fileURLToPath(fileURL)} has links to pages that are not in its sources field: ${missing.join(', ')}. Without its anchor and timestamp, each external link must be equal to an entry in sources. Change each link to cite a source, or add the page to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
+        throw new Error(`The chapter ${fileURLToPath(fileURL)} has links that cite no entry in its sources field: ${missing.join(', ')}. The check removes the anchor and the timestamp from each external link. Then each external link must be equal to an entry in sources. Change each link to cite a source, or add its target to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
       }
     },
   };
