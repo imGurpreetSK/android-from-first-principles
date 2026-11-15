@@ -1,6 +1,8 @@
 ---
 title: Flow
 section: Concurrency
+sidebar:
+  order: 1
 checked:
   android: 17
   aosp: android-17.0.0_r1

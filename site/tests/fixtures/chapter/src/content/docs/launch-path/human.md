@@ -1,6 +1,8 @@
 ---
 title: Fixture chapter that a human wrote
 section: The Launch Path
+sidebar:
+  order: 2
 checked:
   android: 17
   aosp: android-17.0.0_r1

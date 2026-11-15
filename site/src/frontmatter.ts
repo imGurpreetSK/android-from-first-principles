@@ -15,7 +15,7 @@ const checked = z
   })
   .refine((c) => c.aosp.startsWith(`android-${c.android}.`), { path: ['aosp'], message: 'aosp must be a tag of the android release.' });
 
-// docs/DESIGN.md "Chapter shape" and "Sourcing rules" give the chapter fields. Starlight gives `title`.
+// docs/DESIGN.md "Chapter shape" and "Sourcing rules" give the chapter fields. Starlight gives `title` and `sidebar.order`.
 const chapter = {
   section: z.enum(sections.map((s) => s.label)),
   checked,
@@ -37,6 +37,11 @@ export const frontmatter = z
     if (missing.length === keys.length) return;
     for (const key of missing) {
       ctx.addIssue({ code: 'custom', path: [key], message: 'A chapter must have this field.' });
+    }
+    // Starlight makes sidebar.order optional. docsSchema merges this schema with the Starlight schema, so data has sidebar.
+    // Without sidebar.order, the sidebar sorts the chapters of a section by id. Then the display numbers follow the alphabet.
+    if ((data as { sidebar?: { order?: number } }).sidebar?.order === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['sidebar', 'order'], message: 'A chapter must have this field.' });
     }
     const { device, checked } = data;
     if (device === true && !checked?.emulator) {

@@ -10,6 +10,7 @@ const schema = docsSchema({ extend: frontmatter })({ image: () => z.string() } a
 const chapter = {
   title: 'The main thread: Looper, Handler, MessageQueue',
   section: 'The Launch Path',
+  sidebar: { order: 5 },
   checked: { android: 17, aosp: 'android-17.0.0_r1' },
   sources: ['https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java'],
   rebuild: true,
@@ -40,6 +41,10 @@ describe('chapter frontmatter', () => {
   test.each(Object.keys(chapter))('rejects a chapter without %s', (field) => {
     const { [field]: _, ...rest } = chapter as Record<string, unknown>;
     expect(valid(rest)).toBe(false);
+  });
+
+  test('rejects a chapter with a sidebar field without order', () => {
+    expect(valid({ ...chapter, sidebar: { label: 'Main thread' } })).toBe(false);
   });
 
   test('rejects an empty section', () => {
