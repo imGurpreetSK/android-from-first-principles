@@ -158,7 +158,7 @@ A v2 signature puts the APK Signing Block immediately before the ZIP Central Dir
 
 At install, the platform finds the APK Signing Block from the offset of the Central Directory ([ApkSigningBlockUtils.java, lines 82–85](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/util/apk/ApkSigningBlockUtils.java#82)). It checks the magic at the end of the block ([ApkSigningBlockUtils.java, lines 745–756](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/util/apk/ApkSigningBlockUtils.java#745)). If an app targets API level 30 or higher, the minimum signature scheme is v2 ([ApkSignatureVerifier.java, lines 579–581](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/util/apk/ApkSignatureVerifier.java#579)).
 
-Since Android 11, if an app targets API level 30 and has only a v1 signature, the app must also have a v2 or higher signature ([Android 11 behavior changes, "APK Signature Scheme v2 now required"](https://developer.android.com/about/versions/11/behavior-changes-11#minimum-signature-scheme)).
+Since Android 11, if an app targets API level 30 or higher and has only a v1 signature, the app must also have a v2 or higher signature ([Android 11 behavior changes, "APK Signature Scheme v2 now required"](https://developer.android.com/about/versions/11/behavior-changes-11#minimum-signature-scheme)).
 
 ### The installer keeps the APK as one file
 
