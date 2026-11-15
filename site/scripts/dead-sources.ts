@@ -10,7 +10,7 @@ const given = chapters.filter((chapter) => files.has(chapter.file));
 const dead = await deadSources(given.flatMap((chapter) => chapter.sources), fetch, setTimeout);
 for (const { file, sources } of given) {
   for (const source of sources.filter((s) => dead.has(s))) {
-    console.error(`The chapter ${file} has a source that does not load: ${source} (${dead.get(source)}). If the page moved, change the source and its citations to the new URL. If the page does not exist, remove the source and its citations. If the page loads in a browser, run the job again.`);
+    console.error(`The chapter ${file} has a source that does not load: ${source} (${dead.get(source)}). If the source loads in a browser, run the job again. If the source moved, make a plan amendment with the new URL, and change each citation of the source to the new URL. If the source does not exist, make a plan amendment with a new source, and cite the new source for each claim. A plan amendment is a separate commit that changes only the frontmatter. The maintainer approves it with a "plan approved" comment.`);
   }
 }
 if (dead.size > 0) process.exitCode = 1;
