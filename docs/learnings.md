@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A validator wrote temporary files into a directory of saved pages. Rule: Write temporary files in a new directory in the session scratch directory. Do not write them into a directory of downloaded files.
+
 2026-11-14: A validator searched a saved HTML spec page for `id="..."` and got no result. The page writes most ids without quotes, for example `id=the-details-element`. Rule: Before you trust a search with no result on saved HTML, check how the file writes the attribute.
 
 2026-11-14: A test matched `<p>` with no attributes. A later scoped style added a class to the tag, and the test broke. A fact checker and a validator wrote a regex for built HTML from the component source. Astro adds a scoped class, for example `astro-hkc32dio`, at the end of the class attribute, so the regex failed. Rule: In a regex for built HTML, allow attributes on each tag, for example `<p[^>]*>`. For a class, write `class="<name>[ "]`. Run the regex on the built file before you propose it.
