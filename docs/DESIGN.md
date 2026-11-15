@@ -15,7 +15,7 @@ All chapters have one skeleton. Some parts are required. The other parts are opt
 
 ```
 ---
-title: The main thread: Looper, Handler, MessageQueue
+title: "The main thread: Looper, Handler, MessageQueue"
 section: The Launch Path
 sidebar:
   order: 5
@@ -43,6 +43,7 @@ edited_by: <name>
 Sources             required   auto-listed from frontmatter
 ```
 
+- If a title has `: `, put the title in double quotes, because YAML does not allow `: ` in an unquoted value.
 - "Build it naive" and "Where it breaks" are a pair. Each chapter with a rebuild has a breaking test.
 - A chapter without a rebuild has no `samples/` module.
 - The chapter plan sets "Try it". If `rebuild` is true, "Try it" has prompts that change the rebuild. If `device` is true, it has device prompts. If both are false, the chapter has no "Try it".
