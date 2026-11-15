@@ -23,7 +23,7 @@ async function check(sources: string[], results: Record<string, (Response | Erro
 }
 
 test('accepts a source that loads, and fetches each source one time', async () => {
-  expect(await check([page, code, page], { [page]: [status(200)], [code]: [status(200)] })).toEqual({ dead: {}, fetched: [page, code], waits: [] });
+  expect(await check([page, code, page], { [page]: [status(200)], [code]: [status(204)] })).toEqual({ dead: {}, fetched: [page, code], waits: [] });
 });
 
 test('rejects a source with status 404 or 410, and does not fetch it again', async () => {
@@ -56,10 +56,11 @@ test('rejects a source whose fetch fails, for example a host that DNS does not k
 test('fetches a YouTube video through the YouTube oEmbed endpoint, because the watch page gives 200 for a video that does not exist', async () => {
   const watch = 'https://www.youtube.com/watch?v=zzzzzzzzzzz';
   const short = 'https://youtu.be/zzzzzzzzzzz';
+  const mobile = 'https://m.youtube.com/watch?v=zzzzzzzzzzz';
   const oembed = (url: string) => `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-  expect(await check([watch, short], { [oembed(watch)]: [status(400)], [oembed(short)]: [status(404)] })).toEqual({
-    dead: { [watch]: 'status 400', [short]: 'status 404' },
-    fetched: [oembed(watch), oembed(short)],
+  expect(await check([watch, short, mobile], { [oembed(watch)]: [status(400)], [oembed(short)]: [status(404)], [oembed(mobile)]: [status(400)] })).toEqual({
+    dead: { [watch]: 'status 400', [short]: 'status 404', [mobile]: 'status 400' },
+    fetched: [oembed(watch), oembed(short), oembed(mobile)],
     waits: [],
   });
 });
