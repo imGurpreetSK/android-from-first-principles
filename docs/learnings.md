@@ -11,7 +11,7 @@ Entry format, one or two lines:
 
 ## Log
 
-2026-11-14: A fixer ran the tests with the filter `-t "cite|missingSource"`. The filter skipped a test whose name did not match. Rule: After a filtered test run, read the "Tests" line of the summary. Make sure that the count of passed tests is the count of tests that you expect, and read the count of skipped tests.
+2026-11-14: A fixer ran the tests with the filter `-t "cite|missingSource"`. The filter skipped a test whose name did not match. Rule: After a filtered test run, read the "Tests" line of the summary. Make sure that the count of passed tests is the count of tests that you expect to match the filter. A filtered run does not replace the full `npm test` of "Build and test".
 
 2026-11-14: A staff reviewer copied an ignored file into the worktree for one check. The reviewer brief says "Do not edit files". Rule: If a fact checker, staff reviewer or validator needs an extra file for a check, copy the files of the check to a new directory in the session scratch directory. Add the extra file there, and run the check there. To copy `node_modules`, obey the `node_modules` entry. Do not add files to the worktree.
 
