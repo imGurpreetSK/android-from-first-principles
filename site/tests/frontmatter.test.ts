@@ -128,6 +128,7 @@ describe('chapter frontmatter', () => {
     // GitHub code that is not AOSP, AndroidX, R8 or AGP. The GitHub tag check in CI checks its ref.
     'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/Builders.common.kt',
     'https://github.com/androidx/media/blob/1.5.0/README.md',
+    'https://github.com/android/nowinandroid/blob/0123456789abcdef0123456789abcdef01234567/README.md',
   ])('accepts the source %s on the host of its project', (source) => {
     expect(messages([source])).toEqual([]);
   });
@@ -139,6 +140,7 @@ describe('chapter frontmatter', () => {
     ['https://android-review.googlesource.com/c/platform/tools/build/+/1848036', 'Do not cite a Gerrit change.'],
     ['https://github.com/aosp-mirror/platform_frameworks_base/blob/0123456789abcdef0123456789abcdef01234567/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],
     ['https://github.com/android/platform_frameworks_base/blob/0123456789abcdef0123456789abcdef01234567/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],
+    ['https://github.com/LineageOS/android_frameworks_base/blob/00596dcbd6f884e7da2c24c28228575a15763007/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],
     ['https://github.com/androidx/androidx/blob/0123456789abcdef0123456789abcdef01234567/lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/ViewModel.kt', 'Cite AOSP and AndroidX code on android.googlesource.com'],
     ['https://github.com/example/r8/blob/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/tools/r8/R8.java', 'Cite R8 code on r8.googlesource.com.'],
     ['https://android.googlesource.com/platform/external/r8/+/0123456789abcdef0123456789abcdef01234567/src/main/java/com/android/tools/r8/R8.java', 'Cite R8 code on r8.googlesource.com.'],
