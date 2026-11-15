@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A test matched `<p>` with no attributes. A later scoped style added a class to the tag, and the test broke. A fact checker and a validator wrote a regex for built HTML from the component source. Astro adds a scoped class, for example `astro-hkc32dio`, at the end of the class attribute, so the regex failed. Rule: In a regex for built HTML, allow attributes on each tag, for example `<p[^>]*>`. For a class, write `class="<name>[ "]`. Run the regex on the built file before you propose it.
+
 2026-11-14: A writer ran `shasum -c` from a directory that did not hold the listed files, so the check verified no file. `shasum -c` finds each relative path in the list from the current directory. Rule: Run `shasum -c` from the directory that holds the files. Make sure that the output says "OK" for each file.
 
 2026-11-14: Two writers made a fixture use the site config, and the fixture build failed. Starlight resolves each `customCss` path that starts with `.` against the Astro root. The root of a fixture does not have the file. Rule: In an Astro config that a fixture uses, give each local `customCss` file as an absolute path. `site/astro.config.mjs` does this with `local()`.
