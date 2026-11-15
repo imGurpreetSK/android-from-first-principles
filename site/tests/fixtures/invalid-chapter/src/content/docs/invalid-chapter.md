@@ -1,6 +1,8 @@
 ---
 title: Invalid chapter
 section: The Launch Path
+sidebar:
+  order: 1
 checked:
   android: 17
   aosp: android-17.0.0_r1
