@@ -200,3 +200,19 @@ Since Android 15, AOSP supports devices with a 16 KB page size. If an app has na
 Since Android 16, a 16 KB device runs an app with 4 KB-aligned native code in a compatibility mode and shows a dialog. If the manifest attribute `android:pageSizeCompat` turns on the mode, the dialog does not show ([Android 16 behavior changes, "16 KB page size compatibility mode"](https://developer.android.com/about/versions/16/behavior-changes-all#16-kb-compatibility-mode)).
 
 </GoDeeper>
+
+## Mental model
+
+An APK is a ZIP file that the platform reads in place. D8 writes the code as `classes.dex`. AAPT2 writes the resources as `resources.arsc` and the manifest as binary XML. AGP stores the entries that the platform maps. It puts the data of each stored entry at a multiple of 4. The padding goes in the extra field of the local file header. Then the signature goes in the APK Signing Block, before the Central Directory. The signature protects this layout. At install, the APK stays one file, `base.apk`. At run time, ART maps `classes.dex` and `libandroidfw` maps `resources.arsc` from that file. If a stored entry is not aligned, the platform copies it into RAM, or the install fails.
+
+```mermaid
+flowchart LR
+  code["Java bytecode"] --> d8["D8"] --> dex["classes.dex"]
+  res["Resources and manifest"] --> aapt2["AAPT2"] --> arsc["resources.arsc and binary XML manifest"]
+  dex --> agp["AGP: stored entries, data at a multiple of 4"]
+  arsc --> agp
+  agp --> sig["APK Signing Block before the Central Directory"]
+  sig --> apk["base.apk in /data/app/~~…/package-…/"]
+  apk --> art["ART maps classes.dex"]
+  apk --> fw["libandroidfw maps resources.arsc"]
+```
