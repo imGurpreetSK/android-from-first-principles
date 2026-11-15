@@ -75,11 +75,11 @@ All docs, chapters included, use Simplified Technical English (STE). [AGENTS.md]
       - Cite other Google code on its Gitiles host at its tag, for example R8 on `r8.googlesource.com`.
       - AGP code is in `platform/tools/base`, which has no tag for each AGP version. Pin AGP code at the `studio-<version>` tag of the Android Studio release that pairs with that AGP version, or at a full SHA.
       - Cite all other code on GitHub at its tag.
-    - SQLite: the baseline decides which SQLite to cite.
+    - SQLite: what the chapter describes decides which SQLite to cite.
       - For platform behavior, cite `platform/external/sqlite` on `android.googlesource.com` at the `aosp` tag of the `checked` stamp.
       - Cite the SQLite that Room bundles only if the chapter describes the bundled driver (`BundledSQLiteDriver`). Then cite the code on `github.com/sqlite/sqlite` at the `version-<x.y.z>` tag of the version that the library in `checked.libraries` bundles. (If you cite the AndroidX copy instead, use the full SHA of that library.)
       - The chapter names the SQLite version in the text.
-      - CI rejects code links on `sqlite.org/src/`, `www.sqlite.org/src/` and `sqlite.org/cgi/src/`, because the link can use a branch name, for example `ci=trunk`, and then shows the moving tip.
+      - CI rejects code links on `sqlite.org/src/`, `www.sqlite.org/src/`, `sqlite.org/cgi/src/` and `www.sqlite.org/cgi/src/`, because the link can use a branch name, for example `ci=trunk`, and then shows the moving tip.
     - A chapter can name cs.android.com in plain text as a place to browse code. A chapter never cites it.
   - Docs: the URL of the page, not an archive snapshot. There is no way to pin a doc page. Its owner can rewrite it. The `checked` stamp records the versions against which the editor checked the page. If a page no longer supports its claim, open a "Challenge a claim" issue. If code can support a claim, cite the code.
   - Talks: the URL and a timestamp.
