@@ -107,7 +107,7 @@ ${lines}
 
 If a source loads in a browser, do not change the chapter. If a source moved, make a fix PR. In the PR, make a plan amendment with the new URL, and change each citation of the source to the new URL. If a source does not exist, make a fix PR. In the PR, make a plan amendment with a new source, and cite the new source for each claim.
 
-Each run of the weekly source check updates this issue. If a source does not load and this issue does not list it, the run also adds a comment. If all sources load, the run closes this issue.`;
+Each run of the weekly source check updates this issue. If a source does not load and this issue does not list it, the run also adds a comment. If all sources load, the run closes this issue. If you close this issue and a source still does not load, the next run opens a new issue.`;
 
 test('opens one issue with each source that does not load in each chapter, if no open issue has the title', () => {
   expect(report({ [page]: 'status 410', [code]: 'status 404' }, [{ number: 3, title: 'Challenge a claim' }])).toEqual([
