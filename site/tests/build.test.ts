@@ -126,7 +126,7 @@ test('astro build fails on a chapter with links to pages that are not in its sou
     expect(status).not.toBe(0);
     // The inline link and the reference link. The link that cites a source is not in the list.
     expect(stdout + stderr).toContain(
-      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links to pages that are not in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/reference/android/os/Looper#loop(). Without its anchor,`,
+      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links to pages that are not in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/reference/android/os/Looper#loop(). Without its anchor and timestamp,`,
     );
   } finally {
     rmSync(outDir, { recursive: true, force: true });

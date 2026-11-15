@@ -12,9 +12,11 @@ describe('missingSource', () => {
     ['a Gitiles line', `${looper}#160`],
     ['a GitHub line range', 'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/README.md#L10-L20'],
     ['a doc page heading', `${page}#loop()`],
-    ['a talk timestamp', `${talk}#t=95`],
+    ['a talk timestamp', `${talk}&t=95s`],
+    ['a talk timestamp before the video ID', 'https://www.youtube.com/watch?t=95&v=abc123'],
+    ['a talk timestamp in a short link', 'https://youtu.be/abc123?t=95'],
   ])('accepts a link to %s', (_, link) => {
-    expect(missingSource(link, [...sources, 'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/README.md'])).toBeUndefined();
+    expect(missingSource(link, [...sources, 'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/README.md', 'https://youtu.be/abc123'])).toBeUndefined();
   });
 
   test.each([
@@ -23,9 +25,9 @@ describe('missingSource', () => {
     ['a source at a different ref', looper.replace('_r1', '_r2'), looper.replace('_r1', '_r2')],
     ['a source with a query', `${page}?hl=de`, `${page}?hl=de`],
     ['a source with a trailing slash', `${page}/`, `${page}/`],
-    ['a talk with the timestamp in a query parameter', `${talk}&t=95`, `${talk}&t=95`],
     ['a source over http', looper.replace('https', 'http'), looper.replace('https', 'http')],
-  ])('returns the link without its anchor for %s', (_, link, source) => {
+    ['a t query parameter on a host that is not YouTube', 'https://example.com/p?t=5', 'https://example.com/p?t=5'],
+  ])('returns the link without its anchor and timestamp for %s', (_, link, source) => {
     expect(missingSource(link, sources)).toBe(source);
   });
 

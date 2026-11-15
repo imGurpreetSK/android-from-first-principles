@@ -25,7 +25,7 @@ function citations({ data, fileURL }) {
     // After the visit, so that the error names each link of the chapter that cites no source.
     after() {
       if (missing.length > 0) {
-        throw new Error(`The chapter ${fileURLToPath(fileURL)} has links to pages that are not in its sources field: ${missing.join(', ')}. Without its anchor, each external link must be equal to an entry in sources. Change each link to cite a source, or add the page to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
+        throw new Error(`The chapter ${fileURLToPath(fileURL)} has links to pages that are not in its sources field: ${missing.join(', ')}. Without its anchor and timestamp, each external link must be equal to an entry in sources. Change each link to cite a source, or add the page to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
       }
     },
   };
