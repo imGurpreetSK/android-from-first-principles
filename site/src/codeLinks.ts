@@ -13,6 +13,7 @@ const otherCodeHosts = new Set(['elixir.bootlin.com', 'git.kernel.org', 'gitlab.
 // The rules reject these URL forms. The first rule that the source breaks gives the return value.
 // 1. Each link on cs.android.com or on a host in otherCodeHosts.
 // 1a. Each link on kernel.googlesource.com or on github.com/torvalds/linux. Kernel code comes from android.googlesource.com kernel/common.
+// 1b. Each link to sqlite.org/src/ or www.sqlite.org/src/. SQLite code is in Fossil, and a link there can follow a branch. A doc page on sqlite.org, for example /wal.html, passes.
 // 2. Each link on raw.githubusercontent.com or on www.github.com. The other rules and the GitHub tag check read only links on github.com.
 // 3. Each link to a Gerrit change: on a Gerrit host, *-review.googlesource.com, or on r.android.com, which redirects to android-review.googlesource.com. A Gerrit change has no Gitiles ref, so the Gitiles rule gives the wrong fix.
 // 4. A link to a GitHub copy of AOSP or AndroidX: github.com/aosp-mirror/<repo>, a repo whose name starts with platform_ or android_ (for example android/platform_frameworks_base, which GitHub redirects to aosp-mirror, or the fork LineageOS/android_frameworks_base), or github.com/androidx/androidx.
@@ -33,6 +34,9 @@ export function codeLinkError(source: string) {
   }
   if (host === 'kernel.googlesource.com' || (host === 'github.com' && /^\/torvalds\/linux(\/|$)/i.test(path))) {
     return 'Cite kernel code on android.googlesource.com in kernel/common, at a tag or a full SHA.';
+  }
+  if ((host === 'sqlite.org' || host === 'www.sqlite.org') && path.startsWith('/src/')) {
+    return 'Cite SQLite code on github.com/sqlite/sqlite at its version tag, or in platform/external/sqlite on android.googlesource.com at a tag.';
   }
   if (host === 'raw.githubusercontent.com' || host === 'www.github.com') {
     return 'Cite the file on github.com: github.com/<owner>/<repo>/blob/<tag or full SHA>/<path>.';

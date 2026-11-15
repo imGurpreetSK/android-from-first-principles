@@ -136,6 +136,10 @@ describe('chapter frontmatter', () => {
     'https://github.com/android/nowinandroid/blob/0123456789abcdef0123456789abcdef01234567/README.md',
     // A repo whose name only starts with linux is not the kernel.
     'https://github.com/torvalds/linux-foo/blob/0123456789abcdef0123456789abcdef01234567/README.md',
+    // A SQLite doc page on sqlite.org, and SQLite code on github.com/sqlite/sqlite and in platform/external/sqlite at a tag.
+    'https://sqlite.org/wal.html',
+    'https://github.com/sqlite/sqlite/blob/version-3.46.0/src/wal.c',
+    'https://android.googlesource.com/platform/external/sqlite/+/refs/tags/android-17.0.0_r1/dist/sqlite-autoconf-3500600/sqlite3.c',
   ])('accepts the source %s on the host of its project', (source) => {
     expect(messages([source])).toEqual([]);
   });
@@ -159,6 +163,8 @@ describe('chapter frontmatter', () => {
     ['https://github.com/torvalds/linux/blob/v6.12/kernel/sched/core.c', 'Cite kernel code on android.googlesource.com in kernel/common'],
     ['https://github.com/torvalds/linux', 'Cite kernel code on android.googlesource.com in kernel/common'],
     ['https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux/+/refs/tags/v6.12/kernel/sched/core.c', 'Cite kernel code on android.googlesource.com in kernel/common'],
+    ['https://sqlite.org/src/file?name=src/wal.c&ci=trunk', 'Cite SQLite code on github.com/sqlite/sqlite'],
+    ['https://www.sqlite.org/src/file?name=src/wal.c&ci=trunk', 'Cite SQLite code on github.com/sqlite/sqlite'],
   ])('rejects the source %s, because it is not on the host of its project, and names the source', (source, fix) => {
     expect(messages([source])).toEqual([expect.stringContaining(`${source}: ${fix}`)]);
   });
