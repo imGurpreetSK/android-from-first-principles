@@ -1,10 +1,10 @@
 ---
-description: Write the chapter plan of one chapter. Commit it alone on a new branch and open the PR. Then stop.
+description: Write the frontmatter of one chapter, with its chapter plan. Commit it alone on a new branch and open the PR. Then stop.
 argument-hint: <chapter slug>
 disable-model-invocation: true
 ---
 
-Write the chapter plan of the chapter `$ARGUMENTS`. This command does the Plan step of the chapter pipeline (docs/DESIGN.md, "Chapter pipeline"). The plan is the frontmatter of the chapter file. The maintainer approves the plan on the PR. `/chapter-draft` does not run before that approval.
+Write the frontmatter of the chapter `$ARGUMENTS`. This command does the Plan step of the chapter pipeline (docs/DESIGN.md, "Chapter pipeline"). The plan is the `sources`, `rebuild` and `device` fields of the frontmatter. The maintainer approves the plan on the PR. `/chapter-draft` does not run before that approval.
 
 ## Rules for you
 
