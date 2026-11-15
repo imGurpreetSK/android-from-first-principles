@@ -61,6 +61,16 @@ test.each([
   }
 });
 
+test('the home page has one font preload link, to the Roboto latin 400 normal file', () => {
+  const page = files.find(({ name }) => name === 'index.html')!.text;
+  const preloads = (page.match(/<link\b[^>]*>/g) ?? []).filter((tag) => /\brel="?preload\b/.test(tag) && /\bas="?font\b/.test(tag));
+  // The preload filter in Head.astro has no subset. If the build gets a Roboto 400 normal file of another subset, the page gets a second font preload link, and this test fails.
+  expect(preloads).toHaveLength(1);
+  const href = preloads[0].match(/\bhref="?([^"\s>]+)/)?.[1] ?? '';
+  const roboto400 = readFileSync(join(root, 'node_modules/@fontsource/roboto/files/roboto-latin-400-normal.woff2'));
+  expect(readFileSync(join(outDir, href)).equals(roboto400), href).toBe(true);
+});
+
 test.each([
   ['--sl-font', '--font-roboto', 'Roboto'],
   ['--sl-font-mono', '--font-roboto-mono', 'Roboto Mono'],

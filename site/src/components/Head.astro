@@ -2,8 +2,9 @@
 import { Font } from 'astro:assets';
 import Default from '@astrojs/starlight/components/Head.astro';
 // Each <Font /> adds the @font-face rules and the CSS variable of one family in the fonts config of astro.config.mjs.
+// Preload only the Roboto 400 normal file, for body text. Without a preload, the browser asks for a font file only after it applies the CSS.
 ---
 
 <Default />
-<Font cssVariable="--font-roboto" />
+<Font cssVariable="--font-roboto" preload={[{ weight: 400, style: 'normal' }]} />
 <Font cssVariable="--font-roboto-mono" />
