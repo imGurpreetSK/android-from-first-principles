@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A fact checker ran a recursive `grep` on the whole session scratch directory. The directory holds Gradle caches, so the search ran past the 120-second timeout. A writer ran `ls -R` on the `system-images` directory of the Android SDK, and the output was about 11,000 tokens. Rule: Before a recursive search or list, list one level with `find <dir> -maxdepth 1`. Then search or list only the subdirectories that you need.
+
 2026-11-14: A fixer ran `git add` on the old path after `git mv`, and `git add` failed. `git mv` stages the rename. A writer ran `git mv -k` on an untracked file. `git mv -k` does not move the file, shows no error and exits 0. Rule: After `git mv`, run `git add` only on the new path. To move an untracked file, use `mv`. Do not use `git mv -k`.
 
 2026-11-14: A writer expected a fixture build in a Vitest test to drop a draft page, as a production build does. Vitest sets `MODE=test`, `NODE_ENV=test` and other keys in `process.env`, and the `astro build` child process gets them. With `MODE=test` in `process.env`, `astro build` builds draft pages, because Starlight reads `import.meta.env.MODE`. A staff reviewer said that a `MODE` override has no effect, because no build package reads `process.env.MODE`. Rule: A build that a Vitest test starts is not a production build, unless the test deletes these keys from the environment of the build, as `site/tests/astro.ts` does. Before a test depends on the build mode, read the build output of the test. Before you say that no code reads an environment variable, also search for `import.meta.env.<NAME>`. Then prove the claim with a build.
