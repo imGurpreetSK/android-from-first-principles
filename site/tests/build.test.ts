@@ -125,9 +125,9 @@ test('astro build fails on a chapter with links that cite no entry in its source
   try {
     const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', citationMismatch, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: production });
     expect(status).not.toBe(0);
-    // The inline link, the JSX <a> link, the LinkCard and the two reference links. The link that cites a source is not in the list.
+    // The inline link, the JSX <a> link, the JSX <a> link with an href in braces, the LinkCard and the two reference links. The link that cites a source is not in the list.
     expect(stdout + stderr).toContain(
-      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links that cite no entry in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(), https://x.example/d.png. The check removes the anchor and the timestamp`,
+      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links that cite no entry in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, href={…}, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(), https://x.example/d.png. The check removes the anchor and the timestamp`,
     );
   } finally {
     rmSync(outDir, { recursive: true, force: true });

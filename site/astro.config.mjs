@@ -19,9 +19,14 @@ function citations({ data, fileURL }) {
   // A reference link gets its URL from a definition node. An image reference also uses a definition node, so check only the definitions of reference links.
   const definitions = [];
   const references = new Set();
-  // A JSX element, for example <a> or LinkCard, gives its URL in the href attribute. An href value in braces is an expression, so the check cannot read the URL.
+  // A JSX element, for example <a> or LinkCard, gives its URL in the href attribute.
+  // An href in braces is an expression. The check cannot read its URL, so a chapter must give each href as a string.
   const jsx = ({ attributes }) => {
-    for (const a of attributes) if (a.name === 'href' && typeof a.value === 'string') check({ url: a.value });
+    for (const a of attributes) {
+      if (a.name !== 'href') continue;
+      if (typeof a.value === 'string') check({ url: a.value });
+      else missing.push('href={…}');
+    }
   };
   return {
     name: 'citations',
