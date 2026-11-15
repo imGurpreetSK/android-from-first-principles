@@ -10,13 +10,13 @@ describe('missingSource', () => {
   test.each([
     ['a source', looper],
     ['a Gitiles line', `${looper}#160`],
-    ['a GitHub line range', 'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/README.md#L10-L20'],
+    ['a GitHub line range', 'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/Builders.common.kt#L10-L20'],
     ['a doc page heading', `${page}#loop()`],
     ['a talk timestamp', `${talk}&t=95s`],
     ['a talk timestamp before the video ID', 'https://www.youtube.com/watch?t=95&v=abc123'],
     ['a talk timestamp in a short link', 'https://youtu.be/abc123?t=95'],
   ])('accepts a link to %s', (_, link) => {
-    expect(missingSource(link, [...sources, 'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/README.md', 'https://youtu.be/abc123'])).toBeUndefined();
+    expect(missingSource(link, [...sources, 'https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/Builders.common.kt', 'https://youtu.be/abc123'])).toBeUndefined();
   });
 
   test.each([
