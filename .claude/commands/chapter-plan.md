@@ -124,7 +124,7 @@ Start each subagent brief with this text:
     - Run `gh pr create --repo imGurpreetSK/android-from-first-principles --base main --head <owner>:chapter/<slug> --title "Plan the <slug> chapter" --body-file <file>`. Do not pass `--no-maintainer-edit`. Without it, the maintainer can push to the PR branch.
 13. Add the mistakes to the log. If the list is empty, skip this step. Run `git switch -c learnings/plan-<slug> <upstream>/main`. Start a new subagent and give it your list of mistakes. Brief:
 
-    > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`. Do not push.
+    > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the commits in `git log --oneline -15 -- docs/learnings.md`. Do not push.
 14. Go back to `<start>`. If `<start>` is a branch, run `git switch <start>`. If `<start>` is a SHA, run `git switch --detach <start>`. Stop. Do not start the draft. Give a short report:
     - The PR URL, the branch, and the commit hash and subject.
     - The plan: each source with its claim, `rebuild` and `device` with their reasons, the `checked` stamp and `edited_by`.
