@@ -25,7 +25,7 @@ Start each subagent brief with this text:
 
 > Read AGENTS.md and docs/learnings.md first and obey them. Read CONTEXT.md for the terms.
 > The chapter is `<slug>`, "<title>", in the section "<section>". Its baseline is Android <android>, at the AOSP tag `<aosp>`.
-> Read each source at its pinned ref, never from memory. For a Gitiles link, run `curl -sL '<url>?format=TEXT' | base64 -d`. For a GitHub link, read `https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>`. For a doc page or a talk, fetch its URL.
+> Read each source at its pinned ref, never from memory. For a Gitiles link, run `curl -sL '<url>?format=TEXT' | base64 -d`. For a GitHub link, read `https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>`. For a doc page, fetch its URL. For a talk, read its transcript, for example the captions of the video. If you cannot read a transcript, do not propose the talk.
 > At the end, return each mistake that you made, with the rule that prevents it.
 
 ## Steps
@@ -62,7 +62,7 @@ Start each subagent brief with this text:
    > - Propose `device`. Set it to true if device prompts on the launch app can show the mechanism.
    >
    > Return:
-   > - Each source, with the claim of the chapter that it supports, and the line or heading that you read.
+   > - Each source, with the claim of the chapter that it supports, and the line, heading or timestamp that you read.
    > - `rebuild` and `device`, each with a one-sentence reason.
    > - For each source that is library code, the library name and its version.
    > - For each source of a "Since Android <version>…" note, the version of the note.
@@ -70,9 +70,9 @@ Start each subagent brief with this text:
    >
    > Do not edit files.
 
-7. Start a new subagent, the validator. Give it each source of the planner, with its claim, the line or heading that the planner read, the version of each "Since Android <version>…" note, and the name and version of each library. Brief:
+7. Start a new subagent, the validator. Give it each source of the planner, with its claim, the line, heading or timestamp that the planner read, the version of each "Since Android <version>…" note, and the name and version of each library. Brief:
 
-   > For each source, read it at its pinned ref. Make sure that the source exists, that it has the line or heading that the planner gives, and that its link obeys docs/DESIGN.md, "Sourcing rules". Make sure that the line or heading supports the claim. Make sure that each source of a "Since Android <version>…" note is a behavior-changes page of that version, or code at the first release tag of that version: `android-<N>.0.0_r1`, or `android-12.1.0_r1` for Android 12L. For AndroidX code, make sure that the commit message of the SHA names the release branch of the library, and that `libraryversions.toml` at the SHA gives the version of the library. Return each source as confirmed or not confirmed, with the reason. Do not edit files.
+   > For each source, read it at its pinned ref. Make sure that the source exists, that it has the line, heading or timestamp that the planner gives, and that its link obeys docs/DESIGN.md, "Sourcing rules". Make sure that the line, heading or timestamp supports the claim. Make sure that each source of a "Since Android <version>…" note is a behavior-changes page of that version, or code at the first release tag of that version: `android-<N>.0.0_r1`, or `android-12.1.0_r1` for Android 12L. For AndroidX code, make sure that the commit message of the SHA names the release branch of the library, and that `libraryversions.toml` at the SHA gives the version of the library. Return each source as confirmed or not confirmed, with the reason. Do not edit files.
 
    Remove each source that the validator does not confirm. If no source is left, say "No source is confirmed." and stop.
 8. Set the other fields of `checked`:
