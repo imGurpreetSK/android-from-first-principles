@@ -29,7 +29,7 @@ Start each subagent brief with this text:
 
 ## Steps
 
-1. Start from the newest `main` of the main repo.
+1. Start from the newest `main` of the upstream repo.
    - If `$ARGUMENTS` is not one chapter slug of lowercase letters, digits and hyphens, say "Usage: `/chapter-plan <slug>`" and stop.
    - If `git status --porcelain` shows changes, say "Commit or remove your changes. Then run `/chapter-plan` again." and stop.
    - In `git remote -v`, find the remote whose URL has `imGurpreetSK/android-from-first-principles`. This text calls it `<upstream>`.
@@ -53,7 +53,7 @@ Start each subagent brief with this text:
    > - Pin each code link as "Sourcing rules" says. For AOSP code, write `https://android.googlesource.com/<project>/+/refs/tags/<aosp>/<path>`. For AndroidX code, use android.googlesource.com at a full commit SHA of the release branch of the library, at the version that you give for the library. For R8 code, use r8.googlesource.com at its tag. For AGP code, use `android.googlesource.com/platform/tools/base` at the `studio-<version>` tag of the Android Studio release that pairs with the AGP version, or at a full SHA. For other code with GitHub release tags, use github.com at the tag.
    > - If the behavior of the chapter differs in a release back to Android 10 (API 29), propose a source for each "Since Android <version>…" note (docs/DESIGN.md, "Sourcing rules"). The source is the behavior-changes page of that release, or the AOSP code at the tag of that release. The tag is `android-<N>.0.0_r1`, where `<N>` is the release number of the note. Write the link as `https://android.googlesource.com/<project>/+/refs/tags/android-<N>.0.0_r1/<path>`. Read the file at that tag. Do not use the tag `<aosp>` for it. Give the version of the note for each such source.
    > - Before you add a source, read it at its pinned ref. A file can move between releases. If a file does not exist at the ref, find its path at the ref, or do not add it. To list a Gitiles directory, run `curl -sL '<directory URL>?format=JSON'`.
-   > - Propose `rebuild`. Set it to true if a small Kotlin toy of the mechanism, with a deterministic breaking test, obeys "Code samples".
+   > - Propose `rebuild`. Set it to true if a rebuild of the mechanism, with a deterministic breaking test, obeys "Code samples".
    > - Propose `device`. Set it to true if device prompts on the launch app can show the mechanism.
    >
    > Return:
