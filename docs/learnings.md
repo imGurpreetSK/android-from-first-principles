@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-15: Most of the 120 agents of the run ran Bash commands before they read `docs/learnings.md`. Then they broke rules of the log. They joined commands with `;`, and they ran `echo ======` unquoted in zsh. After a hook changed a Bash call, they sent later Bash calls in the plain form, and auto mode refused them. Rule: In your first tool call, read `docs/learnings.md` with the Read tool. Do not run a command before it.
+
 2026-11-15: Agents searched the text of a saved doc page for a quoted phrase and found nothing, because a line break in the saved text split the phrase. Rule: Before you search the text of a page for a phrase, join the lines, and change each run of white space to one space. If a search finds nothing, search for a short part of the phrase.
 
 2026-11-15: Reviewers and validators downloaded sources again, but an earlier agent of the same chapter had saved them. The saved files had no record of their URL and ref. One reviewer read a saved copy by its number and got the wrong file. Rule: When you save sources, save them in a new directory in your task directory. Write a file `manifest.txt` in that directory. Give one line for each file: the file name and its URL. For a code file, give the URL at the pinned ref. If the parent agent starts an agent for a chapter, it names each directory of saved sources of that chapter in the brief. Before you download a source, run `find <dir> -name 'manifest.txt'` on your task directory and on each directory of saved sources that your brief names. Read each `manifest.txt`. Find a saved copy by its URL in a manifest, not by its number.
