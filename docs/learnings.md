@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-15: A build test asserted on the text of the Astro output. On the GitHub runner, Astro put ANSI color codes in the text, so the first CI run failed. All local runs passed. GitHub Actions sets `CI=true`. In the Bash tool, stdout is not a TTY, and `CI` has no value. piccolore 0.1.3, the color library of Astro 7.4.4, turns color on if `CI` or `FORCE_COLOR` has a value, or if stdout is a TTY and `TERM` is not `dumb`. If `NO_COLOR` has a value, piccolore turns color off. Rule: Before you assert on the text of a command output in a test, set `NO_COLOR=1` in the environment of the command, as `site/tests/astro.ts` does. Then run the test with `CI=true`.
+
 2026-11-15: Two doc fixers gave `git commit` a message with quotes or backslashes on the command line. In a double-quoted argument, zsh runs a command in backticks, expands `$NAME`, and removes the backslash before `"` and `\`. Rule: If a commit message has a quote, a backslash, a backtick or `$`, write the message with the Write tool to a file in your task directory of the session scratch directory. Then run `git commit -F <file>`.
 
 2026-11-15: A learnings writer ran `find <dir> -not -path '*/node_modules/*'` with a start directory inside `node_modules`. `find` printed nothing and exited 0. `-path` matches the full path, and each path starts with the start directory, so the filter removed each path. Rule: Before you trust an empty `find` result, make sure that no `-path` filter matches the start directory.
