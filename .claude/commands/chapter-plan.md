@@ -132,5 +132,5 @@ Start each subagent brief with this text:
     - The plan: each source with its claim, `rebuild` and `device` with their reasons, the `checked` stamp and `edited_by`.
     - Each source that the validator did not confirm, with the reason.
     - The result of each check.
-    - The list of mistakes, and the branch `learnings/plan-<slug>` that holds them. Do not push it.
+    - The list of mistakes, the branch `learnings/plan-<slug>` that holds them, and the commands that open its PR: `git push -u <push remote> learnings/plan-<slug>` and `gh pr create --repo imGurpreetSK/android-from-first-principles --base main --head <owner>:learnings/plan-<slug> --title "Log the mistakes of /chapter-plan <slug>" --fill`. Do not run them.
     - The next step: after a "plan approved" comment from the maintainer, run `/chapter-draft <slug>`.
