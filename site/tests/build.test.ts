@@ -11,7 +11,7 @@ const fixture = fileURLToPath(new URL('./fixtures/invalid-chapter', import.meta.
 const goDeeper = fileURLToPath(new URL('./fixtures/go-deeper', import.meta.url));
 const goDeeperNoTitle = fileURLToPath(new URL('./fixtures/go-deeper-no-title', import.meta.url));
 // The Astro root of this fixture is next to its samples/, as site/ is next to samples/ in the repo.
-const snippetFixture = new URL('./fixtures/snippet/site/', import.meta.url);
+const snippetFixture = fileURLToPath(new URL('./fixtures/snippet/site', import.meta.url));
 const duplicateSlug = fileURLToPath(new URL('./fixtures/duplicate-slug', import.meta.url));
 const duplicateId = fileURLToPath(new URL('./fixtures/duplicate-id', import.meta.url));
 const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
@@ -60,13 +60,19 @@ test('astro build fails on a Go deeper box without a title', () => {
 }, 60_000);
 
 test('astro build shows the region of a Snippet in a code block, without the marker lines', () => {
-  const { status, stderr } = spawnSync(astro, ['build', '--root', fileURLToPath(snippetFixture), '--force'], { encoding: 'utf8', timeout: 60_000 });
-  expect(status, stderr).toBe(0);
-  const html = readFileSync(new URL('dist/snippet/index.html', snippetFixture), 'utf8');
-  const pre = html.match(/<pre data-language="kt">([\s\S]*?)<\/pre>/)?.[1] ?? '';
-  // Expressive Code puts each code line in a div of the class ec-line.
-  const lines = pre.split('<div class="ec-line">').slice(1).map((line) => line.replace(/<[^>]+>/g, ''));
-  expect(lines).toEqual(['fun loop() {', '    while (true) println("loop")', '}']);
+  // An output directory outside site/, so astro check does not check the built JS files.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-snippet-'));
+  try {
+    const { status, stderr } = spawnSync(astro, ['build', '--root', snippetFixture, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+    expect(status, stderr).toBe(0);
+    const html = readFileSync(join(outDir, 'snippet/index.html'), 'utf8');
+    const pre = html.match(/<pre data-language="kt">([\s\S]*?)<\/pre>/)?.[1] ?? '';
+    // Expressive Code puts each code line in a div of the class ec-line.
+    const lines = pre.split('<div class="ec-line">').slice(1).map((line) => line.replace(/<[^>]+>/g, ''));
+    expect(lines).toEqual(['fun loop() {', '    while (true) println("loop")', '}']);
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
 }, 60_000);
 
 test('astro build fails on two chapters with the same chapter slug in different sections', () => {
