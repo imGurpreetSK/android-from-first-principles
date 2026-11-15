@@ -44,6 +44,7 @@ export function codeLinkError(source: string) {
 }
 
 // A GitHub link to code, for example https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/README.md. The ref is the path segment after blob, tree, blame or raw, or after refs/tags/ if it follows them.
+// Other github.com pages, for example a repo root, an issue or a release, are not code links. Gitiles hosts have only code, so gitilesPin checks each URL on them.
 const github = /^https?:\/\/github\.com\/([^/]+\/[^/]+)\/(?:blob|tree|blame|raw)\/(?:refs\/tags\/)?([^/?#]+)/i;
 const sha = /^[0-9a-f]{40}$/;
 // Each line of git ls-remote --tags is "<SHA>\trefs/tags/<tag>". An annotated tag also has a line that ends in ^{}.
