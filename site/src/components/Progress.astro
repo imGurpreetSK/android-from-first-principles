@@ -6,7 +6,7 @@ const chapters = await getCollection('docs', ({ data }) => data.section !== unde
 // The id of a chapter is <section-slug>/<chapter-slug> (src/sections.ts).
 const slugOf = (id: string) => id.split('/')[1];
 
-// The page shows the tracker only after the script reads the storage. Without JavaScript or storage, the page shows no button that does nothing.
+// The page shows the tracker only after the script reads the storage. Without JavaScript or storage, the tracker stays hidden.
 // data-pagefind-ignore keeps the tracker out of the search index.
 ---
 
