@@ -89,56 +89,56 @@ All docs, chapters included, use Simplified Technical English (STE). [AGENTS.md]
 
 35 chapters in 7 sections. Section 1 follows one cold start, from launcher tap to first frame. It gives the process, main-thread and lifecycle model that all later chapters use.
 
-The chapter slug identifies a chapter. The slug is a topic name, unique across the series (`main-thread`). The number and the section of a chapter never identify it. The progress key and the `samples/main-thread` module use the slug. The URL adds the section, so that the URL is easy to read (`/launch-path/main-thread/`). If a PR moves a chapter to another section, the URL changes, and the same PR adds a redirect from the old URL. The numbers below are display labels from the sidebar order. They can change if the maintainer adds or splits chapters. The sidebar sorts the chapters of a section by `sidebar.order`. Set `sidebar.order` to the position of the chapter in its section, not to its number below. For example, the main thread (05) has `sidebar.order` 5. Config changes & ViewModel (07) has `sidebar.order` 1.
+The chapter slug identifies a chapter. The slug is a topic name, unique across the series (`main-thread`). The curriculum below gives the slug of each chapter in parentheses. The number and the section of a chapter never identify it. The progress key and the `samples/main-thread` module use the slug. The URL adds the section, so that the URL is easy to read (`/launch-path/main-thread/`). If a PR moves a chapter to another section, the URL changes, and the same PR adds a redirect from the old URL. The numbers below are display labels from the sidebar order. They can change if the maintainer adds or splits chapters. The sidebar sorts the chapters of a section by `sidebar.order`. Set `sidebar.order` to the position of the chapter in its section, not to its number below. For example, the main thread (05) has `sidebar.order` 5. Config changes & ViewModel (07) has `sidebar.order` 1.
 
 **1. The Launch Path (tap → first frame)**
-01 APK: what the build actually produces
-02 Zygote & the app process
-03 Binder & system_server
-04 Components & lifecycle
-05 Main thread: Looper / Handler / MessageQueue
-06 Choreographer & the first frame
+01 APK: what the build actually produces (`apk`)
+02 Zygote & the app process (`zygote`)
+03 Binder & system_server (`binder`)
+04 Components & lifecycle (`components-lifecycle`)
+05 Main thread: Looper / Handler / MessageQueue (`main-thread`)
+06 Choreographer & the first frame (`first-frame`)
 
 **2. State & Survival**
-07 Config changes & ViewModel
-08 Process death & saved state
-09 Dependency injection
-10 Navigation & the back stack
-11 Unidirectional data flow
+07 Config changes & ViewModel (`config-changes`)
+08 Process death & saved state (`process-death`)
+09 Dependency injection (`dependency-injection`)
+10 Navigation & the back stack (`navigation`)
+11 Unidirectional data flow (`unidirectional-data-flow`)
 
 **3. Concurrency**
-12 Threads, executors & ANR
-13 Coroutines from continuations
-14 Flow (cold/hot, StateFlow)
-15 Structured concurrency & cancellation
+12 Threads, executors & ANR (`threads-and-anr`)
+13 Coroutines from continuations (`coroutines`)
+14 Flow (cold/hot, StateFlow) (`flow`)
+15 Structured concurrency & cancellation (`structured-concurrency`)
 
 **4. UI Machinery**
-16 Views: measure / layout / draw
-17 Rendering pipeline & jank
-18 Compose runtime: snapshots & recomposition
-19 Compose layout & modifiers
-20 Input & touch dispatch
+16 Views: measure / layout / draw (`views`)
+17 Rendering pipeline & jank (`rendering-pipeline`)
+18 Compose runtime: snapshots & recomposition (`compose-runtime`)
+19 Compose layout & modifiers (`compose-layout`)
+20 Input & touch dispatch (`touch-dispatch`)
 
 **5. Data & I/O**
-21 Files & DataStore
-22 SQLite & Room
-23 Networking: OkHttp & Retrofit
-24 Images & memory
-25 Background work & Doze
+21 Files & DataStore (`files-and-datastore`)
+22 SQLite & Room (`sqlite-and-room`)
+23 Networking: OkHttp & Retrofit (`networking`)
+24 Images & memory (`images-and-memory`)
+25 Background work & Doze (`background-work`)
 
 **6. Production**
-26 Tracing: Perfetto & reading a trace
-27 Memory & leaks
-28 Startup & performance (ART, R8, profiles)
-29 Observability: crashes, ANRs, field metrics
-30 Security & permissions
-31 Gradle & the build
-32 Toolchain versions: Gradle, AGP, Kotlin, R8 & the SDK levels
-33 Testing
-34 CI/CD: signing, bundles, release
+26 Tracing: Perfetto & reading a trace (`tracing`)
+27 Memory & leaks (`memory-leaks`)
+28 Startup & performance (ART, R8, profiles) (`startup-performance`)
+29 Observability: crashes, ANRs, field metrics (`observability`)
+30 Security & permissions (`security-permissions`)
+31 Gradle & the build (`gradle-build`)
+32 Toolchain versions: Gradle, AGP, Kotlin, R8 & the SDK levels (`toolchain-versions`)
+33 Testing (`testing`)
+34 CI/CD: signing, bundles, release (`ci-cd`)
 
 **7. Beyond One Platform**
-35 Kotlin Multiplatform: one codebase, many compilers
+35 Kotlin Multiplatform: one codebase, many compilers (`kotlin-multiplatform`)
 
 ## Launch scope
 
