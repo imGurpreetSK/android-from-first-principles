@@ -33,11 +33,10 @@ jobs:
       # Each GitHub source must point to a full SHA or a tag. The check runs git ls-remote --tags, so it needs the network, and astro build does not run it.
       - run: node scripts/github-tags.ts
       # On a PR, fetch each source of each docs file that the PR changes. If a source does not load, the job fails.
-      # The default shell is bash -e, so if git diff fails, the step fails. Without -e, the script gets no files and passes.
+      # shell: bash runs bash -eo pipefail, so if git diff fails, the step fails. -z and -0 keep each file name whole.
       - if: github.event_name == 'pull_request'
-        run: |
-          files=$(git diff --name-only --relative HEAD^1 HEAD -- src/content/docs)
-          node scripts/dead-sources.ts $files
+        shell: bash
+        run: git diff -z --name-only --relative HEAD^1 HEAD -- src/content/docs | xargs -0 node scripts/dead-sources.ts
 
   samples:
     # The ubuntu-24.04 image has the Android SDK, the platform and the build tools that samples/ needs. It also sets ANDROID_HOME.
