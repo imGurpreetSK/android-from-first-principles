@@ -1,6 +1,7 @@
 // docs/DESIGN.md "Code samples": the link check fetches each source one time. On a PR, a source that does not load blocks the PR.
 
-// After 429 Too Many Requests (RFC 6585, section 4) or a 5xx server error (RFC 9110, section 15.6), a later request can succeed.
+// After 429 Too Many Requests (RFC 6585, section 4) or 503 Service Unavailable (RFC 9110, section 15.6.4), a later request can succeed.
+// Another 5xx status can be temporary or permanent (RFC 9110, section 15.6), so the check also retries it.
 const retry = (status: number) => status === 429 || status >= 500;
 const retries = 3;
 // The longest wait before a retry. A Retry-After value can be one hour or more, for example 3600 in RFC 6585, section 4.
