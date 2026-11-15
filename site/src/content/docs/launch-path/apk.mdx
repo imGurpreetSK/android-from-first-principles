@@ -58,7 +58,7 @@ An APK is a ZIP file ([ABIs, "Native code in app packages"](https://developer.an
 - `classes.dex` holds the code as DEX bytecode. D8 compiles the Java bytecode of the project into DEX bytecode ([d8](https://developer.android.com/tools/d8)).
 - `resources.arsc` holds the resource table. `AndroidManifest.xml` holds the manifest. AAPT2 compiles the resources into a binary format, and then links them and the manifest into the APK ([AAPT2](https://developer.android.com/tools/aapt2)).
 
-The signature is not a ZIP entry. It is in the APK Signing Block, immediately before the ZIP Central Directory ([APK signature scheme v2, "APK signing block"](https://source.android.com/docs/security/features/apksigning/v2#apk-signing-block)).
+A v2 or newer signature is not a ZIP entry. It is in the APK Signing Block, immediately before the ZIP Central Directory ([APK signature scheme v2, "APK signing block"](https://source.android.com/docs/security/features/apksigning/v2#apk-signing-block)).
 
 The platform does not unpack the APK. It reads the entries in place, from the APK file:
 
@@ -203,7 +203,7 @@ Since Android 16, a 16 KB device runs an app with 4 KB-aligned native code in a 
 
 ## Mental model
 
-An APK is a ZIP file that the platform reads in place. D8 writes the code as `classes.dex`. AAPT2 writes the resources as `resources.arsc` and the manifest as binary XML. AGP stores the entries that the platform maps. It puts the data of each stored entry at a multiple of 4. The padding goes in the extra field of the local file header. Then the signature goes in the APK Signing Block, before the Central Directory. The signature protects this layout. At install, the APK stays one file, `base.apk`. At run time, ART maps `classes.dex` and `libandroidfw` maps `resources.arsc` from that file. If a stored entry is not aligned, the platform copies it into RAM, or the install fails.
+An APK is a ZIP file that the platform reads in place. D8 writes the code as `classes.dex`. AAPT2 writes the resources as `resources.arsc` and the manifest as binary XML. AGP stores the entries that the platform maps. It puts the data of each stored entry at a multiple of 4. The padding goes in the extra field of the local file header. Then the v2 signature goes in the APK Signing Block, before the Central Directory. The signature protects this layout. At install, the APK stays one file, `base.apk`. At run time, ART maps `classes.dex` and `libandroidfw` maps `resources.arsc` from that file. If a stored entry is not aligned, the platform copies it into RAM, or the install fails.
 
 ```mermaid
 flowchart LR
