@@ -166,7 +166,7 @@ At install, the package manager opens the APK as an asset container. It reads th
 
 The installer keeps the APK as one file. It puts the file in a new directory `<package>-<random>`, inside a new directory `~~<random>` ([PackageManagerServiceUtils.java, lines 1140–1168](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/pm/PackageManagerServiceUtils.java#1140)). The file has the canonical name of a base APK, `base.apk`. A split APK has the name `split_<name>.apk` ([ApkLiteParseUtils.java, lines 328–332](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/content/pm/parsing/ApkLiteParseUtils.java#328)). Prompt 2 of "Try it" shows the path.
 
-Since Android 11, the code directory of an app has the extra level `~~<random>` ([PackageManagerService.java at android-11.0.0_r1, lines 15944–15966](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/core/java/com/android/server/pm/PackageManagerService.java#15944)). On Android 10, the path has no `~~…` level.
+Since Android 11, the code directory of an app has the extra level `~~<random>` ([PackageManagerService.java at android-11.0.0_r1, lines 15944–15966](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/core/java/com/android/server/pm/PackageManagerService.java#15944)).
 
 ### The platform maps the entries
 
