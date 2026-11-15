@@ -154,16 +154,25 @@ describe('chapter frontmatter', () => {
     ['https://github.com/example/agp/blob/0123456789abcdef0123456789abcdef01234567/build-system/gradle-core/src/main/java/com/android/builder/core/AbstractBuildType.kt', 'Cite AGP code in platform/tools/base'],
     // The AGP repo before platform/tools/base.
     ['https://android.googlesource.com/platform/tools/build/+/0123456789abcdef0123456789abcdef01234567/gradle/src/main/groovy/com/android/build/gradle/AppPlugin.groovy', 'Cite AGP code in platform/tools/base'],
-    // Code hosts other than Gitiles hosts and github.com. The rules reject a link on them, also at a tag.
-    ['https://elixir.bootlin.com/linux/latest/source/kernel/sched/core.c', 'Cite the file on its Gitiles host or on github.com'],
-    ['https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c', 'Cite the file on its Gitiles host or on github.com'],
-    ['https://gitlab.com/example/project/-/blob/v1.0.0/src/Main.kt', 'Cite the file on its Gitiles host or on github.com'],
-    ['https://bitbucket.org/example/project/src/v1.0.0/src/Main.kt', 'Cite the file on its Gitiles host or on github.com'],
-    ['https://sourcegraph.com/github.com/torvalds/linux/-/blob/kernel/sched/core.c', 'Cite the file on its Gitiles host or on github.com'],
-    ['https://cs.opensource.google/go/go/+/refs/tags/go1.23.0:src/runtime/proc.go', 'Cite the file on its Gitiles host or on github.com'],
-    ['https://searchfox.org/mozilla-central/source/xpcom/base/nsCOMPtr.h', 'Cite the file on its Gitiles host or on github.com'],
   ])('rejects the source %s, because it is not on the host of its project, and names the source', (source, fix) => {
     expect(messages([source])).toEqual([expect.stringContaining(`${source}: ${fix}`)]);
+  });
+
+  // Code hosts other than Gitiles hosts and github.com. The rules reject a link on them, also at a tag.
+  test.each([
+    'https://elixir.bootlin.com/linux/latest/source/kernel/sched/core.c',
+    'https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c',
+    'https://gitlab.com/example/project/-/blob/v1.0.0/src/Main.kt',
+    'https://bitbucket.org/example/project/src/v1.0.0/src/Main.kt',
+    'https://sourcegraph.com/github.com/torvalds/linux/-/blob/kernel/sched/core.c',
+    'https://cs.opensource.google/go/go/+/refs/tags/go1.23.0:src/runtime/proc.go',
+    'https://searchfox.org/mozilla-central/source/xpcom/base/nsCOMPtr.h',
+  ])('rejects the source %s, because it is on a code host other than a Gitiles host and github.com, and names the source', (source) => {
+    expect(messages([source])).toEqual([
+      expect.stringContaining(
+        `${source}: Cite the file on its Gitiles host or on github.com, at a tag or a full SHA. Cite kernel code on android.googlesource.com, for example in kernel/common.`,
+      ),
+    ]);
   });
 
   test.each(['', ' '])('rejects the edited_by value "%s"', (edited_by) => {
