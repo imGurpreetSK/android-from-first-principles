@@ -63,7 +63,7 @@ A reviewer returns findings. Give each reviewer this finding form:
 6. Do steps 2, 3 and 4 again for the findings of the staff reviewer.
 7. Start a new subagent and give it your list of mistakes. Brief:
 
-   > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`.
+   > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15 -- docs/learnings.md`.
 
 8. Give a short report:
    - For each reviewer: each finding, and if you accepted it, rejected it or left it for the maintainer.
