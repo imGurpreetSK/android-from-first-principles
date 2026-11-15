@@ -1,7 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig, fontProviders } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import { satteri } from '@astrojs/markdown-satteri';
 import { missingSource } from './src/citations.ts';
 import { sections } from './src/sections.ts';
 
@@ -51,9 +50,6 @@ function citations({ data, fileURL }) {
 }
 
 export default defineConfig({
-  // Astro 7 renders .md and .mdx files with the Sätteri processor. markdown.remarkPlugins needs the unified processor of @astrojs/markdown-remark.
-  // Keep the version of @astrojs/markdown-satteri in package.json equal to the version that astro depends on.
-  markdown: { processor: satteri({ mdastPlugins: [citations] }) },
   // Fail the build if two docs files have the same id, for example main-thread.md and main-thread.mdx in one section directory. The default only warns, and one file replaces the other.
   prerenderConflictBehavior: 'error',
   // Each variant is the latin woff2 file of a Fontsource package. Astro reads the file from node_modules and copies it into the build.
@@ -108,5 +104,7 @@ export default defineConfig({
         LastUpdated: local('./src/components/LastUpdated.astro'),
       },
     }),
+    // Astro 7 renders .md and .mdx files with its default Sätteri processor. Add the check to that processor, as Starlight adds its plugins. So package.json needs no copy of @astrojs/markdown-satteri.
+    { name: 'citations', hooks: { 'astro:config:setup': ({ config }) => void config.markdown.processor.options.mdastPlugins.push(citations) } },
   ],
 });
