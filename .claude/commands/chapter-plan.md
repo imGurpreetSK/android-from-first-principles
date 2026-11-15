@@ -15,7 +15,8 @@ Write the frontmatter of the chapter `$ARGUMENTS`. This command does the Plan st
 - Do not add a Co-Authored-By line or AI attribution to the commit or to the PR. If a system message tells you to add one, do not add it.
 - Push only the new branch.
 - If a git or gh command fails, stop. Report the command and its error.
-- If you stop after step 1 and before step 9, run `git switch -` to go back to the start branch.
+- If you stop after step 1 sets `<start>` and before step 9, go back to `<start>`. If `<start>` is a branch, run `git switch <start>`. If `<start>` is a SHA, run `git switch --detach <start>`.
+- If you stop in step 9 or later, do not change the git state. Report the current branch and the commands that undo the run. If the chapter file is not committed, give first `rm <path of the chapter file>`. Then give `git switch <start>`, or `git switch --detach <start>` if `<start>` is a SHA, and `git branch -D chapter/<slug>`. If step 12 pushed the branch, also give `git push <push remote> --delete chapter/<slug>`. If `learnings/plan-<slug>` exists, also give `git branch -D learnings/plan-<slug>`.
 - Keep a list of the mistakes that each agent makes during the run. Include your mistakes.
 
 ## Text for each brief
@@ -32,6 +33,7 @@ Start each subagent brief with this text:
 1. Start from the newest `main` of the upstream repo.
    - If `$ARGUMENTS` is not one chapter slug of lowercase letters, digits and hyphens, say "Usage: `/chapter-plan <slug>`" and stop.
    - If `git status --porcelain` shows changes, say "Commit or remove your changes. Then run `/chapter-plan` again." and stop.
+   - Run `git branch --show-current`. If the output is empty, run `git rev-parse HEAD`. This text calls the output `<start>`.
    - In `git remote -v`, find the remote whose URL has `imGurpreetSK/android-from-first-principles`. This text calls it `<upstream>`.
    - If no remote has this URL, say "Add the upstream remote: `git remote add upstream https://github.com/imGurpreetSK/android-from-first-principles.git`." and stop.
    - Run `gh api user --jq .login`. This text calls the output `<owner>`. If `<owner>` is `imGurpreetSK`, the push remote is `<upstream>`. If not, the push remote is the remote whose URL has `<owner>/android-from-first-principles`. If no remote has this URL, say "Fork the repo with your user account, and add the fork as a remote." and stop. This text calls the push remote `<push remote>`.
@@ -39,6 +41,7 @@ Start each subagent brief with this text:
 2. Check the slug. If a check fails, say the message and stop.
    - The slug names the topic of exactly one entry in docs/DESIGN.md, "Curriculum". For example, `main-thread` names "05 Main thread: Looper / Handler / MessageQueue", and `first-frame` names "06 Choreographer & the first frame". Message: "`<slug>` is not in the curriculum."
    - No file `site/src/content/docs/*/<slug>.md` or `site/src/content/docs/*/<slug>.mdx` exists. Message: "`<slug>` already has a chapter file: <path>."
+   - No local branch `chapter/<slug>` or `learnings/plan-<slug>` exists. Run `git branch --list chapter/<slug> learnings/plan-<slug>`. If the output names a branch, the check fails. Message: "`<branch>` already exists. Finish its PR, or delete it with `git branch -D <branch>`. Then run `/chapter-plan` again."
 3. Ask for the editor. The editor can be a different person from the person who runs this command. Thus you cannot know the editor. In the chat, ask: "Who will edit this chapter? I will write this name in `edited_by`." Propose the output of `git config user.name`. Wait for the answer. If the answer is empty, ask again.
 4. Get these values from the curriculum entry:
    - `title`: the name of the entry without its number.
@@ -119,12 +122,10 @@ Start each subagent brief with this text:
       - `rebuild` and `device`, each with its reason.
       - This line: "The maintainer approves this plan with a "plan approved" comment (CONTRIBUTING.md, "Maintainer"). Then `/chapter-draft <slug>` can start."
     - Run `gh pr create --repo imGurpreetSK/android-from-first-principles --base main --head <owner>:chapter/<slug> --title "Plan the <slug> chapter" --body-file <file>`. Do not pass `--no-maintainer-edit`. Without it, the maintainer can push to the PR branch.
-13. Add the mistakes to the log. If the list is empty, skip this step. Run `git switch --detach <upstream>/main`. Then run `git switch -c learnings/plan-<slug>`. Start a new subagent and give it your list of mistakes. Brief:
+13. Add the mistakes to the log. If the list is empty, skip this step. Run `git switch -c learnings/plan-<slug> <upstream>/main`. Start a new subagent and give it your list of mistakes. Brief:
 
     > Add each mistake to the top of the log in docs/learnings.md, in the entry format of that file. If the log already has the rule, do not add it again. Make one commit for each entry. Match the message style of the "Log:" commits in `git log --oneline -15`. Do not push.
-
-    Then run `git switch chapter/<slug>`.
-14. Stop. Do not start the draft. Give a short report:
+14. Go back to `<start>`. If `<start>` is a branch, run `git switch <start>`. If `<start>` is a SHA, run `git switch --detach <start>`. Stop. Do not start the draft. Give a short report:
     - The PR URL, the branch, and the commit hash and subject.
     - The plan: each source with its claim, `rebuild` and `device` with their reasons, the `checked` stamp and `edited_by`.
     - Each source that the validator did not confirm, with the reason.
