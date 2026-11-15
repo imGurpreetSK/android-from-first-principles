@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-15: Eight agents wrote a wrong line number in a finding or a verdict. They counted lines in `sed -n` output by hand, took the number of a nearby grep hit, or wrote the number from memory. Most of them found the error before they returned. Rule: Before you write a line number, get it from `grep -n`, `cat -n` or the Read tool on the file at its pinned ref. Do not count lines by hand.
+
 2026-11-15: The brief of the fact checkers had a rule that is not in AGENTS.md, `docs/DESIGN.md` or the command file: "The PR body has all the content of step 12 and the facts of the frontmatter". The validators could not read that brief, so they rejected the same correct finding in 9 of 11 chapters. Rule: Put each rule that a reviewer applies in a file that the reviewer and its validator both read, for example the review rules file of the run. Do not put a rule only in the brief of the reviewer.
 
 2026-11-15: The parent agent ran `bd update <id> --notes "<PR URL>"` on 11 tasks. One task, `afp-5t9.5.1`, had notes from a dry run, and `--notes` replaced them. The parent agent got the old notes back from `bd history <id> --json`. Rule: To add text to the notes of a task, run `bd update <id> --append-notes "<text>"`. If old notes are lost, find them in `bd history <id> --json`.
