@@ -1,8 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 
-// The chapters on the site. A chapter is an entry with a section.
-const chapters = await getCollection('docs', ({ data }) => data.section !== undefined);
+// The chapters on the site. A chapter is an entry with a section. Starlight does not build a draft page in production.
+const chapters = await getCollection('docs', ({ data }) => data.section !== undefined && (import.meta.env.MODE !== 'production' || !data.draft));
 // The id of a chapter is <section-slug>/<chapter-slug> (src/sections.ts).
 const slugOf = (id: string) => id.split('/')[1];
 

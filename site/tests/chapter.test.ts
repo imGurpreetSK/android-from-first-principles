@@ -19,7 +19,8 @@ let notChapter = '';
 beforeAll(() => {
   // --force clears the content cache, so the build uses the current fixture.
   // spawnSync blocks the thread, so the hook timeout cannot stop a stuck build. The spawnSync timeout stops it.
-  const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', fixture, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000 });
+  // Vitest sets MODE to test, and Astro reads MODE from the environment. MODE production makes the build skip draft pages, as the site build does.
+  const { status, stdout, stderr } = spawnSync(astro, ['build', '--root', fixture, '--outDir', outDir, '--force'], { encoding: 'utf8', timeout: 60_000, env: { ...process.env, MODE: 'production' } });
   expect(status, stdout + stderr).toBe(0);
   chapter = read('launch-path/chapter/index.html');
   notChapter = read('404.html');
@@ -69,7 +70,7 @@ test('a chapter ends with a hidden progress tracker: a "Mark as read" button and
   // After the sources list, before the page footer.
   expect(chapter.indexOf('id="sources"')).toBeLessThan(chapter.indexOf(tracker));
   expect(chapter.indexOf(tracker)).toBeLessThan(chapter.indexOf('<footer'));
-  // The fixture has the chapters "chapter" and "human", and a home page without chapter fields. Thus N is 2.
+  // The fixture has the chapters "chapter" and "human", a draft chapter and a home page without chapter fields. Thus N is 2.
   // The script shows the tracker only if it can read the storage. Thus without JavaScript, the tracker stays hidden.
   expect(tracker).toContain(' data-slug="chapter" data-slugs="chapter human" data-pagefind-ignore hidden>');
   expect(tracker).toMatch(/<button type="button" aria-pressed="false"[^>]*>Mark as read<\/button>/);
