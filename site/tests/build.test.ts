@@ -108,7 +108,7 @@ test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the 
   }
 }, 60_000);
 
-test('astro build passes on a chapter whose links cite its sources or are exempt', () => {
+test('astro build passes on a chapter whose links cite its sources or are exempt, and on a page without sources', () => {
   // An output directory outside site/, so astro check does not check the built JS files.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-'));
   try {
