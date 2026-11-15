@@ -39,13 +39,12 @@ Start each subagent brief with this text:
    - Run `gh api user --jq .login`. This text calls the output `<owner>`. If `<owner>` is `imGurpreetSK`, the push remote is `<upstream>`. If not, the push remote is the remote whose URL has `<owner>/android-from-first-principles`. If no remote has this URL, say "Fork the repo with your user account, and add the fork as a remote." and stop. This text calls the push remote `<push remote>`.
    - Run `git fetch <upstream> main`. Then run `git switch --detach <upstream>/main`.
 2. Check the slug. If a check fails, say the message and stop.
-   - The slug names the topic of exactly one entry in docs/DESIGN.md, "Curriculum". For example, `main-thread` names "05 Main thread: Looper / Handler / MessageQueue", and `first-frame` names "06 Choreographer & the first frame". Message: "`<slug>` is not in the curriculum."
-   - If docs/DESIGN.md gives no slug for the entry, ask in the chat: "`<slug>` is permanent. The URL, the progress key and the samples module use it. Is it the slug of "<entry>"?" Wait for the answer. If the answer is not yes, say "Run `/chapter-plan` with the slug that you want." and stop.
+   - Exactly one entry in docs/DESIGN.md, "Curriculum", gives the slug in parentheses. For example, "05 Main thread: Looper / Handler / MessageQueue (`main-thread`)" gives `main-thread`. Do not match the slug to the topic of an entry. Message: "`<slug>` is not in the curriculum."
    - No file `site/src/content/docs/*/<slug>.md` or `site/src/content/docs/*/<slug>.mdx` exists. Message: "`<slug>` already has a chapter file: <path>."
    - No local branch `chapter/<slug>` or `learnings/plan-<slug>` exists. Run `git branch --list chapter/<slug> learnings/plan-<slug>`. If the output names a branch, the check fails. Message: "`<branch>` already exists. Finish its PR, or delete it with `git branch -D <branch>`. Then run `/chapter-plan` again."
 3. Ask for the editor. The editor can be a different person from the person who runs this command. Thus you cannot know the editor. In the chat, ask: "Who will edit this chapter? I will write this name in `edited_by`." Propose the output of `git config user.name`. Wait for the answer. If the answer is empty, ask again. Then ask: "What is the CPU of the editor's computer: arm64-v8a or x86_64?" Propose the value from `uname -m`: `arm64` or `aarch64` gives `arm64-v8a`, and `x86_64` gives `x86_64`. Wait for the answer. Step 8 uses it only if `device` is true.
 4. Get these values from the curriculum entry:
-   - `title`: the name of the entry without its number.
+   - `title`: the name of the entry without its number and its slug.
    - `section`: the label of the section of the entry, as in `site/src/sections.ts`.
    - `sidebar.order`: the position of the entry in its section, from 1. For example, `main-thread` (05) gets 5, and Config changes & ViewModel (07) gets 1.
    - The path of the chapter file: `site/src/content/docs/<section slug>/<slug>.md`. `site/src/sections.ts` gives the section slug.
