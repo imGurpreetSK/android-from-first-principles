@@ -13,7 +13,7 @@ Entry format, one or two lines:
 
 2026-11-14: The parent agent merged two parallel branches onto `main`. Each branch passed alone, but the merge broke the tests. Git kept two import lines from `node:fs`. A new build rule of one branch made the fixture chapters of the other branch invalid. Rule: After you merge a branch onto `main`, run all "Build and test" commands on `main`. Check each merged commit in a scratch worktree. If a merged commit fails, put the fix into that commit before you push.
 
-2026-11-14: A staff reviewer put an HTML comment in the markup of an `.astro` file, and Astro wrote the comment into the built page. The Astro docs say that HTML comments go into the browser DOM, and that Astro removes JS comments. Rule: In an `.astro` file, write each comment in the frontmatter or as `{/* */}`.
+2026-11-14: A staff reviewer put an HTML comment in the markup of an `.astro` file, and Astro wrote the comment into the built page. The Astro docs say that HTML comments go into the browser DOM, and that Astro removes JS comments. Rule: In the markup of an `.astro` file, write each comment in the frontmatter or as `{/* */}`. In a `<style>` element, write CSS comments (`/* */`). In a `<script>` element, write JS comments (`//`).
 
 2026-11-14: A staff reviewer called a deferred tool (`caveman_retrieve`) with a wrong parameter name. The reviewer did not load the schema of the tool first. Rule: Before the first call to a deferred tool, load its schema with ToolSearch.
 
