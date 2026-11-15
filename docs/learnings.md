@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-15: The parent agent ran `bd update <id> --notes "<PR URL>"` on 11 tasks. One task, `afp-5t9.5.1`, had notes from a dry run, and `--notes` replaced them. The parent agent got the old notes back from `bd history <id> --json`. Rule: To add text to the notes of a task, run `bd update <id> --append-notes "<text>"`. If old notes are lost, find them in `bd history <id> --json`.
+
 2026-11-15: The parent agent ran `bd show` and `bd update` in a zsh loop, `while read s url; do …; done < file`. `bd` read the rest of the file from stdin, so the loop stopped after one line. Rule: Write a `while read` loop in a script file with the Write tool, as the 2026-11-14 entry about one command in each Bash call says. In the loop, add `< /dev/null` to each command between `do` and `done`. Then only `read` reads the input of the loop.
 
 2026-11-15: The parent agent launched a workflow with an args object whose lists were all empty. It typed the keys, but not the data of `source-changes.json`. The validators of the run would have checked no source. The parent agent stopped the run before an agent changed a file. Rule: Before you launch a workflow with args, build the args from the data file. Make sure that the count of items in each list is the count in the data file.
