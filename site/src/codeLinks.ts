@@ -8,10 +8,11 @@ const gitilesPin = /^[^+]*\/\+\/(refs\/tags\/[^/]+|[0-9a-f]{40})(\/|$)/;
 // The rules reject these URL forms. The first rule that the source breaks gives the return value.
 // 1. Each link on cs.android.com.
 // 2. Each link on raw.githubusercontent.com or on www.github.com. The other rules and the GitHub tag check read only links on github.com.
-// 3. A link to the GitHub mirror of AOSP (github.com/aosp-mirror/<repo>, or github.com/android/platform_<repo>, which GitHub redirects there) or of AndroidX (github.com/androidx/androidx).
-// 4. A link to R8 code on github.com or on a Gitiles host other than r8.googlesource.com. R8 code has the package path com/android/tools/r8/.
-// 5. A link to AGP code on github.com or on a Gitiles host, outside android.googlesource.com/platform/tools/base. AGP code has the package paths com/android/build/ and com/android/builder/. R8 on r8.googlesource.com also has com/android/build/shrinker/, so the rule skips r8.googlesource.com.
-// 6. A Gitiles link without +/refs/tags/<tag>/ or +/<40-character SHA>/.
+// 3. Each link on a Gerrit host, *-review.googlesource.com. A Gerrit change has no Gitiles ref, so the Gitiles rule gives the wrong fix.
+// 4. A link to the GitHub mirror of AOSP (github.com/aosp-mirror/<repo>, or github.com/android/platform_<repo>, which GitHub redirects there) or of AndroidX (github.com/androidx/androidx).
+// 5. A link to R8 code on github.com or on a Gitiles host other than r8.googlesource.com. R8 code has the package path com/android/tools/r8/.
+// 6. A link to AGP code on github.com or on a Gitiles host, outside android.googlesource.com/platform/tools/base. AGP code has the package paths com/android/build/ and com/android/builder/. R8 on r8.googlesource.com also has com/android/build/shrinker/, so the rule skips r8.googlesource.com.
+// 7. A Gitiles link without +/refs/tags/<tag>/ or +/<40-character SHA>/.
 export function codeLinkError(source: string) {
   const url = URL.parse(source);
   if (!url) return undefined;
@@ -23,6 +24,9 @@ export function codeLinkError(source: string) {
   }
   if (host === 'raw.githubusercontent.com' || host === 'www.github.com') {
     return 'Cite the file on github.com: github.com/<owner>/<repo>/blob/<tag or full SHA>/<path>.';
+  }
+  if (host.endsWith('-review.googlesource.com')) {
+    return 'Do not cite a Gerrit change. Cite the file on its Gitiles host at a tag or a full SHA.';
   }
   if (host === 'github.com' && /^\/(aosp-mirror\/|android\/platform_|androidx\/androidx(\/|$))/i.test(path)) {
     return 'Cite AOSP and AndroidX code on android.googlesource.com, not on a GitHub mirror.';
