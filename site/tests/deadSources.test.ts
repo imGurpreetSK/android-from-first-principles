@@ -85,16 +85,17 @@ test('does not fetch a YouTube page that is not a video through the oEmbed endpo
 const title = 'Sources that do not load';
 
 // Runs reportDeadSources for two chapters with a fake of the issue calls. The fake gives the open issues, and records each other call.
-function report(dead: Record<string, string>, open: { number: number; title: string }[]) {
+function report(dead: Record<string, string>, open: { number: number; title: string; body?: string }[]) {
   const calls: unknown[][] = [];
   const chapters = [
     { file: 'site/src/content/docs/a.md', sources: [page, code] },
     { file: 'site/src/content/docs/b.md', sources: [code] },
   ];
   reportDeadSources(new Map(Object.entries(dead)), chapters, {
-    open: () => open,
+    open: () => open.map((issue) => ({ body: '', ...issue })),
     create: (...args) => calls.push(['create', ...args]),
     edit: (...args) => calls.push(['edit', ...args]),
+    comment: (...args) => calls.push(['comment', ...args]),
     close: (...args) => calls.push(['close', ...args]),
   });
   return calls;
@@ -106,7 +107,7 @@ ${lines}
 
 If a source loads in a browser, do not change the chapter. If a source moved, make a fix PR. In the PR, make a plan amendment with the new URL, and change each citation of the source to the new URL. If a source does not exist, make a fix PR. In the PR, make a plan amendment with a new source, and cite the new source for each claim.
 
-Each run of the weekly source check updates this issue. If all sources load, the run closes this issue.`;
+Each run of the weekly source check updates this issue. If a source does not load and this issue does not list it, the run also adds a comment. If all sources load, the run closes this issue.`;
 
 test('opens one issue with each source that does not load in each chapter, if no open issue has the title', () => {
   expect(report({ [page]: 'status 410', [code]: 'status 404' }, [{ number: 3, title: 'Challenge a claim' }])).toEqual([
@@ -115,8 +116,24 @@ test('opens one issue with each source that does not load in each chapter, if no
 });
 
 test('updates the body of the newest open issue with the title, and opens no issue', () => {
-  const open = [{ number: 3, title: 'Challenge a claim' }, { number: 9, title }, { number: 7, title }];
+  const open = [{ number: 3, title: 'Challenge a claim' }, { number: 9, title, body: body(`- \`site/src/content/docs/a.md\`: ${page} (status 404)`) }, { number: 7, title }];
   expect(report({ [page]: 'status 410' }, open)).toEqual([['edit', 9, body(`- \`site/src/content/docs/a.md\`: ${page} (status 410)`)]]);
+});
+
+test('comments with each source that does not load, if the open issue does not list it', () => {
+  const open = [{ number: 9, title, body: body(`- \`site/src/content/docs/a.md\`: ${page} (status 410)`) }];
+  expect(report({ [page]: 'status 410', [code]: 'status 404' }, open)).toEqual([
+    ['edit', 9, body(`- \`site/src/content/docs/a.md\`: ${page} (status 410)\n- \`site/src/content/docs/a.md\`: ${code} (status 404)\n- \`site/src/content/docs/b.md\`: ${code} (status 404)`)],
+    ['comment', 9, `These sources do not load, and the last run did not list them:\n\n- ${code}`],
+  ]);
+});
+
+test('comments with a source that the open issue does not list, also if the issue lists a source whose URL starts with its URL', () => {
+  const open = [{ number: 9, title, body: body(`- \`site/src/content/docs/a.md\`: ${page}2 (status 404)`) }];
+  expect(report({ [page]: 'status 410' }, open)).toEqual([
+    ['edit', 9, body(`- \`site/src/content/docs/a.md\`: ${page} (status 410)`)],
+    ['comment', 9, `These sources do not load, and the last run did not list them:\n\n- ${page}`],
+  ]);
 });
 
 test('closes the open issue with a comment if all sources load', () => {

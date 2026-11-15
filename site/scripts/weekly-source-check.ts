@@ -17,8 +17,9 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const gh = (...args: string[]) => execFileSync('gh', args, { encoding: 'utf8' });
 reportDeadSources(dead, chapters.map(({ file, sources }) => ({ file: relative(root, file), sources })), {
   // shortcut: gh reads at most 1000 open issues. If the repo has more open issues, add --search with the title.
-  open: () => JSON.parse(gh('issue', 'list', '--state', 'open', '--limit', '1000', '--json', 'number,title')),
+  open: () => JSON.parse(gh('issue', 'list', '--state', 'open', '--limit', '1000', '--json', 'number,title,body')),
   create: (title, body) => gh('issue', 'create', '--title', title, '--body', body),
   edit: (number, body) => gh('issue', 'edit', String(number), '--body', body),
+  comment: (number, body) => gh('issue', 'comment', String(number), '--body', body),
   close: (number, comment) => gh('issue', 'close', String(number), '--comment', comment),
 });

@@ -55,14 +55,16 @@ const issueTitle = 'Sources that do not load';
 
 // The GitHub issue calls of the weekly source check. open() gives the open issues of the repo, the newest issue first.
 export interface Issues {
-  open(): { number: number; title: string }[];
+  open(): { number: number; title: string; body: string }[];
   create(title: string, body: string): void;
   edit(number: number, body: string): void;
+  comment(number: number, body: string): void;
   close(number: number, comment: string): void;
 }
 
 // Reports the result of the weekly source check in the newest open issue with the title issueTitle.
 // If a source does not load, it updates the body of that issue, or opens the issue if no open issue has the title.
+// If the body of that issue does not list a source that does not load, it also adds a comment with the source.
 // If all sources load, it closes the issue. Thus an open issue shows only the sources that did not load at the last run. If a source does not load later, the run opens a new issue.
 export function reportDeadSources(dead: ReadonlyMap<string, string>, chapters: readonly { file: string; sources: readonly string[] }[], issues: Issues) {
   const issue = issues.open().find((open) => open.title === issueTitle);
@@ -75,8 +77,14 @@ export function reportDeadSources(dead: ReadonlyMap<string, string>, chapters: r
     'The weekly source check found sources that do not load. Each line gives the chapter, the source and the reason.',
     lines.join('\n'),
     'If a source loads in a browser, do not change the chapter. If a source moved, make a fix PR. In the PR, make a plan amendment with the new URL, and change each citation of the source to the new URL. If a source does not exist, make a fix PR. In the PR, make a plan amendment with a new source, and cite the new source for each claim.',
-    'Each run of the weekly source check updates this issue. If all sources load, the run closes this issue.',
+    'Each run of the weekly source check updates this issue. If a source does not load and this issue does not list it, the run also adds a comment. If all sources load, the run closes this issue.',
   ].join('\n\n');
-  if (issue) issues.edit(issue.number, body);
-  else issues.create(issueTitle, body);
+  if (!issue) {
+    issues.create(issueTitle, body);
+    return;
+  }
+  // A comment on the issue tells the maintainer about each source that the body did not list.
+  const added = [...dead.keys()].filter((source) => !issue.body.includes(` ${source} (`));
+  issues.edit(issue.number, body);
+  if (added.length > 0) issues.comment(issue.number, `These sources do not load, and the last run did not list them:\n\n${added.map((source) => `- ${source}`).join('\n')}`);
 }
