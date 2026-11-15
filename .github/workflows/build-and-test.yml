@@ -18,6 +18,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # On a PR, HEAD is the merge commit of the PR, and HEAD^1 is the base. Depth 2 fetches both, for the source check below.
+          fetch-depth: 2
       # setup-node reads the Node version from engines.node.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -30,6 +32,12 @@ jobs:
       - run: npm run check
       # Each GitHub source must point to a full SHA or a tag. The check runs git ls-remote --tags, so it needs the network, and astro build does not run it.
       - run: node scripts/github-tags.ts
+      # On a PR, fetch each source of each docs file that the PR changes. If a source does not load, the job fails.
+      # The default shell is bash -e, so if git diff fails, the step fails. Without -e, the script gets no files and passes.
+      - if: github.event_name == 'pull_request'
+        run: |
+          files=$(git diff --name-only --relative HEAD^1 HEAD -- src/content/docs)
+          node scripts/dead-sources.ts $files
 
   samples:
     # The ubuntu-24.04 image has the Android SDK, the platform and the build tools that samples/ needs. It also sets ANDROID_HOME.
