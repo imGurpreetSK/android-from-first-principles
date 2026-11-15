@@ -30,5 +30,5 @@ This repo holds Android from First Principles, a free online series on the machi
 
 Before each commit, run these commands. If a command fails, do not commit.
 
-- Site: Run `npm ci`, `npm run build`, `npm test`, `npm run check` and `node scripts/github-tags.ts` in `site/`. It needs Node 24. The last command also needs the network.
+- Site: Run `npm ci`, `npm run build`, `npm test` and `npm run check` in `site/`. It needs Node 24. If the commit adds or changes `sources` in a chapter, also run `node scripts/github-tags.ts` in `site/`. This command needs the network.
 - Samples: Run `samples/gradlew -p samples build` from the repo root. It builds `samples/` and runs all its tests. It needs JDK 17 or later and the Android SDK. Before you run it, set the `ANDROID_HOME` environment variable to the Android SDK directory.

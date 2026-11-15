@@ -108,7 +108,7 @@ Start each subagent brief with this text:
    ```
 
 10. Run each check alone, one after the other. Do not pipe a command whose result you check.
-    - The "Build and test" commands of AGENTS.md. In `site/`, run `npm ci`, `npm run build`, `npm test`, `npm run check` and `node scripts/github-tags.ts`. `npm run build` checks the frontmatter schema, the code link rules and the citations. From the repo root, run `samples/gradlew -w -p samples build`, with `ANDROID_HOME` set to the Android SDK directory.
+    - The "Build and test" commands of AGENTS.md. In `site/`, run `npm ci`, `npm run build`, `npm test` and `npm run check`. The plan commit adds `sources`, so also run `node scripts/github-tags.ts`. `npm run build` checks the frontmatter schema, the code link rules and the citations. From the repo root, run `samples/gradlew -w -p samples build`, with `ANDROID_HOME` set to the Android SDK directory.
     - In `site/`, run `node scripts/dead-sources.ts <absolute path of the chapter file>`. Make sure that the output says "The check fetches <n> sources of 1 chapters.", where `<n>` is the number of sources in the frontmatter.
 
     If a check fails because of the frontmatter, start a new writer with the brief of step 9 and the error. If the writer changes `sources`, start a new validator (step 7) for each changed source. Then run all the checks again. Do this at most two times. If a check fails for a different reason, or if you cannot fix it, do not commit. Report the check and its error, and stop.
