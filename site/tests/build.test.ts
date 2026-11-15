@@ -18,6 +18,8 @@ const citation = fileURLToPath(new URL('./fixtures/citation', import.meta.url));
 const citationMismatch = fileURLToPath(new URL('./fixtures/citation-mismatch', import.meta.url));
 const citationHtml = fileURLToPath(new URL('./fixtures/citation-html', import.meta.url));
 const codeLink = fileURLToPath(new URL('./fixtures/code-link', import.meta.url));
+// The chapter file of a dry run of /chapter-plan main-thread (.claude/commands/chapter-plan.md).
+const chapterPlan = fileURLToPath(new URL('./fixtures/chapter-plan', import.meta.url));
 
 test('astro build fails on a chapter with invalid frontmatter', () => {
   // --force clears the content cache, so the build checks the fixture with the current schema.
@@ -160,6 +162,18 @@ test('astro build fails on a chapter with a source that breaks a code link rule,
     expect(stdout + stderr).toContain(
       'sources.0: https://android.googlesource.com/platform/frameworks/base/+/main/core/java/android/os/Looper.java: Pin the Gitiles link to a tag or to a commit.',
     );
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build passes on the frontmatter of a /chapter-plan dry run, a chapter without a body, and makes its page', () => {
+  // An output directory outside site/, so astro check does not check the built JS files.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-chapter-plan-'));
+  try {
+    const { status, stdout, stderr } = build('--root', chapterPlan, '--outDir', outDir, '--force');
+    expect(status, stdout + stderr).toBe(0);
+    expect(existsSync(join(outDir, 'launch-path/main-thread/index.html'))).toBe(true);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
