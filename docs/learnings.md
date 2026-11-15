@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-14: A writer wrote a regex for the Go deeper box. The regex also matched the mobile table of contents of Starlight, `<details id="starlight__mobile-toc">`. An earlier search with `.{0,300}` missed that element. Rule: Before you assert on build output, search the full file with a pattern that has no length limit.
+
 2026-11-14: The user said "launch the app". The parent agent started the Android emulator, but the user meant the site. Rule: In this project, "the app" and "the web app" mean the site, unless the user names the launch app. If you are not sure, ask.
 
 2026-11-14: The parent agent opened the site in the browser while work was not done. The user wants the site open only when the whole task is done. Rule: Start the site dev server and open the site only when the whole task is done.
