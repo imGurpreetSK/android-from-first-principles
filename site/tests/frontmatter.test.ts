@@ -138,6 +138,7 @@ describe('chapter frontmatter', () => {
     ['https://raw.githubusercontent.com/Kotlin/kotlinx.coroutines/master/README.md', 'Cite the file on github.com'],
     ['https://www.github.com/Kotlin/kotlinx.coroutines/blob/master/README.md', 'Cite the file on github.com'],
     ['https://android-review.googlesource.com/c/platform/tools/build/+/1848036', 'Do not cite a Gerrit change.'],
+    ['https://r.android.com/1848036', 'Do not cite a Gerrit change.'],
     ['https://github.com/aosp-mirror/platform_frameworks_base/blob/0123456789abcdef0123456789abcdef01234567/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],
     ['https://github.com/android/platform_frameworks_base/blob/0123456789abcdef0123456789abcdef01234567/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],
     ['https://github.com/LineageOS/android_frameworks_base/blob/00596dcbd6f884e7da2c24c28228575a15763007/core/java/android/os/Looper.java', 'Cite AOSP and AndroidX code on android.googlesource.com'],

@@ -8,7 +8,7 @@ const gitilesPin = /^[^+]*\/\+\/(refs\/tags\/[^/]+|[0-9a-f]{40})(\/|$)/;
 // The rules reject these URL forms. The first rule that the source breaks gives the return value.
 // 1. Each link on cs.android.com.
 // 2. Each link on raw.githubusercontent.com or on www.github.com. The other rules and the GitHub tag check read only links on github.com.
-// 3. Each link on a Gerrit host, *-review.googlesource.com. A Gerrit change has no Gitiles ref, so the Gitiles rule gives the wrong fix.
+// 3. Each link to a Gerrit change: on a Gerrit host, *-review.googlesource.com, or on r.android.com, which redirects to android-review.googlesource.com. A Gerrit change has no Gitiles ref, so the Gitiles rule gives the wrong fix.
 // 4. A link to a GitHub copy of AOSP or AndroidX: github.com/aosp-mirror/<repo>, a repo whose name starts with platform_ or android_ (for example android/platform_frameworks_base, which GitHub redirects to aosp-mirror, or the fork LineageOS/android_frameworks_base), or github.com/androidx/androidx.
 // 5. A link to R8 code on github.com or on a Gitiles host other than r8.googlesource.com. R8 code has the package path com/android/tools/r8/.
 // 6. A link to AGP code on github.com or on a Gitiles host, outside android.googlesource.com/platform/tools/base. AGP code has the package paths com/android/build/ and com/android/builder/. R8 on r8.googlesource.com also has com/android/build/shrinker/, so the rule skips r8.googlesource.com.
@@ -25,7 +25,7 @@ export function codeLinkError(source: string) {
   if (host === 'raw.githubusercontent.com' || host === 'www.github.com') {
     return 'Cite the file on github.com: github.com/<owner>/<repo>/blob/<tag or full SHA>/<path>.';
   }
-  if (host.endsWith('-review.googlesource.com')) {
+  if (host === 'r.android.com' || host.endsWith('-review.googlesource.com')) {
     return 'Do not cite a Gerrit change. Cite the file on its Gitiles host at a tag or a full SHA.';
   }
   if (host === 'github.com' && /^\/(aosp-mirror\/|[^/]+\/(platform|android)_|androidx\/androidx(\/|$))/i.test(path)) {
