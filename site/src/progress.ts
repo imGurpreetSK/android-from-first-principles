@@ -1,5 +1,5 @@
 // The progress tracker of the reader (docs/DESIGN.md, "Site").
-// The key of a chapter is its chapter slug, not its URL, because a chapter can move to another section (docs/DESIGN.md, "Curriculum").
+// The key of a chapter is read:<chapter-slug>, not its URL, because a chapter can move to another section (docs/DESIGN.md, "Curriculum").
 // Each storage access can throw, for example if the browser blocks storage. Then these functions return undefined.
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;

@@ -40,7 +40,7 @@ test('the count includes only the chapters on the site', () => {
   expect(progress(() => storage, slugs, 'apk')).toEqual({ read: true, count: 1 });
 });
 
-test('the key of a chapter is its chapter slug, so the progress stays if the chapter moves to another section', () => {
+test('the key of a chapter is read:<chapter-slug>, without the section', () => {
   const storage = fake();
   toggle(() => storage, slugs, 'main-thread');
   expect(storage.getItem('read:main-thread')).toBe('1');
