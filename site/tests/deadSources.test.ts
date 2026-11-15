@@ -108,9 +108,9 @@ If a source loads in a browser, do not change the chapter. If a source moved, ma
 
 Each run of the weekly source check updates this issue. If all sources load, the run closes this issue.`;
 
-test('opens one issue with each chapter that has a dead source, if no open issue has the title', () => {
-  expect(report({ [code]: 'status 404' }, [{ number: 3, title: 'Challenge a claim' }])).toEqual([
-    ['create', title, body(`- \`site/src/content/docs/a.md\`: ${code} (status 404)\n- \`site/src/content/docs/b.md\`: ${code} (status 404)`)],
+test('opens one issue with each source that does not load in each chapter, if no open issue has the title', () => {
+  expect(report({ [page]: 'status 410', [code]: 'status 404' }, [{ number: 3, title: 'Challenge a claim' }])).toEqual([
+    ['create', title, body(`- \`site/src/content/docs/a.md\`: ${page} (status 410)\n- \`site/src/content/docs/a.md\`: ${code} (status 404)\n- \`site/src/content/docs/b.md\`: ${code} (status 404)`)],
   ]);
 });
 
