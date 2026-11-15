@@ -203,7 +203,7 @@ Since Android 16, a 16 KB device runs an app with 4 KB-aligned native code in a 
 
 ## Mental model
 
-An APK is a ZIP file that the platform reads in place. D8 writes the code as `classes.dex`. AAPT2 writes the resources as `resources.arsc` and the manifest as binary XML. AGP stores the entries that the platform maps. It puts the data of each stored entry at a multiple of 4. The padding goes in the extra field of the local file header. Then the v2 signature goes in the APK Signing Block, before the Central Directory. The signature protects this layout. At install, the APK stays one file, `base.apk`. At run time, ART maps `classes.dex` and `libandroidfw` maps `resources.arsc` from that file. If a stored entry is not aligned, the platform copies it into RAM, or the install fails.
+An APK is a ZIP file that the platform reads in place. D8 writes the code as `classes.dex`. AAPT2 writes the resources as `resources.arsc` and the manifest as binary XML. AGP stores the entries that the platform maps. It puts the data of each stored entry at a multiple of 4. Without AGP, `zipalign` does the alignment with padding in the extra field of the local file header. Then the v2 signature goes in the APK Signing Block, before the Central Directory. The signature protects this layout. At install, the APK stays one file, `base.apk`. At run time, ART maps `classes.dex` and `libandroidfw` maps `resources.arsc` from that file. If a stored entry is not aligned, the platform copies it into RAM, or the install fails.
 
 ```mermaid
 flowchart LR
