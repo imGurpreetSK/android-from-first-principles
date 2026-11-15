@@ -41,7 +41,7 @@ export const frontmatter = z
     // Starlight makes sidebar.order optional. docsSchema merges this schema with the Starlight schema, so data has sidebar.
     // Without sidebar.order, the sidebar sorts the chapters of a section by id. Then the display numbers follow the alphabet.
     if ((data as { sidebar?: { order?: number } }).sidebar?.order === undefined) {
-      ctx.addIssue({ code: 'custom', path: ['sidebar', 'order'], message: 'A chapter must have this field.' });
+      ctx.addIssue({ code: 'custom', path: ['sidebar', 'order'], message: 'A chapter must have this field. Write order under sidebar, as in docs/DESIGN.md "Chapter shape".' });
     }
     const { device, checked } = data;
     if (device === true && !checked?.emulator) {
