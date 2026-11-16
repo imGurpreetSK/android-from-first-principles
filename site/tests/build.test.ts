@@ -17,6 +17,7 @@ const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
 const citation = fileURLToPath(new URL('./fixtures/citation', import.meta.url));
 const citationMismatch = fileURLToPath(new URL('./fixtures/citation-mismatch', import.meta.url));
 const citationHtml = fileURLToPath(new URL('./fixtures/citation-html', import.meta.url));
+const citationFootnote = fileURLToPath(new URL('./fixtures/citation-footnote', import.meta.url));
 const codeLink = fileURLToPath(new URL('./fixtures/code-link', import.meta.url));
 // The chapter file of a dry run of /chapter-plan main-thread (.claude/commands/chapter-plan.md).
 const chapterPlan = fileURLToPath(new URL('./fixtures/chapter-plan', import.meta.url));
@@ -113,7 +114,7 @@ test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the 
   }
 }, 60_000);
 
-test('astro build passes on a chapter whose links cite its sources or are exempt, and on a page without sources', () => {
+test('astro build passes on a chapter whose citations are footnotes of its sources and whose other links are exempt, and on a page without sources', () => {
   // An output directory outside site/, so astro check does not check the built JS files.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-'));
   try {
@@ -148,6 +149,26 @@ test('astro build fails on a .md chapter with an HTML link that cites no entry i
     expect(stdout + stderr).toContain(
       `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has links that cite no entry in its sources field: https://developer.android.com/guide.`,
     );
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build fails on a chapter with a citation that is not a footnote or a footnote link whose text is not its URL, and names each link', () => {
+  // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-footnote-'));
+  try {
+    const { status, stdout, stderr } = build('--root', citationFootnote, '--outDir', outDir, '--force');
+    expect(status).not.toBe(0);
+    const file = join(citationFootnote, 'src/content/docs/launch-path/main-thread.md');
+    const looper = 'https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160';
+    // The check also reads the links in a footnote.
+    expect(stdout + stderr).toContain(`The chapter ${file} has links that cite no entry in its sources field: https://developer.android.com/guide.`);
+    // The inline link and the reference link. The links to a chapter and to this repo are not in the list.
+    expect(stdout + stderr).toContain(
+      `The chapter ${file} has external links that are not a Markdown link in a footnote: ${looper}, https://developer.android.com/reference/android/os/Looper#loop(). Write each citation as a GFM footnote.`,
+    );
+    expect(stdout + stderr).toContain(`The chapter ${file} has footnote links whose text is not their URL: ${looper}. Make the text`);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }

@@ -15,9 +15,9 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
-A citation with a line: [Looper.java](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160).
+A citation of a line.[^looper-160] A second claim cites the same line.[^looper-160]
 
-A reference citation with a heading: [Looper][looper].
+A citation of a heading.[^loop]
 
 A link to a chapter: [Zygote](/launch-path/zygote/). A relative link to a chapter: [Binder](../binder/).
 
@@ -25,5 +25,7 @@ A link to a GitHub page of this repo: [Challenge a claim](https://github.com/imG
 
 An image reference is not a citation: ![D][d].
 
-[looper]: https://developer.android.com/reference/android/os/Looper#loop()
 [d]: https://x.example/d.png
+
+[^looper-160]: Looper.java, line 160: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160)
+[^loop]: Looper.loop(): [https://developer.android.com/reference/android/os/Looper#loop()](https://developer.android.com/reference/android/os/Looper#loop())

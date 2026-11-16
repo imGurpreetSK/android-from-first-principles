@@ -1,20 +1,32 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig, fontProviders } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import { missingSource } from './src/citations.ts';
+import { missingSource, needsSource } from './src/citations.ts';
 import { sections } from './src/sections.ts';
 
 // Starlight resolves a path that starts with "." against the Astro root. A test fixture has its own root, so give absolute paths.
 const local = (path) => fileURLToPath(new URL(path, import.meta.url));
 
-// Fail the build if a link in a chapter body cites no entry in the sources of the chapter. A page without sources is not a chapter.
+// Fail the build if a link in a chapter body cites no entry in the sources of the chapter, or if a citation is not in the footnote form (docs/DESIGN.md "Sourcing rules"). A page without sources is not a chapter.
 // Sätteri calls this plugin factory one time for each .md and .mdx file. Astro puts the frontmatter in data.astro.
 function citations({ data, fileURL }) {
   const sources = data.astro?.frontmatter?.sources;
   if (!sources) return null;
   const missing = [];
+  // The links that must cite a source, but are not a Markdown link in a footnote definition.
+  const outside = [];
+  // The links in a footnote definition whose text is not their URL.
+  const wrongText = [];
   const check = ({ url }) => {
     if (missingSource(url, sources)) missing.push(url);
+  };
+  const inline = ({ url }) => {
+    check({ url });
+    if (needsSource(url)) outside.push(url);
+  };
+  const inFootnote = (node, ctx) => {
+    for (let p = ctx.parent(node); p; p = ctx.parent(p)) if (p.type === 'footnoteDefinition') return true;
+    return false;
   };
   // A reference link gets its URL from a definition node. An image reference also uses a definition node, so check only the definitions of reference links.
   const definitions = [];
@@ -24,13 +36,19 @@ function citations({ data, fileURL }) {
   const jsx = ({ attributes }) => {
     for (const a of attributes) {
       if (a.name !== 'href') continue;
-      if (typeof a.value === 'string') check({ url: a.value });
+      if (typeof a.value === 'string') inline({ url: a.value });
       else missing.push('href={…}');
     }
   };
   return {
     name: 'citations',
-    link: check,
+    link: (node, ctx) => {
+      if (!inFootnote(node, ctx)) inline(node);
+      else {
+        check(node);
+        if (ctx.textContent(node) !== node.url) wrongText.push(node.url);
+      }
+    },
     linkReference: ({ identifier }) => {
       references.add(identifier);
     },
@@ -39,17 +57,26 @@ function citations({ data, fileURL }) {
     },
     // In a .md file, an HTML tag is an html node, for example <a href="https://...">. The check reads each href attribute of the node.
     html: ({ value }) => {
-      for (const [, url] of value.matchAll(/\shref\s*=\s*["']?([^"'\s>]+)/gi)) check({ url });
+      for (const [, url] of value.matchAll(/\shref\s*=\s*["']?([^"'\s>]+)/gi)) inline({ url });
     },
     mdxJsxFlowElement: jsx,
     mdxJsxTextElement: jsx,
-    // After the visit, so that the error names each link of the chapter that cites no source.
+    // After the visit, so that the error names each bad link of the chapter.
     after() {
       // A definition can come before or after its reference link, so check the definitions after the visit.
-      for (const d of definitions) if (references.has(d.identifier)) check(d);
+      for (const d of definitions) if (references.has(d.identifier)) inline(d);
+      const file = fileURLToPath(fileURL);
+      const errors = [];
       if (missing.length > 0) {
-        throw new Error(`The chapter ${fileURLToPath(fileURL)} has links that cite no entry in its sources field: ${missing.join(', ')}. The check removes the anchor and the timestamp from each external link. Then each external link must be equal to an entry in sources. Change each link to cite a source, or add its target to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
+        errors.push(`The chapter ${file} has links that cite no entry in its sources field: ${missing.join(', ')}. The check removes the anchor and the timestamp from each external link. Then each external link must be equal to an entry in sources. Change each link to cite a source, or add its target to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
       }
+      if (outside.length > 0) {
+        errors.push(`The chapter ${file} has external links that are not a Markdown link in a footnote: ${outside.join(', ')}. Write each citation as a GFM footnote. Put the marker [^<label>] after the claim. At the end of the file, put the definition [^<label>]: <short label>: [<URL>](<URL>) (docs/DESIGN.md "Sourcing rules").`);
+      }
+      if (wrongText.length > 0) {
+        errors.push(`The chapter ${file} has footnote links whose text is not their URL: ${wrongText.join(', ')}. Make the text of each link equal to its URL, with the anchor, so that the note shows the URL.`);
+      }
+      if (errors.length > 0) throw new Error(errors.join(' '));
     },
   };
 }
