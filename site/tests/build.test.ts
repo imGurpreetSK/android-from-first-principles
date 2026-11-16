@@ -182,6 +182,8 @@ test('astro build fails on a chapter whose citations break the footnote rules of
     // Sätteri keeps a marker without a definition as text, and shows no footnote for a definition without a marker.
     expect(stdout + stderr).toContain(`The chapter ${file} has markers without a footnote definition: [^nodef]. At the end`);
     expect(stdout + stderr).toContain(`The chapter ${file} has footnote definitions without a marker: unused. Put the marker`);
+    // A link to a chapter does not cite a source.
+    expect(stdout + stderr).toContain(`The chapter ${file} has footnotes without a link to a source: nolink, chapter. Give each footnote`);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }

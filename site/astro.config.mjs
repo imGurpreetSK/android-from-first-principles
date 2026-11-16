@@ -24,14 +24,15 @@ function citations({ data, fileURL }) {
     check({ url });
     if (needsSource(url)) outside.push(url);
   };
-  const inFootnote = (node, ctx) => {
-    for (let p = ctx.parent(node); p; p = ctx.parent(p)) if (p.type === 'footnoteDefinition') return true;
-    return false;
+  // The footnote definition that holds the node, or undefined.
+  const footnoteOf = (node, ctx) => {
+    for (let p = ctx.parent(node); p; p = ctx.parent(p)) if (p.type === 'footnoteDefinition') return p;
   };
-  // The labels of the markers and of the footnote definitions. A marker without a definition stays text, for example "[^label]".
+  // The labels of the markers. A marker without a definition stays text, for example "[^label]".
   const markers = new Set();
-  const notes = new Set();
   const loose = [];
+  // For each footnote definition, the URLs of its links that must cite a source.
+  const notes = new Map();
   // A reference link gets its URL from a definition node. An image reference also uses a definition node, so check only the definitions of reference links.
   const definitions = [];
   const references = new Set();
@@ -47,10 +48,12 @@ function citations({ data, fileURL }) {
   return {
     name: 'citations',
     link: (node, ctx) => {
-      if (!inFootnote(node, ctx)) inline(node);
+      const note = footnoteOf(node, ctx);
+      if (!note) inline(node);
       else {
         check(node);
         if (ctx.textContent(node) !== node.url) wrongText.push(node.url);
+        if (needsSource(node.url)) notes.set(note.identifier, [...(notes.get(note.identifier) ?? []), node.url]);
       }
     },
     linkReference: ({ identifier }) => {
@@ -63,7 +66,7 @@ function citations({ data, fileURL }) {
       markers.add(identifier);
     },
     footnoteDefinition: ({ identifier }) => {
-      notes.add(identifier);
+      if (!notes.has(identifier)) notes.set(identifier, []);
     },
     text: ({ value }) => {
       loose.push(...(value.match(/\[\^[^\]\s]+\]/g) ?? []));
@@ -92,9 +95,13 @@ function citations({ data, fileURL }) {
       if (loose.length > 0) {
         errors.push(`The chapter ${file} has markers without a footnote definition: ${loose.join(', ')}. At the end of the file, put the definition [^<label>]: <short label>: [<URL>](<URL>) for each label, or correct the label of the marker.`);
       }
-      const unused = [...notes].filter((id) => !markers.has(id));
+      const unused = [...notes.keys()].filter((id) => !markers.has(id));
       if (unused.length > 0) {
         errors.push(`The chapter ${file} has footnote definitions without a marker: ${unused.join(', ')}. Put the marker [^<label>] after the claim, or remove the definition.`);
+      }
+      const noSource = [...notes].filter(([, urls]) => urls.length === 0).map(([id]) => id);
+      if (noSource.length > 0) {
+        errors.push(`The chapter ${file} has footnotes without a link to a source: ${noSource.join(', ')}. Give each footnote the form [^<label>]: <short label>: [<URL>](<URL>).`);
       }
       if (errors.length > 0) throw new Error(errors.join(' '));
     },
