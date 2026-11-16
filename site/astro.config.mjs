@@ -31,6 +31,8 @@ function citations({ data, fileURL }) {
   // The labels of the markers. A marker without a definition stays text, for example "[^label]".
   const markers = new Set();
   const loose = [];
+  // The markers that follow a marker with a separator between them, for example "[^a], [^b]" or "[^a]<sup>,</sup>[^b]".
+  const separated = [];
   // For each footnote definition, the URLs of its links that must cite a source.
   const notes = new Map();
   // A reference link gets its URL from a definition node. An image reference also uses a definition node, so check only the definitions of reference links.
@@ -62,8 +64,20 @@ function citations({ data, fileURL }) {
     definition: (node) => {
       definitions.push(node);
     },
-    footnoteReference: ({ identifier }) => {
-      markers.add(identifier);
+    footnoteReference: (node, ctx) => {
+      markers.add(node.identifier);
+      // The site puts the gap between two markers (theme.css). Text, HTML or JSX with only spaces and punctuation between two markers is a second separator.
+      const siblings = ctx.parent(node).children;
+      const i = ctx.indexOf(node);
+      for (let j = i - 1; j >= 0; j--) {
+        const s = siblings[j];
+        if (s.type === 'footnoteReference') {
+          if (j < i - 1) separated.push(`[^${node.identifier}]`);
+          break;
+        }
+        if (!['text', 'html', 'mdxJsxTextElement'].includes(s.type)) break;
+        if (!/^[\s\p{P}]*$/u.test(s.type === 'html' ? '' : ctx.textContent(s))) break;
+      }
     },
     footnoteDefinition: ({ identifier }) => {
       if (!notes.has(identifier)) notes.set(identifier, []);
@@ -94,6 +108,9 @@ function citations({ data, fileURL }) {
       }
       if (loose.length > 0) {
         errors.push(`The chapter ${file} has markers without a footnote definition: ${loose.join(', ')}. At the end of the file, put the definition [^<label>]: <short label>: [<URL>](<URL>) for each label, or correct the label of the marker.`);
+      }
+      if (separated.length > 0) {
+        errors.push(`The chapter ${file} has markers with a separator before them: ${separated.join(', ')}. Put the markers of one claim next to each other, with no text between them, for example [^a][^b]. The site puts the space between the numbers (docs/DESIGN.md "Sourcing rules").`);
       }
       const unused = [...notes.keys()].filter((id) => !markers.has(id));
       if (unused.length > 0) {

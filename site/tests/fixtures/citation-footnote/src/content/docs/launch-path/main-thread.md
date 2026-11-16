@@ -27,6 +27,8 @@ A footnote without a link.[^nolink] A footnote with only a link to a chapter.[^c
 
 Two more labels for the spot of loop.[^dup][^dup2] A footnote with the same link two times.[^twice]
 
+Two markers with a comma in HTML.[^loop]<sup>,</sup>[^twice] Two markers with a comma.[^loop], [^label] Two markers with no separator.[^twice][^loop]
+
 A link to a chapter: [Zygote](/launch-path/zygote/). A link to a GitHub page of this repo: [Challenge a claim](https://github.com/imGurpreetSK/android-from-first-principles/issues/new?template=challenge-a-claim.yml).
 
 [looper]: https://developer.android.com/reference/android/os/Looper#loop()

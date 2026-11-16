@@ -196,6 +196,8 @@ test('astro build fails on a chapter whose citations break the footnote rules of
     expect(stdout + stderr).toContain(
       `The chapter ${file} has footnotes that cite the same spot: https://developer.android.com/reference/android/os/Looper#loop(). Give the claims`,
     );
+    // A comma in HTML and a comma in text fail. Two markers with no separator pass.
+    expect(stdout + stderr).toContain(`The chapter ${file} has markers with a separator before them: [^twice], [^label]. Put the markers`);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
