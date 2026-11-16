@@ -138,6 +138,7 @@ export default defineConfig({
     }),
     // Astro 7 renders .md and .mdx files with its default Sätteri processor. Add the check to that processor, as Starlight adds its plugins. So package.json needs no copy of @astrojs/markdown-satteri.
     // Sätteri names the footnotes section "Footnotes" by default. The aria-describedby attribute of each marker points to its hidden heading, and the table of contents links to the heading.
+    // Sätteri labels each back link "Back to reference {reference}" by default. CONTEXT.md avoids "reference" for a citation.
     // A gfm object keeps the other GFM features on (featuresToParseOptions in satteri/dist/compile.js).
     {
       name: 'citations',
@@ -145,7 +146,7 @@ export default defineConfig({
         'astro:config:setup': ({ config }) => {
           const { options } = config.markdown.processor;
           options.mdastPlugins.push(citations);
-          options.features.gfm = { footnotes: { label: 'Citations' } };
+          options.features.gfm = { footnotes: { label: 'Citations', backLabel: 'Back to citation {reference}' } };
         },
       },
     },
