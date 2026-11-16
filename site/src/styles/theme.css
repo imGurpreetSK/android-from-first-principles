@@ -21,8 +21,8 @@
 /* Citations. Sätteri renders each footnote marker as <sup><a data-footnote-ref> and the footnotes as <section data-footnotes> at the end of the chapter body. */
 .sl-markdown-content [data-footnote-ref] {
   font-size: var(--sl-text-2xs);
-  /* Sätteri puts no space between two adjacent markers. The gap shows 1 2, not 12. */
-  margin-inline-start: 0.2em;
+  /* Sätteri puts no character between two markers that are next to each other. This gap is the separator of the site, so a chapter writes no separator. The gap is one space (U+0020) of Roboto 400: 508 of 2048 units per em. The markers of citations 25 and 26 show as 25 26. */
+  margin-inline-start: 0.248em;
 }
 
 .sl-markdown-content [data-footnotes] {
