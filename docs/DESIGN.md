@@ -88,6 +88,7 @@ All docs, chapters included, use Simplified Technical English (STE). [AGENTS.md]
   - Put the marker `[^<label>]` after the claim. The site shows the marker as a superscript number. A click on the number goes to the footnote.
   - At the end of the chapter file, put one definition for each label: `[^<label>]: <short label>: [<URL>](<URL>)`. The short label names the spot, for example `ZipAlign.cpp, lines 39–51`. The link text is the full URL with its anchor, so the footnote shows the URL.
   - If two claims cite the same spot, give them the same label. Then they get the same number.
+  - If one claim cites more than one spot, put the markers next to each other, with no text between them, for example `[^a][^b]`. The site puts a gap of one space before each number, so the numbers show apart, for example 25 26. Do not write a comma or another separator.
   - A marker can be in a Go deeper box.
   - The site shows the footnotes in small text at the end of the chapter body.
   - If an external link in a chapter is outside a footnote, or if it is a reference link, an HTML link or a JSX link, the build fails. The build also fails if the text of a footnote link is not its URL. The build also fails on a marker without a definition, on a definition without a marker, on a footnote without a link to a source, and on two footnotes with the same URL. A link between chapters or a link to a GitHub page of this repo can be outside a footnote.
