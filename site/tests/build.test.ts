@@ -17,6 +17,7 @@ const sidebar = fileURLToPath(new URL('./fixtures/sidebar', import.meta.url));
 const citation = fileURLToPath(new URL('./fixtures/citation', import.meta.url));
 const citationMismatch = fileURLToPath(new URL('./fixtures/citation-mismatch', import.meta.url));
 const citationHtml = fileURLToPath(new URL('./fixtures/citation-html', import.meta.url));
+const citationFootnote = fileURLToPath(new URL('./fixtures/citation-footnote', import.meta.url));
 const codeLink = fileURLToPath(new URL('./fixtures/code-link', import.meta.url));
 // The chapter file of a dry run of /chapter-plan main-thread (.claude/commands/chapter-plan.md).
 const chapterPlan = fileURLToPath(new URL('./fixtures/chapter-plan', import.meta.url));
@@ -113,18 +114,28 @@ test('astro build puts each chapter at /<section-slug>/<chapter-slug>/, and the 
   }
 }, 60_000);
 
-test('astro build passes on a chapter whose links cite its sources or are exempt, and on a page without sources', () => {
+test('astro build passes on a chapter whose citations are footnotes of its sources and whose other links are exempt, and on a page without sources', () => {
   // An output directory outside site/, so astro check does not check the built JS files.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-'));
   try {
     const { status, stdout, stderr } = build('--root', citation, '--outDir', outDir, '--force');
     expect(status, stdout + stderr).toBe(0);
+    // theme.css styles the markers by data-footnote-ref, and the footnotes by data-footnotes and :target on the id of each footnote.
+    // Two claims that cite the same spot get the same number.
+    const html = readFileSync(join(outDir, 'launch-path/main-thread/index.html'), 'utf8');
+    const markers = [...html.matchAll(/<sup(?:\s[^>]*)?><a\b[^>]*\bhref="#user-content-fn-([^"]*)"[^>]*\bdata-footnote-ref\b[^>]*>(\d+)<\/a><\/sup>/g)].map(([, label, n]) => `${label} ${n}`);
+    expect(markers).toEqual(['looper-160 1', 'looper-160 1', 'loop 2']);
+    const notes = html.match(/<section\b[^>]*\bdata-footnotes\b[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+    expect([...notes.matchAll(/<li\b[^>]*\bid="user-content-fn-([^"]*)"/g)].map(([, label]) => label)).toEqual(['looper-160', 'loop']);
+    // The hidden heading of the footnotes section. The aria-describedby attribute of each marker points to it.
+    expect(notes).toMatch(/<h2\b[^>]*\bid="footnote-label"[^>]*>Citations<\/h2>/);
+    expect(notes).toContain('aria-label="Back to citation 1"');
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
 }, 60_000);
 
-test('astro build fails on a chapter with links that cite no entry in its sources, and names the file and each link', () => {
+test('astro build fails on a chapter with links that cite no entry in its sources or that are not footnote links, and names the file and each link', () => {
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-mismatch-'));
   try {
@@ -134,12 +145,16 @@ test('astro build fails on a chapter with links that cite no entry in its source
     expect(stdout + stderr).toContain(
       `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links that cite no entry in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, href={…}, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(), https://x.example/d.png. The check removes the anchor and the timestamp`,
     );
+    // The JSX <a> link and the LinkCard also fail the footnote rule.
+    expect(stdout + stderr).toContain(
+      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has external links that are not a link of the form [<text>](<URL>) in a footnote: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160, https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(), https://x.example/d.png. Write each citation`,
+    );
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
 }, 60_000);
 
-test('astro build fails on a .md chapter with an HTML link that cites no entry in its sources, and names the link', () => {
+test('astro build fails on a .md chapter with an HTML link that cites no entry in its sources and is not a footnote link, and names the link', () => {
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-html-'));
   try {
@@ -148,6 +163,41 @@ test('astro build fails on a .md chapter with an HTML link that cites no entry i
     expect(stdout + stderr).toContain(
       `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has links that cite no entry in its sources field: https://developer.android.com/guide.`,
     );
+    // The HTML link also fails the footnote rule.
+    expect(stdout + stderr).toContain(
+      `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has external links that are not a link of the form [<text>](<URL>) in a footnote: https://developer.android.com/guide. Write each citation`,
+    );
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build fails on a chapter whose citations break the footnote rules of docs/DESIGN.md, and names each link and label', () => {
+  // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-footnote-'));
+  try {
+    const { status, stdout, stderr } = build('--root', citationFootnote, '--outDir', outDir, '--force');
+    expect(status).not.toBe(0);
+    const file = join(citationFootnote, 'src/content/docs/launch-path/main-thread.md');
+    const looper = 'https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160';
+    // The check also reads the links in a footnote.
+    expect(stdout + stderr).toContain(`The chapter ${file} has links that cite no entry in its sources field: https://developer.android.com/guide.`);
+    // The inline link and the reference link. The links to a chapter and to this repo are not in the list.
+    expect(stdout + stderr).toContain(
+      `The chapter ${file} has external links that are not a link of the form [<text>](<URL>) in a footnote: ${looper}, https://developer.android.com/reference/android/os/Looper#loop(). Write each citation as a GFM footnote.`,
+    );
+    expect(stdout + stderr).toContain(`The chapter ${file} has footnote links whose text is not their URL: ${looper}. Make the text`);
+    // Sätteri keeps a marker without a definition as text, and shows no footnote for a definition without a marker.
+    expect(stdout + stderr).toContain(`The chapter ${file} has markers without a footnote definition: [^nodef]. At the end`);
+    expect(stdout + stderr).toContain(`The chapter ${file} has footnote definitions without a marker: unused. Put the marker`);
+    // A link to a chapter does not cite a source.
+    expect(stdout + stderr).toContain(`The chapter ${file} has footnotes without a link to a source: nolink, chapter. Give each footnote`);
+    // Three footnotes cite the spot of loop, and the error names it one time. A link that is two times in one footnote does not count.
+    expect(stdout + stderr).toContain(
+      `The chapter ${file} has footnotes that cite the same spot: https://developer.android.com/reference/android/os/Looper#loop(). Give the claims`,
+    );
+    // A comma in HTML and a comma in text fail. Two markers with no separator pass.
+    expect(stdout + stderr).toContain(`The chapter ${file} has markers with a separator before them: [^twice], [^label]. Put the markers`);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }

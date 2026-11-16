@@ -14,9 +14,12 @@ export function source(link: string) {
   return youtube.test(s) ? s.replace(timestamp, '$1').replace(/[?&]$/, '') : s;
 }
 
+// Returns true if the link must cite a source.
+export const needsSource = (link: string) => external.test(link) && !repo.test(link);
+
 // Returns the link without its anchor and timestamp, if the link must cite a source and sources does not have it.
 export function missingSource(link: string, sources: readonly string[]) {
-  if (!external.test(link) || repo.test(link)) return undefined;
+  if (!needsSource(link)) return undefined;
   const s = source(link);
   return sources.includes(s) ? undefined : s;
 }
