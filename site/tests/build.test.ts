@@ -135,7 +135,7 @@ test('astro build passes on a chapter whose citations are footnotes of its sourc
   }
 }, 60_000);
 
-test('astro build fails on a chapter with links that cite no entry in its sources, and names the file and each link', () => {
+test('astro build fails on a chapter with links that cite no entry in its sources or that are not footnote links, and names the file and each link', () => {
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-mismatch-'));
   try {
@@ -145,12 +145,16 @@ test('astro build fails on a chapter with links that cite no entry in its source
     expect(stdout + stderr).toContain(
       `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has links that cite no entry in its sources field: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, href={…}, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(), https://x.example/d.png. The check removes the anchor and the timestamp`,
     );
+    // The JSX <a> link and the LinkCard also fail the footnote rule.
+    expect(stdout + stderr).toContain(
+      `The chapter ${join(citationMismatch, 'src/content/docs/launch-path/main-thread.mdx')} has external links that are not a link of the form [<text>](<URL>) in a footnote: https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160, https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#100, https://developer.android.com/guide, https://developer.android.com/guide/components/processes-and-threads, https://developer.android.com/reference/android/os/Looper#loop(), https://x.example/d.png. Write each citation`,
+    );
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
 }, 60_000);
 
-test('astro build fails on a .md chapter with an HTML link that cites no entry in its sources, and names the link', () => {
+test('astro build fails on a .md chapter with an HTML link that cites no entry in its sources and is not a footnote link, and names the link', () => {
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-html-'));
   try {
@@ -158,6 +162,10 @@ test('astro build fails on a .md chapter with an HTML link that cites no entry i
     expect(status).not.toBe(0);
     expect(stdout + stderr).toContain(
       `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has links that cite no entry in its sources field: https://developer.android.com/guide.`,
+    );
+    // The HTML link also fails the footnote rule.
+    expect(stdout + stderr).toContain(
+      `The chapter ${join(citationHtml, 'src/content/docs/launch-path/main-thread.md')} has external links that are not a link of the form [<text>](<URL>) in a footnote: https://developer.android.com/guide. Write each citation`,
     );
   } finally {
     rmSync(outDir, { recursive: true, force: true });
