@@ -21,6 +21,8 @@
 /* Citations. Sätteri renders each footnote marker as <sup><a data-footnote-ref> and the footnotes as <section data-footnotes> at the end of the chapter body. */
 .sl-markdown-content [data-footnote-ref] {
   font-size: var(--sl-text-2xs);
+  /* Sätteri puts no space between two adjacent markers. The gap shows 1 2, not 12. */
+  margin-inline-start: 0.2em;
 }
 
 .sl-markdown-content [data-footnotes] {
