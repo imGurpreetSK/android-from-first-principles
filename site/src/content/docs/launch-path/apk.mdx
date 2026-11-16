@@ -136,7 +136,7 @@ Android Studio and AGP run these build tools:
 AGP aligns the APK automatically[^zipalign-doc]. `ApkFlinger`, an APK writer in the AGP code, shows the rules:
 
 - If an entry is not compressed, `ApkFlinger` aligns it on 4 bytes, the `DEFAULT_ALIGNMENT`[^apkflinger-195][^apkflinger-284].
-- If AGP packages the native libraries uncompressed, `ApkFlinger` aligns each native library on the page size[^apkflinger-90][^apkflinger-195]. The default page size is 16 KB[^apkflinger-65].
+- If AGP packages the native libraries uncompressed, `ApkFlinger` aligns each native library on the page size[^apkflinger-195][^apkflinger-90]. The default page size is 16 KB[^apkflinger-65].
 - A compressed entry gets no alignment[^apkflinger-265]. The platform cannot map a compressed entry, so its offset is not important. For example, ART always extracts a compressed DEX entry[^dex-file-loader-569].
 
 AGP also decides which entries to store. If `minSdk` is 28 or higher and `useLegacyPackaging` has no value, AGP stores the DEX files uncompressed[^dexpackaging]. The launch app has `minSdk` 29 and uses AGP 9.5.0, so its `classes.dex` is a stored entry.
