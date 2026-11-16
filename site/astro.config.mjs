@@ -74,7 +74,7 @@ function citations({ data, fileURL }) {
         errors.push(`The chapter ${file} has external links that are not a Markdown link in a footnote: ${outside.join(', ')}. Write each citation as a GFM footnote. Put the marker [^<label>] after the claim. At the end of the file, put the definition [^<label>]: <short label>: [<URL>](<URL>) (docs/DESIGN.md "Sourcing rules").`);
       }
       if (wrongText.length > 0) {
-        errors.push(`The chapter ${file} has footnote links whose text is not their URL: ${wrongText.join(', ')}. Make the text of each link equal to its URL, with the anchor, so that the note shows the URL.`);
+        errors.push(`The chapter ${file} has footnote links whose text is not their URL: ${wrongText.join(', ')}. Make the text of each link equal to its URL, with the anchor, so that the footnote shows the URL.`);
       }
       if (errors.length > 0) throw new Error(errors.join(' '));
     },
