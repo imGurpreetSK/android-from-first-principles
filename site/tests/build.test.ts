@@ -127,6 +127,8 @@ test('astro build passes on a chapter whose citations are footnotes of its sourc
     expect(markers).toEqual(['looper-160 1', 'looper-160 1', 'loop 2']);
     const notes = html.match(/<section\b[^>]*\bdata-footnotes\b[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
     expect([...notes.matchAll(/<li\b[^>]*\bid="user-content-fn-([^"]*)"/g)].map(([, label]) => label)).toEqual(['looper-160', 'loop']);
+    // The hidden heading of the footnotes section. The aria-describedby attribute of each marker points to it.
+    expect(notes).toMatch(/<h2\b[^>]*\bid="footnote-label"[^>]*>Citations<\/h2>/);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
