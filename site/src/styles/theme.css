@@ -23,10 +23,8 @@
   font-size: var(--sl-text-2xs);
 }
 
-/* A long URL breaks at any character, so a footnote never makes the page scroll sideways. */
 .sl-markdown-content [data-footnotes] {
   font-size: var(--sl-text-2xs);
-  overflow-wrap: anywhere;
 }
 
 /* A click on a marker targets its footnote. accent-low has a value in each theme. Link text on it: 4.8:1 in light mode, 6.9:1 in dark mode. */
