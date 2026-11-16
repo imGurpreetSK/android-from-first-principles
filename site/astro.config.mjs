@@ -103,6 +103,12 @@ function citations({ data, fileURL }) {
       if (noSource.length > 0) {
         errors.push(`The chapter ${file} has footnotes without a link to a source: ${noSource.join(', ')}. Give each footnote the form [^<label>]: <short label>: [<URL>](<URL>).`);
       }
+      // A URL that is in more than one footnote. A URL that is two times in one footnote does not count.
+      const urls = [...notes.values()].flatMap((u) => [...new Set(u)]);
+      const twice = [...new Set(urls.filter((u, i) => urls.indexOf(u) !== i))];
+      if (twice.length > 0) {
+        errors.push(`The chapter ${file} has footnotes that cite the same spot: ${twice.join(', ')}. Give the claims that cite one spot the same label, and keep one definition.`);
+      }
       if (errors.length > 0) throw new Error(errors.join(' '));
     },
   };

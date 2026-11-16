@@ -25,6 +25,8 @@ A marker without a definition.[^nodef]
 
 A footnote without a link.[^nolink] A footnote with only a link to a chapter.[^chapter]
 
+Two more labels for the spot of loop.[^dup][^dup2] A footnote with the same link two times.[^twice]
+
 A link to a chapter: [Zygote](/launch-path/zygote/). A link to a GitHub page of this repo: [Challenge a claim](https://github.com/imGurpreetSK/android-from-first-principles/issues/new?template=challenge-a-claim.yml).
 
 [looper]: https://developer.android.com/reference/android/os/Looper#loop()
@@ -35,3 +37,6 @@ A link to a chapter: [Zygote](/launch-path/zygote/). A link to a GitHub page of 
 [^unused]: Looper.java, line 100: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#100](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#100)
 [^nolink]: Looper.java, line 160
 [^chapter]: Zygote: [/launch-path/zygote/](/launch-path/zygote/)
+[^dup]: Looper.loop(): [https://developer.android.com/reference/android/os/Looper#loop()](https://developer.android.com/reference/android/os/Looper#loop())
+[^dup2]: Looper.loop(): [https://developer.android.com/reference/android/os/Looper#loop()](https://developer.android.com/reference/android/os/Looper#loop())
+[^twice]: Looper.java, line 200: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#200](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#200), [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#200](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#200)

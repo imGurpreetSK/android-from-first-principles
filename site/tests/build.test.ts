@@ -184,6 +184,10 @@ test('astro build fails on a chapter whose citations break the footnote rules of
     expect(stdout + stderr).toContain(`The chapter ${file} has footnote definitions without a marker: unused. Put the marker`);
     // A link to a chapter does not cite a source.
     expect(stdout + stderr).toContain(`The chapter ${file} has footnotes without a link to a source: nolink, chapter. Give each footnote`);
+    // Three footnotes cite the spot of loop, and the error names it one time. A link that is two times in one footnote does not count.
+    expect(stdout + stderr).toContain(
+      `The chapter ${file} has footnotes that cite the same spot: https://developer.android.com/reference/android/os/Looper#loop(). Give the claims`,
+    );
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }

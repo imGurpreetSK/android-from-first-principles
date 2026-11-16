@@ -90,7 +90,7 @@ All docs, chapters included, use Simplified Technical English (STE). [AGENTS.md]
   - If two claims cite the same spot, give them the same label. Then they get the same number.
   - A marker can be in a Go deeper box.
   - The site shows the footnotes in small text at the end of the chapter body.
-  - If an external link in a chapter is outside a footnote, or if it is a reference link, an HTML link or a JSX link, the build fails. The build also fails if the text of a footnote link is not its URL. The build also fails on a marker without a definition, on a definition without a marker, and on a footnote without a link to a source. A link between chapters or a link to a GitHub page of this repo can be outside a footnote.
+  - If an external link in a chapter is outside a footnote, or if it is a reference link, an HTML link or a JSX link, the build fails. The build also fails if the text of a footnote link is not its URL. The build also fails on a marker without a definition, on a definition without a marker, on a footnote without a link to a source, and on two footnotes with the same URL. A link between chapters or a link to a GitHub page of this repo can be outside a footnote.
 - The site shows the `checked` stamp at the top of each chapter. The stamp has these fields:
   - `android`: the **baseline** of the chapter, the Android release whose behavior the chapter describes as current. It is an integer, 10 or more.
   - `aosp`: an AOSP release tag of the `android` release, in the form `android-<android>.<n>.<n>_r<n>`, for example `android-17.0.0_r1`.
