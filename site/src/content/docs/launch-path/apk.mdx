@@ -68,7 +68,7 @@ The platform does not unpack the APK. It reads the entries in place, from the AP
 With `mmap`, a process reads the bytes of a file directly, with no copy in RAM[^zipalign-doc]. ART and `libandroidfw` use an entry in place, with no copy, only if two conditions are true:
 
 - The entry is stored. The ZIP file holds a stored entry with no compression, so the bytes in the APK are the bytes of the file.
-- The data of the entry starts at an aligned offset. For a DEX file and for the resource table, the offset must be a multiple of 4[^dex-format-header-item][^asset-698].
+- The data of the entry starts at an aligned offset. For a DEX file and for the resource table, the offset must be a multiple of 4[^dex-format-header-item]<sup>,</sup>[^asset-698].
 
 If an entry does not meet the two conditions, the platform copies the entry into RAM, or the install fails. A ZIP file can be valid and not meet them. This chapter builds such a ZIP file, shows where it breaks, and then shows how the real build prevents the problem.
 
@@ -135,8 +135,8 @@ Android Studio and AGP run these build tools:
 
 AGP aligns the APK automatically[^zipalign-doc]. `ApkFlinger`, an APK writer in the AGP code, shows the rules:
 
-- If an entry is not compressed, `ApkFlinger` aligns it on 4 bytes, the `DEFAULT_ALIGNMENT`[^apkflinger-195][^apkflinger-284].
-- If AGP packages the native libraries uncompressed, `ApkFlinger` aligns each native library on the page size[^apkflinger-90][^apkflinger-195]. The default page size is 16 KB[^apkflinger-65].
+- If an entry is not compressed, `ApkFlinger` aligns it on 4 bytes, the `DEFAULT_ALIGNMENT`[^apkflinger-195]<sup>,</sup>[^apkflinger-284].
+- If AGP packages the native libraries uncompressed, `ApkFlinger` aligns each native library on the page size[^apkflinger-90]<sup>,</sup>[^apkflinger-195]. The default page size is 16 KB[^apkflinger-65].
 - A compressed entry gets no alignment[^apkflinger-265]. The platform cannot map a compressed entry, so its offset is not important. For example, ART always extracts a compressed DEX entry[^dex-file-loader-569].
 
 AGP also decides which entries to store. If `minSdk` is 28 or higher and `useLegacyPackaging` has no value, AGP stores the DEX files uncompressed[^dexpackaging]. The launch app has `minSdk` 29 and uses AGP 9.5.0, so its `classes.dex` is a stored entry.
@@ -146,7 +146,7 @@ AGP also decides which entries to store. If `minSdk` is 28 or higher and `useLeg
 If you do not use AGP, align the APK with `zipalign`[^zipalign-doc]. `zipalign` copies each entry of an APK into a new file:
 
 - It copies a compressed entry or a directory with no padding[^zipalign-73].
-- It adds each other entry with an alignment `alignTo`[^zipalign-84]. `alignTo` is the alignment argument of the command: 4 for the files of an APK. If page alignment is on, `alignTo` for a `.so` file is the page size[^zipalign-39][^zipalign-usage].
+- It adds each other entry with an alignment `alignTo`[^zipalign-84]. `alignTo` is the alignment argument of the command: 4 for the files of an APK. If page alignment is on, `alignTo` for a `.so` file is the page size[^zipalign-39]<sup>,</sup>[^zipalign-usage].
 
 Before `zipalign` writes an entry, it calculates where the data of the entry will start. It uses the same formula as libziparchive: the current offset + the size of the fixed fields + the name length + the extra field length. If the result is not a multiple of `alignTo`, `zipalign` adds padding to the extra field of the local file header[^zipfile-495]. This is the fix for the flaw of the rebuild: the padding moves the data to the next multiple of 4.
 
@@ -172,7 +172,7 @@ Since Android 11, the code directory of an app has the extra level `~~<random>`[
 
 At run time, the platform reads the entries from `base.apk`:
 
-- ART opens `classes.dex`, then `classes2.dex`, `classes3.dex` and so on. It stops at the first name that has no entry[^dex-file-loader-170][^dex-file-loader-410]. If an entry is stored and aligned, ART maps it from the file, "to avoid a dirty copy"[^dex-file-loader-548].
+- ART opens `classes.dex`, then `classes2.dex`, `classes3.dex` and so on. It stops at the first name that has no entry[^dex-file-loader-170]<sup>,</sup>[^dex-file-loader-410]. If an entry is stored and aligned, ART maps it from the file, "to avoid a dirty copy"[^dex-file-loader-548].
 - `libandroidfw` opens `resources.arsc` with `mmap`, unless the entry is compressed. It parses the table from an aligned buffer[^apkassets-118]. If the mapped data is aligned on 4 bytes, `libandroidfw` uses it directly. Otherwise, it copies the data[^asset-698].
 
 <GoDeeper title="binary XML and the resource table">
@@ -185,7 +185,7 @@ A resource ID has the form `0xpptteeee`: the package index, the type index and t
 
 <GoDeeper title="the DEX magic">
 
-A `.dex` file starts with `DEX_FILE_MAGIC`: `dex\n`, a format version of three decimal digits, and `\0`[^dex-format-magic]. ART accepts a DEX file only if it starts with `dex\n` and has a version from the list of versions in ART[^standard-dex-file-26][^standard-dex-file-58]. Prompt 3 of "Try it" shows these bytes.
+A `.dex` file starts with `DEX_FILE_MAGIC`: `dex\n`, a format version of three decimal digits, and `\0`[^dex-format-magic]. ART accepts a DEX file only if it starts with `dex\n` and has a version from the list of versions in ART[^standard-dex-file-26]<sup>,</sup>[^standard-dex-file-58]. Prompt 3 of "Try it" shows these bytes.
 
 </GoDeeper>
 
@@ -279,7 +279,7 @@ Archive:  /data/app/~~…/io.github.imgurpreetsk.afp.launchapp-…/base.apk
        …                …   …%                            5 files
 ```
 
-`ziptool` of libziparchive acts as `unzip` if its program name is `unzip`, for example through a symlink[^ziptool-490]. With `-lv`, it prints a row for each entry: the length, the method (`Stored` or `Defl:N`), the size, the compression ratio, the date, the time, the CRC-32 and the name[^ziptool-128][^ziptool-313]. The order of the rows can be different from the order in the ZIP file[^ziptool-410].
+`ziptool` of libziparchive acts as `unzip` if its program name is `unzip`, for example through a symlink[^ziptool-490]. With `-lv`, it prints a row for each entry: the length, the method (`Stored` or `Defl:N`), the size, the compression ratio, the date, the time, the CRC-32 and the name[^ziptool-128]<sup>,</sup>[^ziptool-313]. The order of the rows can be different from the order in the ZIP file[^ziptool-410].
 
 - `classes.dex` is `Stored`. The launch app has `minSdk` 29, so AGP stores its DEX files uncompressed[^dexpackaging].
 - `resources.arsc` is `Stored`. The launch app targets API level 37, and the installer rejects a compressed table[^parsingpackageutils-622].
