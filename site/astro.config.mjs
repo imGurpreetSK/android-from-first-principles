@@ -28,6 +28,10 @@ function citations({ data, fileURL }) {
     for (let p = ctx.parent(node); p; p = ctx.parent(p)) if (p.type === 'footnoteDefinition') return true;
     return false;
   };
+  // The labels of the markers and of the footnote definitions. A marker without a definition stays text, for example "[^label]".
+  const markers = new Set();
+  const notes = new Set();
+  const loose = [];
   // A reference link gets its URL from a definition node. An image reference also uses a definition node, so check only the definitions of reference links.
   const definitions = [];
   const references = new Set();
@@ -55,6 +59,15 @@ function citations({ data, fileURL }) {
     definition: (node) => {
       definitions.push(node);
     },
+    footnoteReference: ({ identifier }) => {
+      markers.add(identifier);
+    },
+    footnoteDefinition: ({ identifier }) => {
+      notes.add(identifier);
+    },
+    text: ({ value }) => {
+      loose.push(...(value.match(/\[\^[^\]\s]+\]/g) ?? []));
+    },
     // In a .md file, an HTML tag is an html node, for example <a href="https://...">. The check reads each href attribute of the node.
     html: ({ value }) => {
       for (const [, url] of value.matchAll(/\shref\s*=\s*["']?([^"'\s>]+)/gi)) inline({ url });
@@ -75,6 +88,13 @@ function citations({ data, fileURL }) {
       }
       if (wrongText.length > 0) {
         errors.push(`The chapter ${file} has footnote links whose text is not their URL: ${wrongText.join(', ')}. Make the text of each link equal to its URL, with the anchor, so that the footnote shows the URL.`);
+      }
+      if (loose.length > 0) {
+        errors.push(`The chapter ${file} has markers without a footnote definition: ${loose.join(', ')}. At the end of the file, put the definition [^<label>]: <short label>: [<URL>](<URL>) for each label, or correct the label of the marker.`);
+      }
+      const unused = [...notes].filter((id) => !markers.has(id));
+      if (unused.length > 0) {
+        errors.push(`The chapter ${file} has footnote definitions without a marker: ${unused.join(', ')}. Put the marker [^<label>] after the claim, or remove the definition.`);
       }
       if (errors.length > 0) throw new Error(errors.join(' '));
     },

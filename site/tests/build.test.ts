@@ -164,7 +164,7 @@ test('astro build fails on a .md chapter with an HTML link that cites no entry i
   }
 }, 60_000);
 
-test('astro build fails on a chapter with a citation that is not a footnote or a footnote link whose text is not its URL, and names each link', () => {
+test('astro build fails on a chapter whose citations break the footnote rules of docs/DESIGN.md, and names each link and label', () => {
   // The failed build also writes files. The output directory is outside site/, so astro check does not check them.
   const outDir = mkdtempSync(join(tmpdir(), 'afp-citation-footnote-'));
   try {
@@ -179,6 +179,9 @@ test('astro build fails on a chapter with a citation that is not a footnote or a
       `The chapter ${file} has external links that are not a link of the form [<text>](<URL>) in a footnote: ${looper}, https://developer.android.com/reference/android/os/Looper#loop(). Write each citation as a GFM footnote.`,
     );
     expect(stdout + stderr).toContain(`The chapter ${file} has footnote links whose text is not their URL: ${looper}. Make the text`);
+    // Sätteri keeps a marker without a definition as text, and shows no footnote for a definition without a marker.
+    expect(stdout + stderr).toContain(`The chapter ${file} has markers without a footnote definition: [^nodef]. At the end`);
+    expect(stdout + stderr).toContain(`The chapter ${file} has footnote definitions without a marker: unused. Put the marker`);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
