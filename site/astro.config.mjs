@@ -13,7 +13,7 @@ function citations({ data, fileURL }) {
   const sources = data.astro?.frontmatter?.sources;
   if (!sources) return null;
   const missing = [];
-  // The links that must cite a source, but are not a Markdown link in a footnote definition.
+  // The links that must cite a source, but are outside a footnote definition, or are a reference link, an HTML link or a JSX link.
   const outside = [];
   // The links in a footnote definition whose text is not their URL.
   const wrongText = [];
@@ -71,7 +71,7 @@ function citations({ data, fileURL }) {
         errors.push(`The chapter ${file} has links that cite no entry in its sources field: ${missing.join(', ')}. The check removes the anchor and the timestamp from each external link. Then each external link must be equal to an entry in sources. Change each link to cite a source, or add its target to sources in a plan amendment (docs/DESIGN.md "Chapter pipeline").`);
       }
       if (outside.length > 0) {
-        errors.push(`The chapter ${file} has external links that are not a Markdown link in a footnote: ${outside.join(', ')}. Write each citation as a GFM footnote. Put the marker [^<label>] after the claim. At the end of the file, put the definition [^<label>]: <short label>: [<URL>](<URL>) (docs/DESIGN.md "Sourcing rules").`);
+        errors.push(`The chapter ${file} has external links that are not a link of the form [<text>](<URL>) in a footnote: ${outside.join(', ')}. Write each citation as a GFM footnote. Put the marker [^<label>] after the claim. At the end of the file, put the definition [^<label>]: <short label>: [<URL>](<URL>) (docs/DESIGN.md "Sourcing rules").`);
       }
       if (wrongText.length > 0) {
         errors.push(`The chapter ${file} has footnote links whose text is not their URL: ${wrongText.join(', ')}. Make the text of each link equal to its URL, with the anchor, so that the footnote shows the URL.`);

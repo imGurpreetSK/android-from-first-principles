@@ -175,7 +175,7 @@ test('astro build fails on a chapter with a citation that is not a footnote or a
     expect(stdout + stderr).toContain(`The chapter ${file} has links that cite no entry in its sources field: https://developer.android.com/guide.`);
     // The inline link and the reference link. The links to a chapter and to this repo are not in the list.
     expect(stdout + stderr).toContain(
-      `The chapter ${file} has external links that are not a Markdown link in a footnote: ${looper}, https://developer.android.com/reference/android/os/Looper#loop(). Write each citation as a GFM footnote.`,
+      `The chapter ${file} has external links that are not a link of the form [<text>](<URL>) in a footnote: ${looper}, https://developer.android.com/reference/android/os/Looper#loop(). Write each citation as a GFM footnote.`,
     );
     expect(stdout + stderr).toContain(`The chapter ${file} has footnote links whose text is not their URL: ${looper}. Make the text`);
   } finally {
