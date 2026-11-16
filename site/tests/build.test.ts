@@ -120,6 +120,13 @@ test('astro build passes on a chapter whose citations are footnotes of its sourc
   try {
     const { status, stdout, stderr } = build('--root', citation, '--outDir', outDir, '--force');
     expect(status, stdout + stderr).toBe(0);
+    // theme.css styles the markers by data-footnote-ref, and the footnotes by data-footnotes and :target on the id of each footnote.
+    // Two claims that cite the same spot get the same number.
+    const html = readFileSync(join(outDir, 'launch-path/main-thread/index.html'), 'utf8');
+    const markers = [...html.matchAll(/<sup(?:\s[^>]*)?><a\b[^>]*\bhref="#user-content-fn-([^"]*)"[^>]*\bdata-footnote-ref\b[^>]*>(\d+)<\/a><\/sup>/g)].map(([, label, n]) => `${label} ${n}`);
+    expect(markers).toEqual(['looper-160 1', 'looper-160 1', 'loop 2']);
+    const notes = html.match(/<section\b[^>]*\bdata-footnotes\b[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+    expect([...notes.matchAll(/<li\b[^>]*\bid="user-content-fn-([^"]*)"/g)].map(([, label]) => label)).toEqual(['looper-160', 'loop']);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
