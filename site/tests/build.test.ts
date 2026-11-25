@@ -187,7 +187,7 @@ test('astro build changes a mermaid code block in MDX to <pre class="mermaid">, 
     const { status, stdout, stderr } = build('--root', mermaid, '--outDir', outDir, '--force');
     expect(status, stdout + stderr).toBe(0);
     const html = readFileSync(join(outDir, 'diagram/index.html'), 'utf8');
-    // The script of astro-mermaid reads the diagram text from the element. The build escapes &, <, > and ", and keeps the braces of the MDX file.
+    // The script of astro-mermaid reads the diagram text from the element. The Sätteri plugin of astro-mermaid escapes &, <, >, " and '. The build keeps the braces of the MDX file.
     expect(html.match(/<pre\b[^>]*\bclass="(?:[^"]* )?mermaid[ "][^>]*>[\s\S]*?<\/pre>/g)).toEqual([
       '<pre class="mermaid">flowchart LR\n  A[Tap] --&gt; B{Process?}\n  B --&gt;|no| C[&quot;fork &amp; start&quot;]</pre>',
     ]);
