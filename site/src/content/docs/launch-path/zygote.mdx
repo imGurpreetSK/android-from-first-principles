@@ -64,7 +64,7 @@ The rebuild is a zygote in plain Kotlin, in the module `samples/zygote`. The JVM
 
 <Snippet file="zygote/src/main/kotlin/NaiveZygote.kt" region="image" />
 
-`ProcessImage` holds a table of classes and a random number generator. The real `Math.random()` also uses one `java.util.Random` object in each process[^math-978][^math-1016]. The tests give the rebuild placeholder class names, because the rebuild does not run the classes.
+`ProcessImage` holds a table of classes and a random number generator. The real `Math.random()` also uses one `java.util.Random` object in each process[^math-978][^math-1016]. The tests give the rebuild three placeholder class names, because the rebuild does not run the classes.
 
 `NaiveZygote` prepares the image one time and copies it for each app:
 
