@@ -2,23 +2,25 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.io.Serializable
+import java.util.Random
 
 // region image
 // A stand-in for the memory of a process.
-class ProcessImage : Serializable {
+class ProcessImage(seed: Long) : Serializable {
     val classes = mutableMapOf<String, String>() // the name of each class to its code
+    val random = Random(seed) // Math.random() also uses a java.util.Random.
 }
 // endregion
 
 // region zygote
-class NaiveZygote(private val classNames: List<String>) {
+class NaiveZygote(private val classNames: List<String>, private val seed: Long) {
     var classLoads = 0
         private set
     private lateinit var image: ProcessImage
 
     // The zygote loads each class one time, so that no app loads it again.
     fun preload() {
-        image = ProcessImage()
+        image = ProcessImage(seed)
         for (name in classNames) {
             image.classes[name] = "code of $name"
             classLoads++
