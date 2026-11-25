@@ -96,7 +96,7 @@ export default defineConfig({
   integrations: [
     // A Sätteri plugin of astro-mermaid changes each mermaid code block to <pre class="mermaid">, so Expressive Code does not show it as code.
     // A page script loads the mermaid package only on a page with a diagram. The script renders each diagram in the theme of the page, and renders it again when the theme changes.
-    // The astro-mermaid README puts it before Starlight. It replaces the Sätteri processor with a copy, so it comes before each integration that adds a plugin to the processor.
+    // The astro-mermaid README puts it before Starlight.
     // astro-mermaid imports @astrojs/markdown-satteri, the processor package of astro. If the import fails, astro-mermaid logs a warning and adds remark and rehype plugins. The site does not install @astrojs/markdown-remark, so astro build fails.
     // enableLog: false keeps the info logs of the script out of the browser console.
     astroMermaid({ enableLog: false }),
