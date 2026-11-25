@@ -144,7 +144,7 @@ The loop of the Zygote, `runSelectLoop`, polls the `zygote` socket and each open
 
 The Zygote reads each command into a native buffer. Thus it can fork apps again and again with no new memory allocation, and its memory stays stable[^zygotecommandbuffer-27]. `forkRepeatedly` forks one child for each simple fork command[^zygotecommandbuffer-152].
 
-Since Android 12, the Zygote reads commands into a native buffer, so that it can fork apps with no new memory allocation[^zygotecommandbuffer-12-26].
+Since Android 12, the Zygote has this native command buffer[^zygotecommandbuffer-12-26].
 
 <GoDeeper title="the other fork path and the USAP pool">
 
