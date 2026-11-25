@@ -204,6 +204,87 @@ flowchart TD
   app --> main["ActivityThread.main and Looper.loop()"]
 ```
 
+## Try it
+
+### 1. Give each child a new seed
+
+Change the rebuild so that each child gets a new seed, as `postForkChild` does. Give `NaiveZygote` a third constructor parameter, `seeds: () -> Long`, as the seed source. In `fork()`, call `setSeed(seeds())` on the `random` of the copy before you return the copy. The seed source replaces the clock, so the tests stay deterministic. In `NaiveZygoteTest`, add a counter, `private var next = 0L`. Give each zygote the seed source `{ next++ }`. From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :zygote:test
+```
+
+The breaking test fails, because each child gets a different seed. The Gradle output includes these lines:
+
+```
+NaiveZygoteTest > naiveFork_givesSameRandomNumber_toEveryChild() FAILED
+    org.opentest4j.AssertionFailedError at NaiveZygoteTest.kt:…
+
+3 tests completed, 1 failed
+```
+
+The line number depends on your change.
+
+Then give the zygote of the breaking test the seed source `{ next }`. This source gives the same value for each fork, as the clock does for two forks in the same millisecond. Run the tests again. All three tests pass, so the flaw is back. The real fix has the same limit, because `postForkChild` uses the time in milliseconds as the seed[^zygotehooks-237].
+
+### 2. Read the start record of system_server
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installLaunchPathRelease
+```
+
+Stop the app, so that the next start is a cold start. Start the app and wait for the launch to complete. Then print the newest `am_proc_start` event of the launch app:
+
+```sh
+adb shell am force-stop io.github.imgurpreetsk.afp.launchapp
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+adb shell "logcat -b events -d | grep am_proc_start | grep launchapp | tail -n 1"
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+Starting: Intent { cmp=io.github.imgurpreetsk.afp.launchapp/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: io.github.imgurpreetsk.afp.launchapp/.MainActivity
+TotalTime: …
+WaitTime: …
+Complete
+… I am_proc_start: [0,…,…,io.github.imgurpreetsk.afp.launchapp,…,{io.github.imgurpreetsk.afp.launchapp/io.github.imgurpreetsk.afp.launchapp.MainActivity}]
+```
+
+`am force-stop` stops all of the app[^adb-am]. `am start -W` starts the activity and waits for the launch to complete[^adb-am]. Thus the event is in the log before `logcat` reads the log.
+
+The event has these fields: the user (0), the PID that the Zygote sent back, the UID of the app, the process name, the hosting type and the hosting name[^processlist-2979]. The hosting type is one of the start reasons of `HostingRecord`[^hostingrecord-102]. The hosting name is the activity that needed the process. Thus `system_server` asked the Zygote for a new process because an activity needed one, and it got a PID back.
+
+### 3. List the Zygote and its children
+
+List the Zygote, `system_server` and the launch app, with their parent PIDs, users and SELinux labels:
+
+```sh
+adb shell "ps -A -w -o PID,PPID,USER,LABEL,NAME | grep -E 'zygote|system_server|launchapp'"
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+     …      1 root         u:r:zygote:s0                  zygote64
+     …      … system       u:r:system_server:s0           system_server
+     …      … u0_a…        u:r:untrusted_app:s0:c…        io.github.imgurpreetsk.afp.launchapp
+```
+
+`-A` lists all processes, `-w` does not cut the fields, and `-o` selects the fields[^ps-67]. `PPID` is the PID of the parent. `USER` is the user name. `LABEL` is the security label. `NAME` is `argv[0]` of the process[^ps-326].
+
+- init starts `zygote64`[^init-rc-1091], so the parent of `zygote64` is init. `zygote64` runs as root[^init-zygote64-rc-1], in the SELinux domain `zygote`.
+- The `PPID` of `system_server` and of the launch app is the PID of `zygote64`. Thus the Zygote forked both.
+- The launch app runs as an app user, `u0_a…`, in the domain `untrusted_app`. `SpecializeCommon` set the UID and the SELinux context after the fork[^zygote-cpp-2041][^zygote-cpp-2172]. The launch app has a `targetSdk` of 37, so its domain is `untrusted_app`[^seapp-contexts-209].
+- The `NAME` of the launch app is its package name, because `handleBindApplication` set `argv[0]` to the process name[^activitythread-8028].
+
+The output can have more lines, for example a line for the WebView Zygote[^zygote-doc].
+
 [^processes-and-threads]: Processes and threads overview: [https://developer.android.com/guide/components/processes-and-threads](https://developer.android.com/guide/components/processes-and-threads)
 [^memory-overview-sharing]: Memory overview, "Share memory": [https://developer.android.com/topic/performance/memory-overview#SharingRAM](https://developer.android.com/topic/performance/memory-overview#SharingRAM)
 [^math-1020]: Math.java, lines 1020–1030: [https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#1020](https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#1020)
@@ -303,3 +384,6 @@ flowchart TD
 [^processlist-2979]: ProcessList.java, lines 2979–2982: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2979](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2979)
 [^processlist-2996]: ProcessList.java, lines 2996–3012: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2996](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2996)
 [^hostingrecord-102]: HostingRecord.java, lines 102–115: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/HostingRecord.java#102](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/HostingRecord.java#102)
+[^adb-am]: adb, "Call activity manager": [https://developer.android.com/tools/adb#am](https://developer.android.com/tools/adb#am)
+[^ps-67]: ps.c, lines 67–84: [https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#67](https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#67)
+[^ps-326]: ps.c, lines 326–360: [https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#326](https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#326)
