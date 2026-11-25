@@ -190,6 +190,20 @@ The `Runnable` calls `ActivityThread.main`. `main` sets `argv[0]` to `<pre-initi
 
 After the Zygote sends back the PID, `ProcessList.handleProcessStartedLocked` in `system_server` writes the event `am_proc_start`. The event has these fields: the user, the PID, the UID, the process name, the hosting type and the hosting name[^processlist-2979]. `handleProcessStartedLocked` also logs a line that starts with `Start proc`[^processlist-2996]. The hosting type is the reason for the process start, for example `activity`, `top-activity`, `next-activity` or `next-top-activity`[^hostingrecord-102]. Prompt 2 of "Try it" reads this event.
 
+## Mental model
+
+At boot, init starts the Zygote as `app_process64 --zygote`. The Zygote starts the VM, preloads the common classes and resources, and forks `system_server`. Then it waits on its socket. To start an app, `system_server` writes the arguments of the new process to the socket. The Zygote forks and writes the PID of the child back to `system_server`. The child starts as a copy of the Zygote and shares its pages. Then the child specializes: it gets the GID, the UID, the SELinux domain and the name of the app, and a new random seed. Last, it calls `ActivityThread.main`, which starts the main `Looper`. The rebuild copies all the state and keeps the flaw. The real child changes the state that must be different in each process.
+
+```mermaid
+flowchart TD
+  init["init"] -->|"starts app_process64 --zygote"| zygote["zygote64: VM, preloaded classes and resources"]
+  zygote -->|"fork"| ss["system_server"]
+  ss -->|"arguments on the zygote socket"| zygote
+  zygote -->|"fork, then the PID back to system_server"| child["child: a copy of the Zygote"]
+  child -->|"specialize: GID, UID, SELinux domain, name, new random seed"| app["app process"]
+  app --> main["ActivityThread.main and Looper.loop()"]
+```
+
 [^processes-and-threads]: Processes and threads overview: [https://developer.android.com/guide/components/processes-and-threads](https://developer.android.com/guide/components/processes-and-threads)
 [^memory-overview-sharing]: Memory overview, "Share memory": [https://developer.android.com/topic/performance/memory-overview#SharingRAM](https://developer.android.com/topic/performance/memory-overview#SharingRAM)
 [^math-1020]: Math.java, lines 1020–1030: [https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#1020](https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#1020)
