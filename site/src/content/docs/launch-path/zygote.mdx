@@ -43,6 +43,8 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
+import Snippet from '../../../components/Snippet.astro';
+
 ## The problem
 
 Section 1 follows one cold start of the launch app. The [APK chapter](/launch-path/apk/) ends with `base.apk` on the device. Before the code in `base.apk` can run, the app needs a process.
@@ -55,7 +57,33 @@ Android does this work one time. When the system boots, a process with the name 
 
 The child of a fork starts with the state of the Zygote. Some of that state must be different in each app process, so Android changes it in each child after the fork[^math-1020]. This chapter builds a zygote that copies one prepared image for each app. Then it shows state that a child must not get from the zygote. Then it follows the real Zygote from boot to `ActivityThread.main`, the entry point of the app process[^processlist-2078].
 
+## Build it naive
+
+The rebuild is a zygote in plain Kotlin, in the module `samples/zygote`. The JVM cannot call `fork()`. Thus the rebuild copies a stand-in for the memory of a process, `ProcessImage`:
+
+<Snippet file="zygote/src/main/kotlin/NaiveZygote.kt" region="image" />
+
+`ProcessImage` holds a table of classes and a random number generator. The real `Math.random()` also uses one `java.util.Random` object in each process[^math-978][^math-1016]. The tests give the rebuild placeholder class names, because the rebuild does not run the classes.
+
+`NaiveZygote` prepares the image one time and copies it for each app:
+
+<Snippet file="zygote/src/main/kotlin/NaiveZygote.kt" region="zygote" />
+
+- `preload()` makes the image and loads each class into it. `classLoads` counts the loads.
+- `fork()` writes the image to bytes with Java serialization, and reads a new image from the bytes. Thus each child gets its own copy of all the state of the zygote. The code does not select what to copy.
+
+A test makes one zygote and forks five children:
+
+<Snippet file="zygote/src/test/kotlin/NaiveZygoteTest.kt" region="preload" />
+
+After five forks, `classLoads` is 3, and each child has the three classes. Thus the zygote loads each class one time, not one time for each app. This test is not a breaking test.
+
+The deep copy shows what each child sees. It does not show the cost of a real fork. The rebuild writes all the bytes again for each child. A real child shares most of the RAM pages of the framework code and resources with the Zygote[^memory-overview-sharing]. After the fork, a shared page can become a private dirty page, for example when `malloc` changes its data on the page[^zygote-cpp-2521].
+
 [^processes-and-threads]: Processes and threads overview: [https://developer.android.com/guide/components/processes-and-threads](https://developer.android.com/guide/components/processes-and-threads)
 [^memory-overview-sharing]: Memory overview, "Share memory": [https://developer.android.com/topic/performance/memory-overview#SharingRAM](https://developer.android.com/topic/performance/memory-overview#SharingRAM)
 [^math-1020]: Math.java, lines 1020–1030: [https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#1020](https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#1020)
 [^processlist-2078]: ProcessList.java, lines 2078–2080: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2078](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2078)
+[^math-978]: Math.java, lines 978–980: [https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#978](https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#978)
+[^math-1016]: Math.java, lines 1016–1018: [https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#1016](https://android.googlesource.com/platform/libcore/+/refs/tags/android-17.0.0_r1/ojluni/src/main/java/java/lang/Math.java#1016)
+[^zygote-cpp-2521]: com_android_internal_os_Zygote.cpp, lines 2521–2530: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/com_android_internal_os_Zygote.cpp#2521](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/com_android_internal_os_Zygote.cpp#2521)
