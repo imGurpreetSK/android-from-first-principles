@@ -243,7 +243,7 @@ adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
 adb shell "logcat -b events -d | grep am_proc_start | grep launchapp | tail -n 1"
 ```
 
-{/* Edit step: capture this output on the emulator of the checked stamp. */}
+{/* Edit step: capture this output on the emulator of the checked stamp. If the hosting type is the same on each run, show it in place of the "…" before the hosting name in the am_proc_start line. */}
 
 ```
 Starting: Intent { cmp=io.github.imgurpreetsk.afp.launchapp/.MainActivity }
