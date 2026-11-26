@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-26: A writer put `astroMermaid()` after Starlight in the Astro config. The astro-mermaid README says to put it before Starlight. So the writer stopped one Build and test run and ran it again. Rule: Before you add an Astro integration, read its README for order and setup rules.
+
 2026-11-26: The parent agent kept the brief templates (`writer-rules.md` and `review-rules.md`), the list of mistakes, the check script and the plan copies only in the session scratch directory. A cleanup deleted the older files there, also the files in old worktrees. Then two workflows gave briefs that named files that did not exist, and the agents went on without them. Three agents of one workflow reported the same missing `review-rules.md`. Rule: Before you launch a workflow, make sure that each file that its briefs name exists. Keep each file that later steps need outside the session scratch directory, or make it again before the launch. If your brief names a file that does not exist, write this in your report.
 
 2026-11-26: A fixer made `git commit --fixup` commits for entries of `docs/learnings.md`. Each entry goes to the top of the log, so `git rebase --autosquash` gave conflicts. The parent agent had to build the branch again with a script. Rule: To fix an entry of `docs/learnings.md`, make a new commit. Do not make a `fixup!` or `amend!` commit for it.
