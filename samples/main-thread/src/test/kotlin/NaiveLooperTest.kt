@@ -61,12 +61,12 @@ class NaiveLooperTest {
 }
 
 // region fakes
-// One fake for the clock and the sleeper. The test moves the time, so no test waits.
+// One fake for the clock and the sleeper. A sleep only moves the time, so no test waits.
 class FakeTime : Clock, Sleeper {
     override var now = 0L
         private set
 
-    // Each event stands for work of another thread, for example a post, at a time.
+    // Each event is work that another thread does at a given time, for example a post.
     private val events = mutableListOf<Pair<Long, () -> Unit>>()
 
     fun at(time: Long, event: () -> Unit) {

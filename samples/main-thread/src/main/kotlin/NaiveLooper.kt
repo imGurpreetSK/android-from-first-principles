@@ -16,14 +16,14 @@ class NaiveMessage(val `when`: Long, val block: () -> Unit)
 
 // region queue
 class NaiveMessageQueue {
-    // The list is sorted by `when`, so the head is the next message to run.
+    // `enqueue` keeps the list in order of `when`, so the head is the next message to run.
     private val messages = mutableListOf<NaiveMessage>()
 
     fun enqueue(msg: NaiveMessage) {
         // The new message goes after each message with the same `when`, so these messages run in post order.
         val index = messages.indexOfFirst { it.`when` > msg.`when` }
         messages.add(if (index == -1) messages.size else index, msg)
-        // The flaw: enqueue does not wake the looper. If the looper sleeps, the new message waits until the sleep ends, also if it is due earlier.
+        // The flaw: enqueue does not wake the looper. If the looper sleeps, the new message waits until the sleep ends, also if it is due before the end of the sleep.
     }
 
     fun peek(): NaiveMessage? = messages.firstOrNull()
