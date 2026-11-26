@@ -133,7 +133,7 @@ The transaction reaches the app as a call to `scheduleTransaction` on its `Appli
 
 `handleBindApplication` creates the `Application` object of the app[^activitythread-8260]. Then it installs the content providers of the app. It calls `Application.onCreate` only after these two steps[^activitythread-8289]. The doc of `Application.onCreate` says that the system calls it before it creates an activity, service or receiver object. Content providers are an exception[^application-254].
 
-`LoadedApk.makeApplicationInner` creates the `Application` through `Instrumentation.newApplication`[^loadedapk-1658][^instrumentation-1358]. It does this one time. On each later call, it returns the `Application` that it keeps[^loadedapk-1595]. Thus all components of the process get the same `Application`. `Instrumentation.callApplicationOnCreate` calls `onCreate` of the `Application`[^instrumentation-1397].
+`LoadedApk.makeApplicationInner` creates the `Application` through `Instrumentation.newApplication`[^loadedapk-1658][^instrumentation-1358]. It does this one time. On each later call, it returns the `Application` that it keeps[^loadedapk-1595]. Thus in one process, all components of the app get the same `Application`. `Instrumentation.callApplicationOnCreate` calls `onCreate` of the `Application`[^instrumentation-1397].
 
 ### ActivityThread creates each component
 
