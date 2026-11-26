@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-26: Two site lanes ran at the same time. Two citation markers next to each other showed as "2526". The lanes fixed this problem in two different ways: one lane with a CSS space, and the other lane with commas. The maintainer then had to choose. Rule: If two lanes change the same output, give each reviewer the diff of the other lane.
+
 2026-11-15: Most of the 120 agents of the run ran Bash commands before they read `docs/learnings.md`. Then they broke rules of the log. They joined commands with `;`, and they ran `echo ======` unquoted in zsh. After a hook changed a Bash call, they sent later Bash calls in the plain form, and auto mode refused them. Rule: In your first tool call, read `docs/learnings.md` with the Read tool. Do not run a command before it.
 
 2026-11-15: Agents searched the text of a saved doc page for a quoted phrase and found nothing, because a line break in the saved text split the phrase. Rule: Before you search the text of a page for a phrase, join the lines, and change each run of white space to one space. If a search finds nothing, search for a short part of the phrase.
