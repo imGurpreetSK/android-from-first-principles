@@ -73,6 +73,16 @@ The renderer runs a full traversal for each `setText` call:
 
 Two tests show that the rebuild works. In the first test, the text "Hi" on a display 100 px wide gives `Frame("Hi", x = 40, width = 20)` at the next VSYNC. In the second test, a second VSYNC with no new draw keeps `shownFrames` at 1. Thus the display shows a new frame only if the app draws one.
 
+## Where it breaks
+
+The renderer runs a traversal at once for each change. It does not wait for the next VSYNC. The breaking test changes the text three times and then fires one VSYNC:
+
+<Snippet file="first-frame/src/test/kotlin/NaiveRendererTest.kt" region="flaw" />
+
+The test passes, so the flaw occurs. The renderer ran three traversals, but the display showed one frame. The work of two traversals did not reach the screen.
+
+Each `setText` call on a real `TextView` with a text layout asks for a new draw, and sometimes for a new layout[^textview-11770]. But the real code does not run a traversal for each request. It collects the requests and runs one traversal at the next VSYNC.
+
 [^textview-7524]: TextView.java, lines 7524–7526: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524)
 [^textview-11770]: TextView.java, lines 11770–11822: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770)
 [^displayeventreceiver-341]: DisplayEventReceiver.java, lines 341–353: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#341](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#341)
