@@ -214,7 +214,7 @@ From the repo root, run the tests of the rebuild:
 samples/gradlew -p samples :first-frame:test
 ```
 
-The breaking test fails, because the flaw is gone: three `setText` calls give one draw. The other two tests pass, so the display still shows the text at the next VSYNC, and it still shows no new frame without a draw. The Gradle output includes these lines:
+The breaking test fails, because the flaw is gone: three `setText` calls give one draw. The other two tests pass. Thus the display still shows the text at the next VSYNC. Without a draw, it still shows no new frame. The Gradle output includes these lines:
 
 ```
 NaiveRendererTest > naiveRenderer_drawsThreeTimes_whenTextChangesThreeTimesBeforeOneVsync() FAILED
