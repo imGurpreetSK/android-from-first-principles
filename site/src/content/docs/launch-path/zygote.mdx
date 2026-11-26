@@ -188,7 +188,7 @@ Since Android 16, a device with 16 KB memory pages can run some 4 KB-aligned app
 
 The `Runnable` calls `ActivityThread.main`. `main` sets `argv[0]` to `<pre-initialized>`[^activitythread-9485]. It prepares the main `Looper`, makes an `ActivityThread` and attaches it to `system_server`[^activitythread-9507][^activitythread-9286]. Then it starts the loop with `Looper.loop()`[^activitythread-9523]. Later, `handleBindApplication` sets `argv[0]` to the process name[^activitythread-8028]. This chapter stops at `Looper.loop()`. The next chapters of Section 1 continue from there.
 
-After the Zygote sends back the PID, `ProcessList.handleProcessStartedLocked` in `system_server` writes the event `am_proc_start`. The event has these fields: the user, the PID, the UID, the process name, the hosting type and the hosting name[^processlist-2979]. `handleProcessStartedLocked` also logs a line that starts with `Start proc`[^processlist-2996]. The hosting type is the reason for the process start, for example `activity`, `top-activity`, `next-activity` or `next-top-activity`[^hostingrecord-102]. Prompt 2 of "Try it" reads this event.
+After the Zygote sends back the PID, `ProcessList.handleProcessStartedLocked` in `system_server` writes the event `am_proc_start`. The event has these fields: the user, the PID, the UID, the process name, the hosting type and the hosting name[^processlist-2979]. `handleProcessStartedLocked` also logs a line that starts with `Start proc`[^processlist-2996]. The hosting type is the reason for the process start[^hostingrecord-57], for example `activity`, `top-activity`, `next-activity` or `next-top-activity`[^hostingrecord-102]. Prompt 2 of "Try it" reads this event.
 
 ## Mental model
 
@@ -258,7 +258,7 @@ Complete
 
 `am force-stop` stops all of the app[^adb-am]. `am start -W` starts the activity and waits for the launch to complete[^adb-am]. Thus the event is in the log before `logcat` reads the log.
 
-The event has these fields: the user (0), the PID that the Zygote sent back, the UID of the app, the process name, the hosting type and the hosting name[^processlist-2979]. The hosting type is one of the start reasons of `HostingRecord`[^hostingrecord-102]. The hosting name is the activity that needed the process. Thus `system_server` asked the Zygote for a new process because an activity needed one, and it got a PID back.
+The event has these fields: the user (0), the PID that the Zygote sent back, the UID of the app, the process name, the hosting type and the hosting name[^processlist-2979]. The hosting type is one of the start reasons of `HostingRecord`[^hostingrecord-102]. The hosting name is the component that needed the process, here the activity[^hostingrecord-57]. Thus `system_server` asked the Zygote for a new process because an activity needed one, and it got a PID back.
 
 ### 3. List the Zygote and its children
 
@@ -384,6 +384,7 @@ The output can have more lines, for example a line for the WebView Zygote[^zygot
 [^activitythread-8028]: ActivityThread.java, line 8028: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8028](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8028)
 [^processlist-2979]: ProcessList.java, lines 2979–2982: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2979](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2979)
 [^processlist-2996]: ProcessList.java, lines 2996–3012: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2996](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2996)
+[^hostingrecord-57]: HostingRecord.java, lines 57–61: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/HostingRecord.java#57](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/HostingRecord.java#57)
 [^hostingrecord-102]: HostingRecord.java, lines 102–115: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/HostingRecord.java#102](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/HostingRecord.java#102)
 [^adb-am]: adb, "Call activity manager": [https://developer.android.com/tools/adb#am](https://developer.android.com/tools/adb#am)
 [^ps-67]: ps.c, lines 67–84: [https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#67](https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#67)
