@@ -178,6 +178,27 @@ Time to initial display (TTID) is the time to display the first frame of the app
 
 For a cold or a warm launch, `logAppDisplayed` writes the delay in the Logcat line `Displayed <component> for user <id>: +<time>`[^activitymetricslogger-1514][^activitymetricslogger-609]. `onWindowsDrawn` gives the same delay and the launch state to `ActivityTaskSupervisor.reportActivityLaunched`[^activityrecord-6649]. `reportActivityLaunched` writes them into the `WaitResult` of each `am start -W` call that waits for the activity[^activitytasksupervisor-657]. The Android docs give the `Displayed` line and `am start -S -W` as two ways to get TTID[^launch-time-retrieve-ttid].
 
+## Mental model
+
+A change to a view does not draw. It asks for one traversal. `ViewRootImpl` keeps at most one traversal request (`mTraversalScheduled`), and `Choreographer` keeps at most one VSYNC request (`mFrameScheduled`). At the VSYNC, `doFrame` runs the input and animation callbacks, and then the one traversal: measure, layout and draw. The draw records a display list, and the render thread draws the frame. If no code asks for a frame, no VSYNC comes, and the app draws nothing. On a cold start, `setView` asks for the first traversal after the activity resumes. The first traversal gets a surface and reports its draw to `system_server`. `system_server` shows the window, removes the splash screen and writes TTID in the `Displayed` line.
+
+```mermaid
+sequenceDiagram
+  participant App as App code
+  participant VRI as ViewRootImpl
+  participant C as Choreographer
+  participant SF as SurfaceFlinger
+  participant SS as system_server
+  App->>VRI: requestLayout, three times
+  VRI->>C: one traversal callback
+  C->>SF: one VSYNC request
+  SF-->>C: VSYNC
+  C->>VRI: doFrame runs the traversal
+  Note over VRI: measure, layout, draw
+  VRI->>SS: finishDrawing of the first frame
+  Note over SS: show the window, remove the splash screen, log Displayed
+```
+
 [^textview-7524]: TextView.java, lines 7524–7526: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524)
 [^textview-11770]: TextView.java, lines 11770–11822: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770)
 [^displayeventreceiver-341]: DisplayEventReceiver.java, lines 341–353: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#341](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#341)
