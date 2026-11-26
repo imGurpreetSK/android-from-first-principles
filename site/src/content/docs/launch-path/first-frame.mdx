@@ -101,7 +101,7 @@ This flag is the first half of the fix for the rebuild. The first `setText` sets
 
 ### Choreographer asks for one VSYNC
 
-`Choreographer` keeps one callback queue for each callback type. If a posted callback is due now, `Choreographer` calls `scheduleFrameLocked`[^choreographer-622]. `scheduleFrameLocked` acts only if the flag `mFrameScheduled` is false. It sets the flag. On the `Looper` thread, it asks for a VSYNC immediately. On another thread, it posts an asynchronous message that asks for the VSYNC on the `Looper` thread[^choreographer-919]. To ask, it calls `scheduleVsync` of its `DisplayEventReceiver`[^choreographer-1287]. `scheduleVsync` asks for one VSYNC when the next display frame begins[^displayeventreceiver-341].
+`Choreographer` keeps one callback queue for each callback type. If a posted callback is due now, `Choreographer` calls `scheduleFrameLocked`[^choreographer-622]. `scheduleFrameLocked` acts only if the flag `mFrameScheduled` is false. It sets the flag. On the `Looper` thread, it asks for a VSYNC at once. On another thread, it posts an asynchronous message that asks for the VSYNC on the `Looper` thread[^choreographer-919]. To ask, it calls `scheduleVsync` of its `DisplayEventReceiver`[^choreographer-1287]. `scheduleVsync` asks for one VSYNC when the next display frame begins[^displayeventreceiver-341].
 
 This flag is the second half of the fix. Until the next frame runs, each new callback finds the flag set and asks for no new VSYNC.
 
