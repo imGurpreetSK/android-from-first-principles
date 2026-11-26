@@ -97,7 +97,7 @@ For each window that the app adds, `WindowManagerGlobal.addView` makes a `ViewRo
 
 `scheduleTraversals` acts only if the flag `mTraversalScheduled` is false. It sets the flag. Then it posts a sync barrier to the message queue of the thread, and it posts the traversal to `Choreographer` as a `CALLBACK_TRAVERSAL` callback[^viewrootimpl-3307]. A comment in the method gives the reason for the barrier. Each message that code posts after this point runs after the traversal, unless the message is asynchronous. Thus a `Runnable` that code posts after `setText` can read the new width of the `TextView`[^viewrootimpl-3311].
 
-This flag is the first half of the fix for the rebuild. The first `setText` sets the flag. The second and the third `setText` find the flag set, so they post no new traversal. Their `requestLayout` calls also stop at the first parent that has a layout request.
+This flag is the first half of the fix for the rebuild. The first `setText` sets the flag. In the rebuild, the width of the view changes with the text. If the width of a `TextView` can change, `checkForRelayout` removes the text layout of the view and then calls `requestLayout`[^textview-11816][^textview-10877]. `setText` calls `checkForRelayout` only if the view has a text layout[^textview-7524]. Thus the second and the third `setText` ask for no new layout and no new draw. A change to another view also posts no new traversal. Its `requestLayout` call stops at the first parent that has a layout request[^view-28744]. A call that reaches `scheduleTraversals` finds the flag set and posts nothing[^viewrootimpl-3307].
 
 ### Choreographer asks for one VSYNC
 
@@ -189,7 +189,7 @@ sequenceDiagram
   participant C as Choreographer
   participant SF as SurfaceFlinger
   participant SS as system_server
-  App->>VRI: requestLayout, three times
+  App->>VRI: three setText calls, one layout request
   VRI->>C: one traversal callback
   C->>SF: one VSYNC request
   SF-->>C: VSYNC
@@ -306,6 +306,8 @@ The rebuild shows the same behavior. In its second test, a VSYNC with no new dra
 [^viewrootimpl-2842]: ViewRootImpl.java, lines 2842–2848: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#2842](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#2842)
 [^viewrootimpl-3307]: ViewRootImpl.java, lines 3307–3335: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#3307](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#3307)
 [^viewrootimpl-3311]: ViewRootImpl.java, lines 3311–3328: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#3311](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#3311)
+[^textview-11816]: TextView.java, lines 11816–11822: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11816](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11816)
+[^textview-10877]: TextView.java, lines 10877–10885: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#10877](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#10877)
 [^choreographer-622]: Choreographer.java, lines 622–644: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/Choreographer.java#622](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/Choreographer.java#622)
 [^choreographer-919]: Choreographer.java, lines 919–948: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/Choreographer.java#919](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/Choreographer.java#919)
 [^choreographer-1287]: Choreographer.java, lines 1287–1294: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/Choreographer.java#1287](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/Choreographer.java#1287)
