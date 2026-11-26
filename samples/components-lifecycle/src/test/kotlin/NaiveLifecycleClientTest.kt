@@ -14,4 +14,14 @@ class NaiveLifecycleClientTest {
         assertEquals(ON_DESTROY, client.state)
     }
     // endregion
+
+    // region launch
+    @Test
+    fun naiveClient_skipsOnStart_whenLaunchIsFollowedByResume() {
+        val client = NaiveLifecycleClient(activity)
+        client.moveTo(ON_CREATE) // LaunchActivityItem
+        client.moveTo(ON_RESUME) // ResumeActivityItem
+        assertEquals(listOf("onCreate", "onResume"), activity.log)
+    }
+    // endregion
 }
