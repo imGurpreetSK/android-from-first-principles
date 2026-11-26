@@ -83,6 +83,26 @@ The first test asks for each state from `ON_CREATE` to `ON_DESTROY`, one step at
 
 The test passes. The log has the six core callbacks in order, and the client ends in `ON_DESTROY`. This test is not a breaking test. If the system asks for each step, the naive client calls each callback.
 
+## Where it breaks
+
+The real system does not ask for each step. `LaunchActivityItem` is not a lifecycle item: it extends `ClientTransactionItem`, not `ActivityLifecycleItem`[^launchactivityitem-61]. Its `execute` makes an `ActivityClientRecord` and calls `handleLaunchActivity`[^launchactivityitem-216]. `handleLaunchActivity` calls `performLaunchActivity`[^activitythread-4781]. `performLaunchActivity` calls `onCreate`, and then sets the state of the record to `ON_CREATE`[^activitythread-4556][^activitythread-4568]. Thus the tests treat a `LaunchActivityItem` as a request for `ON_CREATE`.
+
+The first breaking test sends the two requests of a cold start, `ON_CREATE` and then `ON_RESUME`:
+
+<Snippet file="components-lifecycle/src/test/kotlin/NaiveLifecycleClientTest.kt" region="launch" />
+
+The test passes, so the flaw occurs. The log is `[onCreate, onResume]`. The client skipped `onStart`.
+
+The second breaking test starts in `ON_STOP` and asks for `ON_RESUME`. Prompt 3 of "Try it" shows this change on a device:
+
+<Snippet file="components-lifecycle/src/test/kotlin/NaiveLifecycleClientTest.kt" region="restart" />
+
+The test passes. The log is `[onResume]`. The client skipped `onRestart` and `onStart`. The system cannot ask for `onRestart`, because the real client does not accept `ON_RESTART` as a target state[^transactionexecutorhelper-72]. Thus the client must add `onRestart` itself.
+
+The lifecycle doc says that the system calls `onStart` before `onResume`[^lifecycle-oncreate], and `onRestart` when a stopped activity comes back[^lifecycle-onstop]. The naive client breaks both rules.
+
+The tests use no threads and no clock, so they give the same result on each run.
+
 [^fundamentals-components]: Application fundamentals, "App components": [https://developer.android.com/guide/components/fundamentals#Components](https://developer.android.com/guide/components/fundamentals#Components)
 [^fundamentals-declaring]: Application fundamentals, "Declare components": [https://developer.android.com/guide/components/fundamentals#DeclaringComponents](https://developer.android.com/guide/components/fundamentals#DeclaringComponents)
 [^fundamentals-activating]: Application fundamentals, "Activate components": [https://developer.android.com/guide/components/fundamentals#ActivatingComponents](https://developer.android.com/guide/components/fundamentals#ActivatingComponents)
@@ -97,3 +117,9 @@ The test passes. The log has the six core callbacks in order, and the client end
 [^resumeactivityitem-86]: ResumeActivityItem.java, lines 86–89: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ResumeActivityItem.java#86](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ResumeActivityItem.java#86)
 [^activitylifecycleitem-47]: ActivityLifecycleItem.java, lines 47–55: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ActivityLifecycleItem.java#47](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ActivityLifecycleItem.java#47)
 [^transactionexecutor-198]: TransactionExecutor.java, lines 198–245: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/TransactionExecutor.java#198](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/TransactionExecutor.java#198)
+[^launchactivityitem-61]: LaunchActivityItem.java, line 61: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/LaunchActivityItem.java#61](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/LaunchActivityItem.java#61)
+[^launchactivityitem-216]: LaunchActivityItem.java, lines 216–224: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/LaunchActivityItem.java#216](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/LaunchActivityItem.java#216)
+[^activitythread-4781]: ActivityThread.java, line 4781: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#4781](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#4781)
+[^activitythread-4556]: ActivityThread.java, lines 4556–4560: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#4556](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#4556)
+[^activitythread-4568]: ActivityThread.java, line 4568: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#4568](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#4568)
+[^transactionexecutorhelper-72]: TransactionExecutorHelper.java, lines 72–78: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/TransactionExecutorHelper.java#72](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/TransactionExecutorHelper.java#72)
