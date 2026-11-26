@@ -43,3 +43,31 @@ device: true
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
+## The problem
+
+The [Binder chapter](/launch-path/binder/) ends with a call from `system_server` into the new process of the launch app: `bindApplication`. The process runs, but no code of the launch app has run yet. The launch app has one class, `MainActivity`, with one method, `onCreate`. It has no `main()`.
+
+An Android app has four types of components: activities, services, broadcast receivers and content providers. Each component is an entry point for the system or for the user. When the system starts a component, it starts the process of the app if the process does not run. Then it creates the objects of the component classes. Thus an Android app has no `main()` function[^fundamentals-components]. The manifest declares each activity, service and content provider. An app can also register a broadcast receiver in code[^fundamentals-declaring]. An intent activates three of the four types: activities, services and broadcast receivers[^fundamentals-activating].
+
+The `Activity` class has six core callbacks: `onCreate`, `onStart`, `onResume`, `onPause`, `onStop` and `onDestroy`. The system calls each callback when the activity enters a new state[^lifecycle-concepts]. After `onCreate`, the system calls `onStart` and then `onResume`[^lifecycle-oncreate]. If a stopped activity comes back, the system calls `onRestart`[^lifecycle-onstop].
+
+The app does not decide when the state of an activity changes. `system_server` keeps a record of each activity, with the state of the activity[^activityrecord-553]. For each change, `system_server` sends the app a request with one target state[^activitylifecycleitem-73]. To start an activity in a new process, `system_server` sends two items in one transaction. A `LaunchActivityItem` creates the activity. If the activity must resume, a `ResumeActivityItem` follows it[^activitytasksupervisor-1050][^activitytasksupervisor-1060][^activitytasksupervisor-1079]. The target state of `ResumeActivityItem` is `ON_RESUME`[^resumeactivityitem-86]. No item asks for `onStart`. Thus the app must find each callback between the current state and the target state, and call the callbacks in order.
+
+This chapter builds a client that calls only the callback of the target state. Its breaking tests show the callbacks that it skips. Then the chapter follows the real client in `ActivityThread`, from `bindApplication` to `onResume`.
+
+[^fundamentals-components]: Application fundamentals, "App components": [https://developer.android.com/guide/components/fundamentals#Components](https://developer.android.com/guide/components/fundamentals#Components)
+[^fundamentals-declaring]: Application fundamentals, "Declare components": [https://developer.android.com/guide/components/fundamentals#DeclaringComponents](https://developer.android.com/guide/components/fundamentals#DeclaringComponents)
+[^fundamentals-activating]: Application fundamentals, "Activate components": [https://developer.android.com/guide/components/fundamentals#ActivatingComponents](https://developer.android.com/guide/components/fundamentals#ActivatingComponents)
+[^lifecycle-concepts]: The activity lifecycle, "Activity-lifecycle concepts": [https://developer.android.com/guide/components/activities/activity-lifecycle#activity-lifecycle-concepts](https://developer.android.com/guide/components/activities/activity-lifecycle#activity-lifecycle-concepts)
+[^lifecycle-oncreate]: The activity lifecycle, "onCreate": [https://developer.android.com/guide/components/activities/activity-lifecycle#oncreate](https://developer.android.com/guide/components/activities/activity-lifecycle#oncreate)
+[^lifecycle-onstop]: The activity lifecycle, "onStop": [https://developer.android.com/guide/components/activities/activity-lifecycle#onstop](https://developer.android.com/guide/components/activities/activity-lifecycle#onstop)
+[^activityrecord-553]: ActivityRecord.java, lines 553–565: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#553](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#553)
+[^activitylifecycleitem-73]: ActivityLifecycleItem.java, lines 73–75: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ActivityLifecycleItem.java#73](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ActivityLifecycleItem.java#73)
+[^activitytasksupervisor-1050]: ActivityTaskSupervisor.java, lines 1050–1058: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1050](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1050)
+[^activitytasksupervisor-1060]: ActivityTaskSupervisor.java, lines 1060–1069: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1060](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1060)
+[^activitytasksupervisor-1079]: ActivityTaskSupervisor.java, lines 1079–1084: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1079](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1079)
+[^resumeactivityitem-86]: ResumeActivityItem.java, lines 86–89: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ResumeActivityItem.java#86](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ResumeActivityItem.java#86)
