@@ -227,7 +227,7 @@ With the new queue, the private field `mMessages` is always null. If your tests 
 
 <GoDeeper title="one MessageQueue.java in the build">
 
-AOSP has more than one `MessageQueue.java`. The build of the framework excludes each file in `android/os/*MessageQueue/`. It adds exactly one file as `android/os/MessageQueue.java`[^android-bp-33]. The Soong config variable `release_package_messagequeue_implementation` selects the file. If the variable has no value, the build uses `CombinedMessageQueue`[^android-bp-252]. This chapter cites `CombinedDeliMessageQueue/MessageQueue.java`. Prompt 2 of "Try it" shows the frame `nextDeliQueue`, the DeliQueue path of `next()` in this file[^mq-769].
+AOSP has more than one `MessageQueue.java`. The build of the framework excludes each file in `android/os/*MessageQueue/`. It adds exactly one file as `android/os/MessageQueue.java`[^android-bp-33]. The Soong config variable `release_package_messagequeue_implementation` selects the file[^android-bp-252]. This chapter cites `CombinedDeliMessageQueue/MessageQueue.java`. Prompt 2 of "Try it" shows the frame `nextDeliQueue`, the DeliQueue path of `next()` in this file[^mq-769].
 
 </GoDeeper>
 
