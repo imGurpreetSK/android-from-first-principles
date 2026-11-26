@@ -1,0 +1,44 @@
+---
+title: Main thread
+section: The Launch Path
+sidebar:
+  order: 1
+checked:
+  android: 17
+  aosp: android-17.0.0_r1
+sources:
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java
+  - https://developer.android.com/reference/android/os/Looper
+rebuild: false
+device: false
+drafted: ai
+edited_by: Gurpreet Singh
+---
+
+An inline link that cites a source: [Looper.java](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160).
+
+A reference link that cites a source: [Looper][looper].
+
+A footnote with a short label as the link text.[^label] A footnote that cites a page that is not a source.[^guide] A correct footnote.[^loop]
+
+A marker without a definition.[^nodef]
+
+A footnote without a link.[^nolink] A footnote with only a link to a chapter.[^chapter]
+
+Two more labels for the spot of loop.[^dup][^dup2] A footnote with the same link two times.[^twice]
+
+Two markers with a comma in HTML.[^loop]<sup>,</sup>[^twice] Two markers with a comma.[^loop], [^label] Two markers with no separator.[^twice][^loop]
+
+A link to a chapter: [Zygote](/launch-path/zygote/). A link to a GitHub page of this repo: [Challenge a claim](https://github.com/imGurpreetSK/android-from-first-principles/issues/new?template=challenge-a-claim.yml).
+
+[looper]: https://developer.android.com/reference/android/os/Looper#loop()
+
+[^label]: Looper.java, line 160: [Looper.java, line 160](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#160)
+[^guide]: Guide: [https://developer.android.com/guide](https://developer.android.com/guide)
+[^loop]: Looper.loop(): [https://developer.android.com/reference/android/os/Looper#loop()](https://developer.android.com/reference/android/os/Looper#loop())
+[^unused]: Looper.java, line 100: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#100](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#100)
+[^nolink]: Looper.java, line 160
+[^chapter]: Zygote: [/launch-path/zygote/](/launch-path/zygote/)
+[^dup]: Looper.loop(): [https://developer.android.com/reference/android/os/Looper#loop()](https://developer.android.com/reference/android/os/Looper#loop())
+[^dup2]: Looper.loop(): [https://developer.android.com/reference/android/os/Looper#loop()](https://developer.android.com/reference/android/os/Looper#loop())
+[^twice]: Looper.java, line 200: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#200](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#200), [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#200](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#200)
