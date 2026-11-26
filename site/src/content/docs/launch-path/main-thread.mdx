@@ -94,6 +94,22 @@ The first test posts three messages with the delays 300, 100 and 200. The looper
 
 Other tests show that two messages with the same `when` run in the order of their posts, and that a message can post a new message.
 
+## Where it breaks
+
+`enqueue` does not wake the looper. While the looper sleeps, it does not look at the queue. A message that another thread posts during the sleep waits until the sleep ends, also if the message is due before the end of the sleep.
+
+`FakeTime` shows this with no threads. With `at`, a test scripts the work of another thread at a given time. A sleep runs each scripted event that is not after the end of the sleep, at the time of the event. Then the sleep sets the time to its end:
+
+<Snippet file="main-thread/src/test/kotlin/NaiveLooperTest.kt" region="fakes" />
+
+The breaking test posts A with the delay 1000, so the looper sleeps until t=1000. At t=10, another thread posts B with the delay 0:
+
+<Snippet file="main-thread/src/test/kotlin/NaiveLooperTest.kt" region="flaw" />
+
+B has `when` = 10, so B is due at t=10. The looper does not wake. It runs B at t=1000, 990 ms late, and then A. The test passes, so the flaw occurs.
+
+On a real main thread, the flaw is worse. If the queue is empty, the real queue has no head to sleep until. The legacy queue polls with the timeout -1, no time limit[^mq-871][^mq-885]. DeliQueue, the new queue of Android 17, polls with a timeout of 600,000,000 ms, about 7 days[^mq-569][^mq-707]. Without a wake-up, a message that a binder thread posts to an idle main thread, for example `BIND_APPLICATION`, can wait that long.
+
 [^pt-threadsafe]: Processes and threads overview, "Thread-safe methods": [https://developer.android.com/guide/components/processes-and-threads#ThreadSafe](https://developer.android.com/guide/components/processes-and-threads#ThreadSafe)
 [^pt-threads]: Processes and threads overview, "Threads": [https://developer.android.com/guide/components/processes-and-threads#Threads](https://developer.android.com/guide/components/processes-and-threads#Threads)
 [^viewrootimpl-1416]: ViewRootImpl.java, line 1416: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416)
@@ -102,3 +118,7 @@ Other tests show that two messages with the same `when` run in the order of thei
 [^looper-43]: Looper.java, lines 43–47: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#43](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#43)
 [^handler-33]: Handler.java, lines 33–39: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#33](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#33)
 [^activitythread-1511]: ActivityThread.java, lines 1511–1543: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1511](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1511)
+[^mq-871]: MessageQueue.java, line 871: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#871](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#871)
+[^mq-885]: MessageQueue.java, lines 885–915: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#885](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#885)
+[^mq-569]: MessageQueue.java, line 569: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#569](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#569)
+[^mq-707]: MessageQueue.java, lines 707–723: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#707](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#707)
