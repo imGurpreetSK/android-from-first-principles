@@ -135,7 +135,7 @@ If `doFrame` starts one or more frame intervals after the VSYNC, it moves the fr
 
 `AndroidComposeView`, the root of a Compose UI, is a `ViewGroup`[^androidcomposeview-259]. Thus `ViewRootImpl` measures, lays out and draws it on the same path as the `TextView` of the launch app. In its `dispatchDraw`, `AndroidComposeView` runs the Compose measure and layout (`measureAndLayout`)[^androidcomposeview-2220].
 
-Compose also waits for frames through `Choreographer`. `withFrameNanos` posts a `Choreographer.FrameCallback`, through `AndroidUiDispatcher` or directly to `Choreographer`. The callback calls `onFrame` with the frame time. Then `withFrameNanos` resumes with the result of `onFrame`[^androiduiframeclock-32]. `Choreographer.postFrameCallback` puts the callback in the animation queue[^choreographer-732], so it runs before the traversal of the same frame[^choreographer-1201].
+Compose also waits for frames through `Choreographer`. `withFrameNanos` posts a `Choreographer.FrameCallback`, through `AndroidUiDispatcher` or directly to `Choreographer`. The callback calls `onFrame` with the frame time. Then `withFrameNanos` resumes with the result of `onFrame`[^androiduiframeclock-32]. If `withFrameNanos` posts the callback directly, `Choreographer.postFrameCallback` puts it in the animation queue[^choreographer-732], so it runs before the traversal of the same frame[^choreographer-1201].
 
 ### The first frame of the launch app
 
