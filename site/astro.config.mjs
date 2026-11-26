@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig, fontProviders } from 'astro/config';
+import astroMermaid from 'astro-mermaid';
 import starlight from '@astrojs/starlight';
 import { missingSource, needsSource } from './src/citations.ts';
 import { sections } from './src/sections.ts';
@@ -170,6 +171,15 @@ export default defineConfig({
     },
   ],
   integrations: [
+    // A Sätteri plugin of astro-mermaid changes each mermaid code block to <pre class="mermaid">, so Expressive Code does not show it as code.
+    // A page script loads the mermaid package only on a page with a diagram. The script renders each diagram in the theme of the page, and renders it again when the theme changes.
+    // The astro-mermaid README puts it before Starlight.
+    // astro-mermaid imports @astrojs/markdown-satteri, the processor package of astro. If the import fails, astro-mermaid logs a warning and adds remark and rehype plugins. The site does not install @astrojs/markdown-remark, so astro build fails.
+    // enableLog: false keeps the info logs of the script out of the browser console.
+    // The default layout of mermaid 12.3.0 is ELK. Its chunk adds about 457 KB gzip to each page with a diagram, so use dagre.
+    // A flowchart label wraps at 120 px by default, so a long Android class name, for example ActivityTaskManager, breaks in the word.
+    // Without suppressErrorRendering, a diagram with a syntax error leaves an error image at the end of <body> for each render.
+    astroMermaid({ enableLog: false, mermaidConfig: { layout: 'dagre', flowchart: { wrappingWidth: 200 }, suppressErrorRendering: true } }),
     starlight({
       title: 'Android from First Principles',
       editLink: {

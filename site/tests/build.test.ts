@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +21,7 @@ const citationFootnote = fileURLToPath(new URL('./fixtures/citation-footnote', i
 const codeLink = fileURLToPath(new URL('./fixtures/code-link', import.meta.url));
 // The chapter file of a dry run of /chapter-plan main-thread (.claude/commands/chapter-plan.md).
 const chapterPlan = fileURLToPath(new URL('./fixtures/chapter-plan', import.meta.url));
+const mermaid = fileURLToPath(new URL('./fixtures/mermaid', import.meta.url));
 
 test('astro build fails on a chapter with invalid frontmatter', () => {
   // --force clears the content cache, so the build checks the fixture with the current schema.
@@ -224,6 +225,46 @@ test('astro build passes on the frontmatter of a /chapter-plan dry run, a chapte
     const { status, stdout, stderr } = build('--root', chapterPlan, '--outDir', outDir, '--force');
     expect(status, stdout + stderr).toBe(0);
     expect(existsSync(join(outDir, 'launch-path/main-thread/index.html'))).toBe(true);
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test('astro build changes a mermaid code block in MDX to <pre class="mermaid">, not to an Expressive Code block, and a page loads the mermaid package only with a dynamic import', () => {
+  // An output directory outside site/, so astro check does not check the built JS files.
+  const outDir = mkdtempSync(join(tmpdir(), 'afp-mermaid-'));
+  try {
+    const { status, stdout, stderr } = build('--root', mermaid, '--outDir', outDir, '--force');
+    expect(status, stdout + stderr).toBe(0);
+    const html = readFileSync(join(outDir, 'diagram/index.html'), 'utf8');
+    // The script of astro-mermaid reads the diagram text from the element. The Sätteri plugin of astro-mermaid escapes &, <, >, " and '. The build keeps the braces of the MDX file.
+    expect(html.match(/<pre\b[^>]*\bclass="(?:[^"]* )?mermaid[ "][^>]*>[\s\S]*?<\/pre>/g)).toEqual([
+      '<pre class="mermaid">flowchart LR\n  A[Tap] --&gt; B{Process?}\n  B --&gt;|no| C[&quot;fork &amp; start&quot;]</pre>',
+    ]);
+    // Expressive Code renders the Kotlin code block, but not the diagram.
+    expect(html).toContain('<pre data-language="kotlin"');
+    expect(html).not.toContain('data-language="mermaid"');
+    // At the start, a page loads each module script and each file of their static imports. A dynamic import() loads its file only when it runs.
+    const assets = join(outDir, '_astro');
+    const chunks = readdirSync(assets).filter((f) => /^mermaid\.core\.[^/]*\.js$/.test(f));
+    expect(chunks).toHaveLength(1);
+    const page = readFileSync(join(outDir, 'no-diagram/index.html'), 'utf8');
+    const loaded = new Set<string>();
+    const visit = (code: string) => {
+      for (const [, file] of code.matchAll(/\b(?:from|import)\s*["'](?:\.\/|\/_astro\/)([^"']+)["']/g)) {
+        if (loaded.has(file)) continue;
+        loaded.add(file);
+        visit(readFileSync(join(assets, file), 'utf8'));
+      }
+    };
+    for (const [, attributes, body] of page.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
+      if (!/\btype="module"/.test(attributes)) continue;
+      const src = attributes.match(/\bsrc="\/_astro\/([^"]+)"/)?.[1];
+      visit(src ? `import "./${src}"` : body);
+    }
+    expect([...loaded].filter((f) => f.startsWith('mermaid.'))).toEqual([]);
+    // The page script of astro-mermaid runs the import() only if the page has a <pre class="mermaid">.
+    expect([...loaded].filter((f) => readFileSync(join(assets, f), 'utf8').includes(`import(\`./${chunks[0]}\`)`))).toHaveLength(1);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
