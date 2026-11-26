@@ -129,7 +129,7 @@ For the three `setText` calls of the breaking test, the real code thus runs one 
 
 A trace shows each frame as a `Choreographer#doFrame` slice, with the VSYNC ID[^choreographer-1108]. Each callback queue that has due callbacks shows as a slice with its name, for example `traversal`[^choreographer-313][^choreographer-1229]. Measure and layout show as the slices `measure` and `layout`[^viewrootimpl-5472][^viewrootimpl-5538].
 
-If `doFrame` starts one or more frame intervals after the VSYNC, it moves the frame time back to the last VSYNC. If the delay is 30 or more frame intervals, it logs `Skipped N frames!  The application may be doing too much work on its main thread.`[^choreographer-1121] The limit 30 is the default value of the system property `debug.choreographer.skipwarning`[^choreographer-176].
+If `doFrame` starts one or more frame intervals after the VSYNC, it sets the frame time to the last VSYNC before it starts. If the delay is 30 or more frame intervals, it logs `Skipped N frames!  The application may be doing too much work on its main thread.`[^choreographer-1121] The limit 30 is the default value of the system property `debug.choreographer.skipwarning`[^choreographer-176].
 
 ### Compose takes the same path
 
