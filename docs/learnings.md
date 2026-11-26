@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-26: A writer changed a command line in a probe script with the Edit tool. The edit dropped the space before `--outDir`. Astro then built an empty root with the name `v-probe--outDir` in the scratch copy and exited 0, so the probe proved nothing. The same writer made this mistake again in an error message. Rule: If the `old_string` of an Edit starts or ends with a space, start or end the `new_string` with the same space. After each Edit, compare both ends of the new text with the old text. Before you trust exit code 0 of a fixture build, make sure that the log names the expected root and pages.
+
 2026-11-26: Two agents ran `git show <rev>:<path> --output=<file>` to save a file of a commit. `--output` did not apply. Git printed the file to the tool output, and the output file was empty or missing. One of these outputs was about 486 KB. An agent also passed `--output` to `git cat-file`, and the command failed. Rule: To save a file of a commit, write `git show <rev>:<path> > <file>` in a script file, and run the script. Before you use the saved file, make sure that it is not empty.
 
 2026-11-26: A writer gave a message to a git commit command with `git -c core.editor='cp <file>'`. The commit kept the old message. In the Bash tool, `GIT_EDITOR` is `true`, and `GIT_EDITOR` wins over `core.editor`. Rule: To give a message to a git command that opens an editor, for example `git commit --fixup=amend:<hash>`, run `env 'GIT_EDITOR=cp <message file>' git <command>`. Then read the message with `git log -1 --format=%B`.
