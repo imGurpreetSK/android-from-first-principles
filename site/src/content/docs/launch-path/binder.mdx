@@ -67,6 +67,65 @@ Android uses Binder for this problem. With Binder, a process calls a method of a
 
 This chapter builds a binder in plain Kotlin that does not keep this identity. Its breaking tests show what then fails in the launch path. Then the chapter follows the real `attachApplication` call from the app into `system_server`.
 
+## Build it naive
+
+The rebuild is in the module `samples/binder`. It has no threads and no real processes. A `Process` object stands for one process. A `NaiveDriver` object stands for the binder driver in the kernel. Two processes share objects only through the driver.
+
+The rebuild has two kinds of `IBinder`:
+
+<Snippet file="binder/src/main/kotlin/Binder.kt" region="binder" />
+
+- A `Binder` is a local object. Its `transact` calls its own `onTransact`. The real `Binder` is the local implementation of `IBinder`. Usually the AIDL tool generates its subclass[^binder-java-49].
+- A `BinderProxy` stands for an object in another process. It holds a process and a handle: a number that the driver gave to that process. Its `transact` sends the call through the driver. The real `BinderProxy` is the Java proxy for a native `IBinder` object[^binderproxy-48].
+
+A `Parcel` holds the arguments of a call. It keeps plain values and binders in the order of the writes:
+
+<Snippet file="binder/src/main/kotlin/Binder.kt" region="parcel" />
+
+The real `Parcel` holds flattened data and references to live `IBinder` objects. For a reference, the other side gets a proxy that is connected to the original `IBinder`[^parcel-90].
+
+A process gets a handle only from the driver. For each handle, `proxyFor` makes a `BinderProxy`:
+
+<Snippet file="binder/src/main/kotlin/NaiveDriver.kt" region="process" />
+
+The driver keeps a handle table for each process. A handle is an index in the table of one process. `send` moves one binder from one process to another process:
+
+<Snippet file="binder/src/main/kotlin/NaiveDriver.kt" region="send" />
+
+- If the binder is a local `Binder`, the driver records `from` as its owner.
+- If the binder is a `BinderProxy`, the driver finds the local object in the table of `from`.
+- Then the driver adds the local object to the table of `to`, and `to` makes a proxy for the new handle.
+
+`transact` sends one call. The driver finds the target object from the handle, in the table of the caller. It finds the owner of the target, copies the parcel into the owner, calls the target and copies the reply back. A copy keeps each value as it is. It sends each binder through `send`, so the receiver gets a handle in its own table:
+
+<Snippet file="binder/src/main/kotlin/NaiveDriver.kt" region="transact" />
+
+App code does not call `transact` directly. From an `.aidl` file, the build tools generate a Java interface with an inner `Stub` class that extends `Binder`[^aidl-defining]. The rebuild has this code, written by hand, for `IActivityManager` with one method, `attachApplication`:
+
+<Snippet file="binder/src/main/kotlin/Aidl.kt" region="aidl" />
+
+- `Stub` is the local side. It extends `Binder`, and its `asBinder()` returns the object itself. Its `onTransact` reads the arguments in the order of the writes and calls the method.
+- `Proxy` is the remote side. It wraps a binder proxy, and its `asBinder()` returns that binder proxy. Its method writes the arguments into a `Parcel` and calls `transact` with the transaction code of the method.
+- If the binder is a local object of the interface, `asInterface` returns the object itself. Otherwise, it returns a new `Proxy`.
+
+`IApplicationThread` has the same shape, with no methods. `AppThread` is its stub: the binder object of the app.
+
+The server of the rebuild stands for `ActivityManagerService` in `system_server`:
+
+<Snippet file="binder/src/main/kotlin/LaunchPath.kt" region="server" />
+
+`attachApplication` keeps a `ProcessRecord` with the thread of the app and `startSeq`. `recordFor` finds the record of an app. Each `asInterface` call can make a new `Proxy`, so `recordFor` does not compare the interface objects. It compares their binders, `asBinder()`, by identity (`===`).
+
+The tests make two processes, `app` and `server`. The rebuild has no servicemanager, so the test gives the app its first binder with `send`:
+
+<Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="setup" />
+
+Then the app calls `attachApplication` through the proxy:
+
+<Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="attach" />
+
+The test passes. The server keeps one record. The thread of the record is a `BinderProxy`, and `startSeq` is 7. Another test makes a second `Proxy` from the binder of the record. `recordFor` finds the record for the second `Proxy`, because the two proxies have the same `BinderProxy`. These tests are not breaking tests.
+
 [^activitythread-9507]: ActivityThread.java, lines 9507–9523: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507)
 [^activitythread-9282]: ActivityThread.java, lines 9282–9291: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282)
 [^aidl-intro]: Android Interface Definition Language (AIDL): [https://developer.android.com/develop/background-work/services/aidl](https://developer.android.com/develop/background-work/services/aidl)
@@ -74,3 +133,7 @@ This chapter builds a binder in plain Kotlin that does not keep this identity. I
 [^binder-overview]: Binder overview: [https://source.android.com/docs/core/architecture/ipc/binder-overview](https://source.android.com/docs/core/architecture/ipc/binder-overview)
 [^ibinder-39]: IBinder.java, lines 39–48: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#39](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#39)
 [^ibinder-50]: IBinder.java, lines 50–59: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#50](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#50)
+[^binder-java-49]: Binder.java, lines 49–60: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java#49](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java#49)
+[^binderproxy-48]: BinderProxy.java, lines 48–57: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java#48](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java#48)
+[^parcel-90]: Parcel.java, lines 90–97: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Parcel.java#90](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Parcel.java#90)
+[^aidl-defining]: AIDL, "Defining an AIDL interface": [https://developer.android.com/develop/background-work/services/aidl#Defining](https://developer.android.com/develop/background-work/services/aidl#Defining)
