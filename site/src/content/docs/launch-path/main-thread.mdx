@@ -286,7 +286,7 @@ The real queues do the same work. The legacy queue calls `nativeWake()` for a ne
 
 ### 2. Find the loop in the stack of the main thread
 
-Start an emulator with the system image of the checked stamp, a `google_apis` image. The prompts of this chapter need `adb root`. `adb root` works only on a debuggable build, where `ro.debuggable` is 1. Eng and userdebug builds set this value[^adbd-66]. Make sure that the image is debuggable:
+Start an emulator with the system image of the checked stamp, a `google_apis` image. Prompts 2 and 3 need `adb root`. `adb root` works only on a debuggable build, where `ro.debuggable` is 1. Eng and userdebug builds set this value[^adbd-66]. Make sure that the image is debuggable:
 
 ```sh
 adb shell getprop ro.debuggable
