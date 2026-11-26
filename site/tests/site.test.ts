@@ -3,12 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, expect, test } from 'vitest';
+import { sections } from '../src/sections';
 import { build } from './astro';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 // A separate output directory, so the test does not change dist/.
 const outDir = mkdtempSync(join(tmpdir(), 'afp-site-'));
-// The site has no chapters yet, so the build has only the home page, the About page and the Starlight 404 page. Each page loads the custom CSS.
+// The build has the home page, the About page, the chapter pages and the Starlight 404 page. Each page loads the custom CSS.
 let files: { name: string; text: string }[] = [];
 
 beforeAll(() => {
@@ -26,6 +27,49 @@ test('astro build makes a home page with the page title, the hero title and the 
   expect(html).toContain('<title>Android from First Principles</title>');
   // Without a hero, Starlight also renders the page title as an h1. Thus look for the h1 and the tagline in the hero.
   expect(html).toMatch(/<div class="hero[ "][^>]*>[\s\S]*?<h1[^>]*>Android from First Principles<\/h1>[\s\S]*?<div class="tagline[ "][^>]*>The machinery under Android app development\.<\/div>/);
+});
+
+// The sidebar of the About page: each section with a published chapter, and the links of its chapters, in section and sidebar order.
+// Each group label has the class "large". The sidebar has no nested group.
+const sidebar = () =>
+  readFileSync(join(outDir, 'about/index.html'), 'utf8')
+    .match(/<nav\b[^>]*\baria-label="Main"[^>]*>[\s\S]*?<\/nav>/)![0]
+    .split(/<span class="large[ "][^>]*>/)
+    .slice(1)
+    .map((group) => ({ section: group.slice(0, group.indexOf('<')), links: [...group.matchAll(/<a\b[^>]*\bhref="([^"]*)"/g)].map(([, href]) => href) }));
+
+test('the hero links "Start reading" to the first chapter in the sidebar and "About" to the About page, and each link has a page', () => {
+  const html = readFileSync(join(outDir, 'index.html'), 'utf8');
+  const actions = html.match(/<div class="(?:[^"]* )?actions[ "][^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
+  const links = [...actions.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(([, href, text]) => [text, href]);
+  expect(links).toEqual([
+    ['Start reading', sidebar()[0].links[0]],
+    ['About', '/about/'],
+  ]);
+  for (const [, href] of links) expect(existsSync(join(outDir, href, 'index.html')), href).toBe(true);
+});
+
+test('the home page lists each chapter page of the build under the heading of its section, in the order of the sidebar, with the title of the page', () => {
+  const content = readFileSync(join(outDir, 'index.html'), 'utf8').match(/<div class="(?:[^"]* )?sl-markdown-content[ "][^>]*>([\s\S]*?)<footer\b/)?.[1] ?? '';
+  const home = content
+    .split(/<h2\b[^>]*>/)
+    .slice(1)
+    .map((part) => ({ section: part.slice(0, part.indexOf('<')), links: [...part.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(([, href, text]) => ({ href, text })) }));
+  expect(home.map(({ section, links }) => ({ section, links: links.map(({ href }) => href) }))).toEqual(sidebar());
+  // Each section is a heading, then a list with one link in each item.
+  for (const part of content.split(/<h2\b[^>]*>/).slice(1)) {
+    expect(part, part.slice(0, 80)).toMatch(/^[^<]*<\/h2>\s*<ul\b[^>]*>(?:\s*<li\b[^>]*>\s*<a\b[^>]*>[^<]*<\/a>\s*<\/li>)+\s*<\/ul>/);
+  }
+  // The pages in the directory of a section. The id of a chapter is <section-slug>/<chapter-slug> (src/sections.ts).
+  const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' })
+    .filter((name) => sections.some((s) => name.startsWith(`${s.slug}/`)) && name.endsWith('/index.html'))
+    .map((name) => `/${name.slice(0, -'index.html'.length)}`);
+  const links = home.flatMap((s) => s.links);
+  expect(pages).not.toHaveLength(0);
+  expect(links.map(({ href }) => href).sort()).toEqual(pages.sort());
+  for (const { href, text } of links) {
+    expect(readFileSync(join(outDir, href, 'index.html'), 'utf8').match(/<h1 id="_top"[^>]*>([^<]*)<\/h1>/)?.[1], href).toBe(text);
+  }
 });
 
 test('astro build makes an About page with each sentence of the AI disclosure in docs/DESIGN.md', () => {

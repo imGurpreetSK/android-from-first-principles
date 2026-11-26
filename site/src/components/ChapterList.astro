@@ -1,0 +1,23 @@
+---
+import { getChapters } from '../chapters';
+import { bySection } from '../sections';
+
+// The sections with a chapter on the site, as the sidebar shows them. The id of a chapter is its URL without the slashes at the start and the end (src/sections.ts).
+const groups = bySection(await getChapters());
+// data-pagefind-ignore keeps the section headings and the lists out of the search index, because each chapter page has its own title.
+---
+
+{
+  groups.map(({ label, chapters }) => (
+    <>
+      <h2 data-pagefind-ignore>{label}</h2>
+      <ul data-pagefind-ignore>
+        {chapters.map(({ id, data }) => (
+          <li>
+            <a href={`/${id}/`}>{data.title}</a>
+          </li>
+        ))}
+      </ul>
+    </>
+  ))
+}

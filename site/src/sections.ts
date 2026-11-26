@@ -47,3 +47,11 @@ export function checkChapters(entries: { id: string; data: Record<string, unknow
     idByOrder.set(`${section.slug}/${order}`, id);
   }
 }
+
+// Returns each section that has a chapter, with its chapters. The sections are in the order of the curriculum, and the chapters of a section are in sidebar order.
+// The frontmatter schema requires sidebar.order for a chapter. checkChapters rejects two chapters with the same sidebar.order in one section.
+export function bySection<T extends { data: { section?: string; sidebar: { order?: number } } }>(chapters: T[]) {
+  return sections
+    .map(({ label }) => ({ label, chapters: chapters.filter((c) => c.data.section === label).sort((a, b) => a.data.sidebar.order! - b.data.sidebar.order!) }))
+    .filter((s) => s.chapters.length > 0);
+}
