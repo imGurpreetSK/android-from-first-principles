@@ -142,7 +142,7 @@ A `Message` has the public fields `what`, `arg1`, `arg2` and `obj` for its data[
 To post a `Runnable`, a `Handler` does these steps:
 
 1. `post(r)` gets a `Message` and sets its `callback` to `r`[^handler-1080]. Then it sends the message with the delay 0[^handler-487]. `postDelayed(r, delay)` sends the message with a delay[^handler-559].
-2. `sendMessageDelayed()` changes a negative delay to 0. It sets the time of the message to `SystemClock.uptimeMillis()` + delay[^handler-764]. Thus the time base is `uptimeMillis`, and time in deep sleep adds to the delay[^handler-545].
+2. `sendMessageDelayed()` changes a negative delay to 0. It sets the time of the message to `SystemClock.uptimeMillis()` + delay[^handler-764]. Thus the time base is `uptimeMillis`, and deep sleep adds to the delay[^handler-545].
 3. `enqueueMessage()` sets `msg.target = this`. If the `Handler` is asynchronous, it also marks the message as asynchronous. Then it gives the message to `MessageQueue.enqueueMessage()`[^handler-845].
 
 `NaiveHandler.postDelayed` only sets `when` and puts the message into the queue.
@@ -210,7 +210,7 @@ If a registered file descriptor is ready, `pollInner()` runs its callback before
 
 <GoDeeper title="DeliQueue">
 
-The legacy queue uses one global lock for a sorted singly-linked list. In most cases, an insertion takes O(n) time. A thread with a low priority can hold the lock and block the UI thread. Then frames can drop[^readme-problem]. The Android 17 guidance page says the same: a background thread could block the main thread and cause jank[^mq-guide].
+The legacy queue uses one global lock for a sorted singly-linked list. In most cases, an insertion is O(n). A thread with a low priority can hold the lock and block the UI thread. Then frames can drop[^readme-problem]. The Android 17 guidance page says the same: a background thread could block the main thread and cause jank[^mq-guide].
 
 DeliQueue removes the lock from the post:
 
@@ -392,7 +392,7 @@ adb shell 'logcat -d -s Looper | grep "Slow dispatch"'
 …
 ```
 
-Each line is one turn of `loopOnce()` on the main thread. A line gives the time of the dispatch, the thread name, the process name, the class of the `Handler` (`h=`), the callback (`c=`) and `what` (`m=`)[^looper-460]:
+Each line is one turn of `loopOnce()` on the main thread. A line gives the duration of the dispatch, the thread name and the process name (`app=`). Then it gives `main=`, `group=`, the class of the `Handler` (`h=`), the callback (`c=`) and `what` (`m=`)[^looper-460]:
 
 - `m=110` is `BIND_APPLICATION`[^activitythread-2616]. `bindApplication()` sent it from a binder thread[^activitythread-1511].
 - `m=159` is `EXECUTE_TRANSACTION`. `H` runs a `ClientTransaction` from `system_server` in it[^activitythread-2668][^activitythread-3026].
