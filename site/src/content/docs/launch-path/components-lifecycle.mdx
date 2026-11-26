@@ -347,7 +347,7 @@ This prompt needs a tap on the icon of the app on the home screen, because `syst
 … I wm_on_top_resumed_gained_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,…]
 ```
 
-In the block, `…` also stands for each reason that this chapter does not trace.
+In the block, `…` also stands for three reasons. This chapter does not trace the reason of `wm_on_stop_called`. The reasons of the two top-resumed events depend on when the activity loses or gets the topmost resumed position. For the loss, the reason is `pausing` or `topStateChangedWhenResumed`[^activitythread-6256][^activitythread-6141]. For the gain, the reason is `topWhenResuming` or `topStateChangedWhenResumed`[^activitythread-5969][^activitythread-6141].
 
 - The first three events come after Back. The activity is the root of its task, the home screen launched it, and its intent is the main intent. Thus `system_server` moves the task to the back, and the output has no `wm_on_destroy_called`[^activityclientcontroller-2021][^android-12-back]. `wm_on_paused_called` has the reason `performPause`[^activity-9574].
 - The other four events come after the second tap. The client goes from `ON_STOP` to `ON_RESUME` through `ON_RESTART` and `ON_START`, as `getLifecyclePath` computes[^transactionexecutorhelper-96]. No item can ask for `ON_RESTART`[^transactionexecutorhelper-72], so the client adds `onRestart` itself. The rebuild skips `onRestart`. If the system asks only for `ON_RESUME`, the rebuild also skips `onStart`.
