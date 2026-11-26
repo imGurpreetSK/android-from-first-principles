@@ -256,6 +256,104 @@ flowchart LR
   resumeItem["ResumeActivityItem, target ON_RESUME"] -.-> resume
 ```
 
+## Try it
+
+### 1. Give the rebuild a path
+
+Change `moveTo` in `NaiveLifecycleClient`. Compute each state between the current state and the target. For a target with a higher number, take each state after the current state, up to the target. If the client goes from `ON_STOP` or lower back to `ON_START` or higher, put `ON_RESTART` between `ON_STOP` and `ON_START`. Call `perform` for each state of the path, in order. Then set the state. From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :components-lifecycle:test
+```
+
+The two breaking tests fail, because the client now calls `onStart` and `onRestart`. The Gradle output includes these lines:
+
+```
+NaiveLifecycleClientTest > naiveClient_skipsOnRestartAndOnStart_whenResumedFromStopped() FAILED
+    org.opentest4j.AssertionFailedError at NaiveLifecycleClientTest.kt:33
+
+NaiveLifecycleClientTest > naiveClient_skipsOnStart_whenLaunchIsFollowedByResume() FAILED
+    org.opentest4j.AssertionFailedError at NaiveLifecycleClientTest.kt:24
+
+3 tests completed, 2 failed
+```
+
+The first test still passes, because each request of that test is one step away. Compare your path with `getLifecyclePath`[^transactionexecutorhelper-68]. Your path does not need the rule from `ON_PAUSE` to `ON_RESUME` or the path through `ON_DESTROY`, because no test asks for them.
+
+### 2. Watch one cold start cross two processes
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installLaunchPathRelease
+```
+
+Stop the app, so that the next start is a cold start. Clear the event log. Start the app and wait for the launch to complete. Then print the events of the launch app:
+
+```sh
+adb shell am force-stop io.github.imgurpreetsk.afp.launchapp
+adb logcat -b events -c
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+adb shell "logcat -b events -d | grep -E '(am_proc_bound|wm_restart_activity|wm_on_).*io.github.imgurpreetsk.afp.launchapp'"
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+Starting: Intent { cmp=io.github.imgurpreetsk.afp.launchapp/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: io.github.imgurpreetsk.afp.launchapp/.MainActivity
+TotalTime: …
+WaitTime: …
+Complete
+… I am_proc_bound: [0,…,io.github.imgurpreetsk.afp.launchapp]
+… I wm_restart_activity: [0,…,…,io.github.imgurpreetsk.afp.launchapp/.MainActivity]
+… I wm_on_create_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,performCreate,…]
+… I wm_on_start_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,handleStartActivity,…]
+… I wm_on_resume_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,RESUME_ACTIVITY,…]
+… I wm_on_top_resumed_gained_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,…]
+```
+
+The [Zygote chapter](/launch-path/zygote/) explains `am force-stop` and `am start -W`. Each event line starts with the date, the time, the PID and the thread ID. The block shows them as `…`.
+
+- `system_server` writes the first two events. `am_proc_bound` shows that the new process called `attachApplication`. Its fields are the user, the PID of the new process and the process name[^ams-5295]. `wm_restart_activity` shows that `tryRealStartActivityInner` ran[^activitytasksupervisor-1019]. After this event, that method sends the transaction with the `LaunchActivityItem` and the `ResumeActivityItem`[^activitytasksupervisor-1079].
+- The app process writes the other events, so their PID is the PID in `am_proc_bound`. `wm_on_create_called` has the reason `performCreate`[^activity-9322].
+- `wm_on_start_called` has the reason `handleStartActivity`. `cycleToPath` added this step, because the transaction asked only for `ON_RESUME`[^activitythread-4601].
+- `wm_on_resume_called` has the reason `RESUME_ACTIVITY`, from the `ResumeActivityItem`[^resumeactivityitem-70].
+- `wm_on_top_resumed_gained_called` shows that the activity became the topmost resumed activity. Its reason is `topWhenResuming` or `topStateChangedWhenResumed`. The reason depends on when the activity got its position[^activitythread-5969][^activitythread-6141].
+- The last field of each callback event is the duration of the callback in milliseconds[^activity-9322].
+
+### 3. Press Back and come back
+
+This prompt needs a tap on the icon of the app on the home screen, because `system_server` moves the task to the back only if the home screen launched the activity.
+
+1. Run `adb shell am force-stop io.github.imgurpreetsk.afp.launchapp`.
+2. In the emulator, tap the icon of the app on the home screen.
+3. Run `adb logcat -b events -c`.
+4. Run `adb shell input keyevent KEYCODE_BACK`.
+5. Tap the icon of the app again.
+6. Run `adb shell "logcat -b events -d | grep -E 'wm_on_.*io.github.imgurpreetsk.afp.launchapp'"`.
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I wm_on_top_resumed_lost_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,…]
+… I wm_on_paused_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,performPause,…]
+… I wm_on_stop_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,…,…]
+… I wm_on_restart_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,performRestart,…]
+… I wm_on_start_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,handleStartActivity,…]
+… I wm_on_resume_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,RESUME_ACTIVITY,…]
+… I wm_on_top_resumed_gained_called: […,io.github.imgurpreetsk.afp.launchapp.MainActivity,…]
+```
+
+In the block, `…` also stands for each reason that this chapter does not trace.
+
+- The first three events come after Back. The activity is the root of its task, the home screen launched it, and its intent is the main intent. Thus `system_server` moves the task to the back, and the output has no `wm_on_destroy_called`[^activityclientcontroller-2021][^android-12-back]. `wm_on_paused_called` has the reason `performPause`[^activity-9574].
+- The other four events come after the second tap. The client goes from `ON_STOP` to `ON_RESUME` through `ON_RESTART` and `ON_START`, as `getLifecyclePath` computes[^transactionexecutorhelper-96]. No item can ask for `ON_RESTART`[^transactionexecutorhelper-72], so the client adds `onRestart` itself. The rebuild skips `onRestart`. If the system asks only for `ON_RESUME`, the rebuild also skips `onStart`.
+
+To see the contrast, start the app from the shell in step 2: run `adb shell am start -n io.github.imgurpreetsk.afp.launchapp/.MainActivity`. Then the output after Back also has `wm_on_destroy_called`. The shell is not the home process, so the launch source is not the home screen[^activityrecord-2242], and `shouldMoveTaskToBack` is false[^activityclientcontroller-2021]. `system_server` tells the app to finish the activity[^activityclientcontroller-1960], and the system calls `onDestroy` when an activity finishes[^lifecycle-ondestroy].
+
 [^fundamentals-components]: Application fundamentals, "App components": [https://developer.android.com/guide/components/fundamentals#Components](https://developer.android.com/guide/components/fundamentals#Components)
 [^fundamentals-declaring]: Application fundamentals, "Declare components": [https://developer.android.com/guide/components/fundamentals#DeclaringComponents](https://developer.android.com/guide/components/fundamentals#DeclaringComponents)
 [^fundamentals-activating]: Application fundamentals, "Activate components": [https://developer.android.com/guide/components/fundamentals#ActivatingComponents](https://developer.android.com/guide/components/fundamentals#ActivatingComponents)
@@ -374,3 +472,6 @@ flowchart LR
 [^activityrecord-2242]: ActivityRecord.java, lines 2242–2255: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#2242](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#2242)
 [^activityrecord-2890]: ActivityRecord.java, lines 2890–2896: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#2890](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#2890)
 [^activityclientcontroller-2008]: ActivityClientController.java, lines 2008–2020: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityClientController.java#2008](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityClientController.java#2008)
+[^transactionexecutorhelper-68]: TransactionExecutorHelper.java, lines 68–129: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/TransactionExecutorHelper.java#68](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/TransactionExecutorHelper.java#68)
+[^activity-9574]: Activity.java, lines 9574–9575: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#9574](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#9574)
+[^lifecycle-ondestroy]: The activity lifecycle, "onDestroy": [https://developer.android.com/guide/components/activities/activity-lifecycle#ondestroy](https://developer.android.com/guide/components/activities/activity-lifecycle#ondestroy)
