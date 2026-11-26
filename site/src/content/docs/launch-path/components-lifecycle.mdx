@@ -322,7 +322,7 @@ The [Zygote chapter](/launch-path/zygote/) explains `am force-stop` and `am star
 - `wm_on_start_called` has the reason `handleStartActivity`[^activitythread-4601]. `cycleToPath` added this step, because the transaction asked only for `ON_RESUME`[^transactionexecutor-165].
 - `wm_on_resume_called` has the reason `RESUME_ACTIVITY`, from the `ResumeActivityItem`[^resumeactivityitem-70].
 - `wm_on_top_resumed_gained_called` shows that the activity became the topmost resumed activity. Its reason is `topWhenResuming` or `topStateChangedWhenResumed`. The reason depends on when the activity got its position[^activitythread-5969][^activitythread-6141].
-- The last field of each callback event is the duration of the callback in milliseconds[^activity-9322].
+- The last field of `wm_on_create_called`, `wm_on_start_called` and `wm_on_resume_called` is the duration of the callback in milliseconds[^activity-9322][^activity-9372][^activity-9497].
 
 ### 3. Press Back and come back
 
