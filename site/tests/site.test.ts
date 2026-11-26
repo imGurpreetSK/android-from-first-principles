@@ -56,6 +56,10 @@ test('the home page lists each chapter page of the build under the heading of it
     .slice(1)
     .map((part) => ({ section: part.slice(0, part.indexOf('<')), links: [...part.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(([, href, text]) => ({ href, text })) }));
   expect(home.map(({ section, links }) => ({ section, links: links.map(({ href }) => href) }))).toEqual(sidebar());
+  // Each section is a heading, then a list with one link in each item.
+  for (const part of content.split(/<h2\b[^>]*>/).slice(1)) {
+    expect(part, part.slice(0, 80)).toMatch(/^[^<]*<\/h2>\s*<ul\b[^>]*>(?:\s*<li\b[^>]*>\s*<a\b[^>]*>[^<]*<\/a>\s*<\/li>)+\s*<\/ul>/);
+  }
   // The pages in the directory of a section. The id of a chapter is <section-slug>/<chapter-slug> (src/sections.ts).
   const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' })
     .filter((name) => sections.some((s) => name.startsWith(`${s.slug}/`)) && name.endsWith('/index.html'))
