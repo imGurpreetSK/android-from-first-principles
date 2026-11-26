@@ -278,6 +278,101 @@ sequenceDiagram
   Driver->>App: bindApplication on a binder thread
 ```
 
+## Try it
+
+### 1. Keep the identity in the rebuild
+
+Fix the driver first. In `NaiveDriver.send`, if the owner of the local object is `to`, return the local object. Otherwise, if the table of `to` already has the object, return a proxy for its index. Add the object to the table only if the table does not have it. From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :binder:test
+```
+
+The Gradle output includes these lines:
+
+```
+NaiveDriverTest > naiveDriver_givesOwnerAProxy_whenBinderGoesBack() FAILED
+    org.opentest4j.AssertionFailedError at NaiveDriverTest.kt:61
+
+5 tests completed, 1 failed
+```
+
+The app now gets its own `AppThread` back, as `binder_translate_handle` gives the owner its local object[^binder-c-2479]. But `naiveDriver_losesIdentity_whenSameBinderCrossesTwice` still passes. When `appThread` crosses the second time, the server gets the same handle, but `proxyFor` makes a new `BinderProxy` for it.
+
+Then fix the process. In `Process`, keep a map from each handle to its `BinderProxy`. In `proxyFor`, return the proxy from the map, and make a new proxy only for a new handle. In a real process, `getStrongProxyForHandle` and `BinderProxy.getInstance` do this work[^processstate-339][^binderproxy-464]. Run the tests again. The output includes these lines:
+
+```
+NaiveDriverTest > naiveDriver_losesIdentity_whenSameBinderCrossesTwice() FAILED
+    org.opentest4j.AssertionFailedError at NaiveDriverTest.kt:50
+
+NaiveDriverTest > naiveDriver_givesOwnerAProxy_whenBinderGoesBack() FAILED
+    org.opentest4j.AssertionFailedError at NaiveDriverTest.kt:61
+
+5 tests completed, 2 failed
+```
+
+The two breaking tests fail, because the flaw is gone. The three other tests pass, so a call and a lookup by `asBinder()` still work.
+
+### 2. List the binder threads of the launch app
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installLaunchPathRelease
+```
+
+Start the app:
+
+```sh
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+```
+
+List the threads of its process:
+
+```sh
+adb shell ps -T -p $(adb shell pidof io.github.imgurpreetsk.afp.launchapp)
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+…
+… binder:…_1
+… binder:…_2
+…
+```
+
+The output includes lines that end in thread names of the form `binder:<pid>_<number>`. In the block, a line `…` stands for lines that the block leaves out. The number of binder threads can change between runs.
+
+The code of the launch app starts no thread. libbinder started these threads. `startThreadPool` starts the first binder thread[^processstate-220], and the driver can ask for more[^binder-c-5421]. libbinder gives each thread the name `<driver>:<pid>_<number>`, with the number in hex from 1[^processstate-422][^processstate-617].
+
+### 3. Find the record of the launch app in system_server
+
+If the app does not run, install and start it as in prompt 2. Print the process records of its package:
+
+```sh
+adb shell dumpsys activity processes io.github.imgurpreetsk.afp.launchapp
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
+  All known processes:
+  *APP* UID … ProcessRecord{… …:io.github.imgurpreetsk.afp.launchapp/u0a…}
+    user #0 uid=… gids={…}
+    …
+    thread=com.android.server.am.ApplicationThreadDeferred@…
+    pid=…
+    …
+```
+
+The output includes these lines. In the block, a line `…` stands for lines that the block leaves out.
+
+- The argument after `processes` is a package filter[^ams-11642]. For each `ProcessRecord` of the package, `dumpProcessesLSP` prints `*APP*`, the UID and the record. Then it prints the fields of the record[^processlist-4680][^processrecord-1504].
+- The record prints the user, the UID and the GIDs first[^processrecord-472]. Later, it prints `thread=` and `pid=`[^processrecord-527].
+- `thread=` shows `mThread`: the `ApplicationThreadDeferred` that `attachApplicationLocked` made around the binder of the app[^ams-5501]. Thus `system_server` keeps the binder that the app sent in `attachApplication`.
+
 [^activitythread-9507]: ActivityThread.java, lines 9507–9523: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507)
 [^activitythread-9282]: ActivityThread.java, lines 9282–9291: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282)
 [^aidl-intro]: Android Interface Definition Language (AIDL): [https://developer.android.com/develop/background-work/services/aidl](https://developer.android.com/develop/background-work/services/aidl)
@@ -383,3 +478,8 @@ sequenceDiagram
 [^cachedappoptimizer-12-104]: CachedAppOptimizer.java at android-12.0.0_r1, line 104: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#104](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#104)
 [^cachedappoptimizer-12-1358]: CachedAppOptimizer.java at android-12.0.0_r1, lines 1358–1361: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#1358](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#1358)
 [^ibinder-16-433]: IBinder.java at android-16.0.0_r1, lines 433–461: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r1/core/java/android/os/IBinder.java#433](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r1/core/java/android/os/IBinder.java#433)
+[^ams-11642]: ActivityManagerService.java, lines 11642–11652: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11642](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11642)
+[^processlist-4680]: ProcessList.java, lines 4680–4698: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4680](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4680)
+[^processrecord-1504]: ProcessRecord.java, lines 1504–1546: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#1504](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#1504)
+[^processrecord-472]: ProcessRecord.java, lines 472–485: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#472](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#472)
+[^processrecord-527]: ProcessRecord.java, lines 527–528: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#527](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#527)
