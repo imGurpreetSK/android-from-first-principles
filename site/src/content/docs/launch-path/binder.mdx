@@ -260,6 +260,24 @@ Since Android 16, a process can register a `FrozenStateChangeCallback` on a remo
 
 </GoDeeper>
 
+## Mental model
+
+Binder lets a process call an object in another process through the binder driver. The caller calls a proxy. The proxy writes the arguments into a `Parcel` and calls `transact`. The driver copies the transaction into the target process, and a binder thread there calls `onTransact` of the `Stub`. A binder in a `Parcel` crosses as a handle. The driver gives each node one handle in each process, and gives the owner its own object back. Each process keeps one `BinderProxy` for each remote object. Thus `asBinder()` gives the same object each time, and `system_server` can find the `ProcessRecord` of an app by its binder. In the launch path, the app gets the activity service from servicemanager and calls `attachApplication` with its `ApplicationThread`. `system_server` keeps the `BinderProxy` of that thread in the `ProcessRecord`. It calls the app back with `oneway` calls, for example `bindApplication`. The rebuild gives a new handle and a new proxy each time that a binder crosses, so it loses the identity.
+
+```mermaid
+sequenceDiagram
+  participant App as app process
+  participant Driver as binder driver
+  participant SS as system_server
+  App->>Driver: getService activity, to servicemanager at handle 0
+  Driver-->>App: handle of ActivityManagerService
+  App->>Driver: attachApplication(ApplicationThread, startSeq)
+  Driver->>SS: handle of ApplicationThread, PID and UID of the app
+  Note over SS: ProcessRecord keeps the BinderProxy. Lookups compare asBinder().
+  SS->>Driver: bindApplication, oneway
+  Driver->>App: bindApplication on a binder thread
+```
+
 [^activitythread-9507]: ActivityThread.java, lines 9507–9523: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507)
 [^activitythread-9282]: ActivityThread.java, lines 9282–9291: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282)
 [^aidl-intro]: Android Interface Definition Language (AIDL): [https://developer.android.com/develop/background-work/services/aidl](https://developer.android.com/develop/background-work/services/aidl)
