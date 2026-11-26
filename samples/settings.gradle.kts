@@ -18,3 +18,4 @@ rootProject.name = "samples"
 
 include(":launch-app")
 include(":apk")
+include(":zygote")
