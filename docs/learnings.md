@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-26: The parent agent read the output `N` of `git log '--format=%G?'` as "not signed". Git also shows `N` for an SSH signature if `gpg.ssh.allowedSignersFile` is not set. Rule: To check if a commit has a signature, look for the `gpgsig` header in the output of `git cat-file -p <commit>`. To check if GitHub verified the signature, run `gh api repos/<owner>/<repo>/commits/<sha> --jq .commit.verification.verified`.
+
 2026-11-26: The parent agent rebased a local learnings branch onto `main` before it checked if `origin` already had that branch. The parent agent saw this in `git status -sb` and reset the branch before a push. Rule: Before you rebase a branch, run `git branch -r --list '*<name>'`. If `origin` has the branch, merge `main` into it, or do not change it, so that you do not need a force push.
 
 2026-11-26: Two site lanes ran at the same time. Two citation markers next to each other showed as "2526". The lanes fixed this problem in two different ways: one lane with a CSS space, and the other lane with commas. The maintainer then had to choose. Rule: If two lanes change the same output, give each reviewer the diff of the other lane.
