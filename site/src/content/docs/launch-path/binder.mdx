@@ -216,9 +216,9 @@ In each process, libbinder reads each binder from a `Parcel` with `unflattenBind
 
 <GoDeeper title="the binder driver">
 
-The arm64 GKI kernel builds the C binder driver into the kernel. It builds the Rust binder driver only as a module. It also builds binderfs into the kernel[^gki-defconfig-674]. Thus this chapter cites `binder.c`. init mounts binderfs at `/dev/binderfs`, and makes `/dev/binder` a symlink to `/dev/binderfs/binder`[^init-rc-231].
+The arm64 GKI kernel builds the C binder driver into the kernel. It builds the Rust binder driver only as a module. It also builds binderfs into the kernel[^gki-defconfig-674]. Thus this chapter cites `binder.c`.
 
-Since Android 11, init mounts binderfs at `/dev/binderfs` and makes `/dev/binder` a symlink to `/dev/binderfs/binder`[^init-rc-11-175].
+Since Android 11, init mounts binderfs at `/dev/binderfs` and makes `/dev/binder` a symlink to `/dev/binderfs/binder`[^init-rc-11-175][^init-rc-231].
 
 For a nested call, the driver looks at the transaction stack of the thread that calls. If a thread of the target process waits in that stack, the driver sends the transaction to that thread[^binder-c-3505].
 
