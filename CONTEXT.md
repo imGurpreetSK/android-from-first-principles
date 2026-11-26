@@ -53,8 +53,8 @@ The set of sources that a chapter can cite. The maintainer approves it before th
 _Avoid_: bibliography, references
 
 **Citation**:
-An inline link from a claim to one spot in a listed source: a line, a heading or a timestamp.
-_Avoid_: footnote, reference
+A link from a claim to one spot in a listed source: a line, a heading or a timestamp. The chapter shows a superscript number after the claim. The number links to a footnote at the end of the chapter. The footnote gives a short label and the URL of the spot. In the chapter file, a citation is a GFM footnote.
+_Avoid_: reference
 
 **Checked stamp**:
 The record of the baseline of a chapter and of the library versions against which the editor checked its claims. If the chapter has device prompts, the stamp also names the emulator system image.
