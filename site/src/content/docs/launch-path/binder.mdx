@@ -204,17 +204,19 @@ Since Android 14, `IActivityManager` has the synchronous method `finishAttachApp
 
 This is the real fix for the flaw of the rebuild. One part is in the kernel driver. The other part is in each process.
 
-When libbinder writes a binder into a `Parcel`, it writes a local object as `BINDER_TYPE_BINDER`, and a `BpBinder` as `BINDER_TYPE_HANDLE` with its handle[^parcel-cpp-291]. The driver keeps a node for each local object that a process sends, and a ref for each handle. A ref connects a handle of one process to a node.
+The driver gives each node one handle in each process[^binder-c-1646]. If the handle of a node goes back to the process that owns the node, the driver gives that process its original local object, not a handle[^binder-c-2479]. The rebuild makes a new handle each time that a binder crosses, and gives the owner a new handle. The box "the binder driver" shows the driver code.
 
-When a transaction carries a local object, `binder_translate_binder` finds or makes the node of the object. It calls `binder_inc_ref_for_node` for the target process, and puts the handle of that ref into the transaction[^binder-c-2426]. `binder_inc_ref_for_node` makes a new ref only if the target process has no ref for the node[^binder-c-1646]. Thus one node has one handle in each process. The rebuild makes a new handle each time that a binder crosses.
-
-When a transaction carries a handle, `binder_translate_handle` finds the node of the handle. If the node is in the target process, the driver puts the original local object into the transaction, not a handle[^binder-c-2479]. Otherwise, it puts the handle of the target process for the node[^binder-c-2526]. The rebuild gives the owner a new handle.
-
-In each process, libbinder reads each binder from a `Parcel` with `unflattenBinder`. For a local object (`BINDER_TYPE_BINDER`), it gives back the original object. For a handle (`BINDER_TYPE_HANDLE`), it calls `getStrongProxyForHandle`[^parcel-cpp-466]. `getStrongProxyForHandle` makes a new `BpBinder` only if the handle has no live `BpBinder`[^processstate-339]. In Java, `javaObjectForIBinder` returns the original Java object for a local Java binder. For a remote object, it calls `BinderProxy.getInstance`[^android-util-binder-1010]. `getInstance` returns the same `BinderProxy` for the same native `IBinder`, while that `BinderProxy` is in use[^binderproxy-464]. Thus a process has one `BinderProxy` for each remote object. The rebuild makes a new proxy for each handle.
+In each process, libbinder reads each binder from a `Parcel` with `unflattenBinder`. For a local object, it gives back the original object. For a handle, it calls `getStrongProxyForHandle`[^parcel-cpp-466]. `getStrongProxyForHandle` makes a new `BpBinder` only if the handle has no live `BpBinder`[^processstate-339]. In Java, `javaObjectForIBinder` returns the original Java object for a local Java binder. For a remote object, it calls `BinderProxy.getInstance`[^android-util-binder-1010]. `getInstance` returns the same `BinderProxy` for the same native `IBinder`, while that `BinderProxy` is in use[^binderproxy-464]. Thus a process has one `BinderProxy` for each remote object. The rebuild makes a new proxy for each handle.
 
 `ActivityManagerService` depends on this identity. `getRecordForAppLOSP` calls `ProcessList.getLRURecordForAppLOSP`, which compares `t.asBinder() == threadBinder` for each record in the LRU list[^processlist-4351]. If that call finds no record, `getRecordForAppLOSP` checks each `ProcessRecord` with `procThread.asBinder() == threadBinder`[^ams-3978]. The record keeps an `ApplicationThreadDeferred`. Its `asBinder()` returns the binder of the wrapped `IApplicationThread`[^applicationthreaddeferred-96]. Thus the comparison uses the `BinderProxy` of the app.
 
 <GoDeeper title="the binder driver">
+
+When libbinder writes a binder into a `Parcel`, it writes a local object as `BINDER_TYPE_BINDER`, and a `BpBinder` as `BINDER_TYPE_HANDLE` with its handle[^parcel-cpp-291]. The driver keeps a node for each local object that a process sends, and a ref for each handle. A ref connects a handle of one process to a node.
+
+When a transaction carries a local object, `binder_translate_binder` finds or makes the node of the object. It calls `binder_inc_ref_for_node` for the target process, and puts the handle of that ref into the transaction[^binder-c-2426]. `binder_inc_ref_for_node` makes a new ref only if the target process has no ref for the node[^binder-c-1646]. Thus one node has one handle in each process.
+
+When a transaction carries a handle, `binder_translate_handle` finds the node of the handle. If the node is in the target process, the driver puts the original local object into the transaction, not a handle[^binder-c-2479]. Otherwise, it puts the handle of the target process for the node[^binder-c-2526].
 
 The arm64 GKI kernel builds the C binder driver into the kernel. It builds the Rust binder driver only as a module. It also builds binderfs into the kernel[^gki-defconfig-674]. Thus this chapter cites `binder.c`.
 
@@ -297,7 +299,7 @@ NaiveDriverTest > naiveDriver_givesOwnerAProxy_whenBinderGoesBack() FAILED
 5 tests completed, 1 failed
 ```
 
-The app now gets its own `AppThread` back, as `binder_translate_handle` gives the owner its local object[^binder-c-2479]. But `naiveDriver_losesIdentity_whenSameBinderCrossesTwice` still passes. When `appThread` crosses the second time, the server gets the same handle, but `proxyFor` makes a new `BinderProxy` for it.
+The app now gets its own `AppThread` back, as the real driver gives the owner its original local object[^binder-c-2479]. But `naiveDriver_losesIdentity_whenSameBinderCrossesTwice` still passes. When `appThread` crosses the second time, the server gets the same handle, but `proxyFor` makes a new `BinderProxy` for it.
 
 Then fix the process. In `Process`, keep a map from each handle to its `BinderProxy`. In `proxyFor`, if the map has a proxy for the handle, return that proxy. Otherwise, make a new proxy, put it in the map, and return it. In a real process, `getStrongProxyForHandle` and `BinderProxy.getInstance` do this work[^processstate-339][^binderproxy-464]. Run the tests again. The output includes these lines:
 
