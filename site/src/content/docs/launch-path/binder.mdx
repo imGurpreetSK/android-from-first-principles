@@ -114,7 +114,7 @@ The server of the rebuild stands for `ActivityManagerService` in `system_server`
 
 <Snippet file="binder/src/main/kotlin/LaunchPath.kt" region="server" />
 
-`attachApplication` keeps a `ProcessRecord` with the thread of the app and `startSeq`. `recordFor` finds the record of an app. Each `asInterface` call can make a new `Proxy`, so `recordFor` does not compare the interface objects. It compares their binders, `asBinder()`, by identity (`===`).
+`attachApplication` keeps a `ProcessRecord` with the `IApplicationThread` of the app and `startSeq`. `recordFor` finds the record of an app. Each `asInterface` call can make a new `Proxy`, so `recordFor` does not compare the interface objects. It compares their binders, `asBinder()`, by identity (`===`).
 
 The tests make two processes, `app` and `server`. The rebuild has no servicemanager, so the test gives the app its first binder with `send`:
 
@@ -134,9 +134,9 @@ The first breaking test sends `appThread` to the server two times. The first tim
 
 <Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="identity" />
 
-The test passes, so the flaw occurs. The server has two `BinderProxy` objects for one `AppThread`. `recordFor` compares `asBinder()` by identity, so it finds no record for the second proxy. The real `ActivityManagerService` finds a `ProcessRecord` in the same way: it compares `asBinder()` with `==`[^processlist-4351][^ams-3978]. With this flaw, a lookup with a second proxy of the same app thread finds no record.
+The test passes, so the flaw occurs. The server has two `BinderProxy` objects for one `AppThread`. `recordFor` compares `asBinder()` by identity, so it finds no record for the second proxy. The real `ActivityManagerService` finds a `ProcessRecord` in the same way: it compares `asBinder()` with `==`[^processlist-4351][^ams-3978]. With this flaw, a lookup with a second proxy of the same `AppThread` finds no record.
 
-The second breaking test sends the thread of the record back to the app, the owner of `appThread`:
+The second breaking test sends the binder of the record back to the app, the owner of `appThread`:
 
 <Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="back" />
 
@@ -194,7 +194,7 @@ Then `attachApplicationLocked` does these steps:
 
 1. It links to the death of the binder of the app, with an `AppDeathRecipient`[^ams-5283]. `linkToDeath` registers a recipient that the system calls when the process of the binder goes away[^ibinder-80].
 2. It calls `thread.bindApplication`[^ams-5451].
-3. It keeps the thread in the `ProcessRecord`, in an `ApplicationThreadDeferred` wrapper[^ams-5501]. The field `mThread` of `ProcessRecord` holds this wrapper[^processrecord-161].
+3. It keeps the `IApplicationThread` in the `ProcessRecord`, in an `ApplicationThreadDeferred` wrapper[^ams-5501]. The field `mThread` of `ProcessRecord` holds this wrapper[^processrecord-161].
 
 In the app, `bindApplication` fills the service cache of `ServiceManager`[^activitythread-1482]. `initServiceCache` throws an exception if the cache is not empty[^servicemanager-java-361]. Then `bindApplication` sends the message `H.BIND_APPLICATION`[^activitythread-1543]. After `Application.onCreate`[^activitythread-8307], the app calls `finishAttachApplication` on the activity manager[^activitythread-8359].
 
@@ -212,7 +212,7 @@ When a transaction carries a handle, `binder_translate_handle` finds the node of
 
 In each process, libbinder reads each binder from a `Parcel` with `unflattenBinder`. For a local object (`BINDER_TYPE_BINDER`), it gives back the original object. For a handle (`BINDER_TYPE_HANDLE`), it calls `getStrongProxyForHandle`[^parcel-cpp-466]. `getStrongProxyForHandle` makes a new `BpBinder` only if the handle has no live `BpBinder`[^processstate-339]. In Java, `javaObjectForIBinder` returns the original Java object for a local Java binder. For a remote object, it calls `BinderProxy.getInstance`[^android-util-binder-1010]. `getInstance` returns the same `BinderProxy` for the same native `IBinder`, while that `BinderProxy` is in use[^binderproxy-464]. Thus a process has one `BinderProxy` for each remote object. The rebuild makes a new proxy for each handle.
 
-`ActivityManagerService` depends on this identity. `getRecordForAppLOSP` calls `ProcessList.getLRURecordForAppLOSP`, which compares `t.asBinder() == threadBinder` for each record in the LRU list[^processlist-4351]. If that call finds no record, `getRecordForAppLOSP` checks each `ProcessRecord` with `procThread.asBinder() == threadBinder`[^ams-3978]. The record keeps an `ApplicationThreadDeferred`. Its `asBinder()` returns the binder of the wrapped thread[^applicationthreaddeferred-96]. Thus the comparison uses the `BinderProxy` of the app.
+`ActivityManagerService` depends on this identity. `getRecordForAppLOSP` calls `ProcessList.getLRURecordForAppLOSP`, which compares `t.asBinder() == threadBinder` for each record in the LRU list[^processlist-4351]. If that call finds no record, `getRecordForAppLOSP` checks each `ProcessRecord` with `procThread.asBinder() == threadBinder`[^ams-3978]. The record keeps an `ApplicationThreadDeferred`. Its `asBinder()` returns the binder of the wrapped `IApplicationThread`[^applicationthreaddeferred-96]. Thus the comparison uses the `BinderProxy` of the app.
 
 <GoDeeper title="the binder driver">
 
@@ -262,7 +262,7 @@ Since Android 16, a process can register a `FrozenStateChangeCallback` on a remo
 
 ## Mental model
 
-Binder lets a process call an object in another process through the binder driver. The caller calls a proxy. The proxy writes the arguments into a `Parcel` and calls `transact`. The driver copies the transaction into the target process, and a binder thread there calls `onTransact` of the `Stub`. A binder in a `Parcel` crosses as a handle. The driver gives each node one handle in each process, and gives the owner its own object back. Each process keeps one `BinderProxy` for each remote object. Thus `asBinder()` gives the same object each time, and `system_server` can find the `ProcessRecord` of an app by its binder. In the launch path, the app gets the activity service from servicemanager and calls `attachApplication` with its `ApplicationThread`. `system_server` keeps the `BinderProxy` of that thread in the `ProcessRecord`. It calls the app back with `oneway` calls, for example `bindApplication`. The rebuild gives a new handle and a new proxy each time that a binder crosses, so it loses the identity.
+Binder lets a process call an object in another process through the binder driver. The caller calls a proxy. The proxy writes the arguments into a `Parcel` and calls `transact`. The driver copies the transaction into the target process, and a binder thread there calls `onTransact` of the `Stub`. A binder in a `Parcel` crosses as a handle. The driver gives each node one handle in each process, and gives the owner its own object back. Each process keeps one `BinderProxy` for each remote object. Thus `asBinder()` gives the same object each time, and `system_server` can find the `ProcessRecord` of an app by its binder. In the launch path, the app gets the activity service from servicemanager and calls `attachApplication` with its `ApplicationThread`. `system_server` keeps the `BinderProxy` of that `ApplicationThread` in the `ProcessRecord`. It calls the app back with `oneway` calls, for example `bindApplication`. The rebuild gives a new handle and a new proxy each time that a binder crosses, so it loses the identity.
 
 ```mermaid
 sequenceDiagram
