@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 
@@ -38,4 +39,14 @@ class NaiveDriverTest {
         assertNotSame(record.thread, newProxy)
         assertSame(record, activityManager.recordFor(newProxy))
     }
+
+    // region identity
+    @Test
+    fun naiveDriver_losesIdentity_whenSameBinderCrossesTwice() {
+        activityManagerProxy.attachApplication(appThread, startSeq = 7)
+        val again = IApplicationThread.Stub.asInterface(driver.send(appThread, from = app, to = server))
+        assertNotSame(activityManager.records.single().thread.asBinder(), again.asBinder())
+        assertNull(activityManager.recordFor(again))
+    }
+    // endregion
 }
