@@ -126,6 +126,24 @@ Then the app calls `attachApplication` through the proxy:
 
 The test passes. The server keeps one record. The thread of the record is a `BinderProxy`, and `startSeq` is 7. Another test makes a second `Proxy` from the binder of the record. `recordFor` finds the record for the second `Proxy`, because the two proxies have the same `BinderProxy`. These tests are not breaking tests.
 
+## Where it breaks
+
+`send` gives `to` a new handle each time that a binder crosses. It does not look for a handle that `to` already has for the object. It also gives a handle to the owner of the object. And `proxyFor` makes a new `BinderProxy` for each handle. Thus the same object can reach a process as two different proxies.
+
+The first breaking test sends `appThread` to the server two times. The first time is `attachApplication`. The second time is a direct `send`, the step that `transact` does for each binder in a parcel:
+
+<Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="identity" />
+
+The test passes, so the flaw occurs. The server has two `BinderProxy` objects for one `AppThread`. `recordFor` compares `asBinder()` by identity, so it finds no record for the second proxy. The real `ActivityManagerService` finds a `ProcessRecord` in the same way: it compares `asBinder()` with `==`[^processlist-4351][^ams-3978]. With this flaw, a lookup with a second proxy of the same app thread finds no record.
+
+The second breaking test sends the thread of the record back to the app, the owner of `appThread`:
+
+<Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="back" />
+
+The test passes. The app gets a new `Proxy`, not its own `AppThread`. The real `IBinder` gives the opposite result: the original process gets the same `IBinder` object back[^ibinder-50].
+
+The tests use one thread, no clock and no sleep, so they give the same result on each run.
+
 [^activitythread-9507]: ActivityThread.java, lines 9507–9523: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507)
 [^activitythread-9282]: ActivityThread.java, lines 9282–9291: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282)
 [^aidl-intro]: Android Interface Definition Language (AIDL): [https://developer.android.com/develop/background-work/services/aidl](https://developer.android.com/develop/background-work/services/aidl)
@@ -137,3 +155,5 @@ The test passes. The server keeps one record. The thread of the record is a `Bin
 [^binderproxy-48]: BinderProxy.java, lines 48–57: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java#48](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java#48)
 [^parcel-90]: Parcel.java, lines 90–97: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Parcel.java#90](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Parcel.java#90)
 [^aidl-defining]: AIDL, "Defining an AIDL interface": [https://developer.android.com/develop/background-work/services/aidl#Defining](https://developer.android.com/develop/background-work/services/aidl#Defining)
+[^processlist-4351]: ProcessList.java, lines 4351–4364: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4351](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4351)
+[^ams-3978]: ActivityManagerService.java, lines 3978–4013: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#3978](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#3978)
