@@ -284,7 +284,7 @@ Total frames rendered: …
 Total frames rendered: …
 ```
 
-The two values are equal. Thus the idle app rendered no frame in 10 seconds.
+The two values are equal. Thus the idle app drew no frame in 10 seconds.
 
 - The app answers `dumpsys gfxinfo` in `handleDumpGfxInfo`[^activitythread-5724][^threadedrenderer-695]. `ProfileData::dump` prints the line `Total frames rendered`[^profiledata-112]. `reportFrame` adds 1 to the count[^profiledata-175]. `JankTracker::finishFrame` calls `reportFrame` for each finished frame[^janktracker-170]. With `-m 1`, `grep` prints only the first line that matches.
 - The `TextView` of the launch app does not change, so no code posts a callback to `Choreographer`. Thus `Choreographer` does not call `scheduleVsync`[^choreographer-622][^choreographer-919]. SurfaceFlinger sends no VSYNC to a connection that did not ask for one[^eventthread-669]. Without a VSYNC, `doFrame` does not run[^choreographer-1593], and the app draws no frame.
