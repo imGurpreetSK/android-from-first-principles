@@ -113,7 +113,7 @@ The native receiver of `DisplayEventReceiver` uses the `Looper` of the `MessageQ
 
 In SurfaceFlinger, `EventThread` keeps a VSYNC request for each connection. `requestNextVsync` changes the request of the connection from `None` to `Single`[^eventthread-417]. A connection with the request `Single` gets the next VSYNC, and its request changes to `SingleSuppressCallback`. At the VSYNC after that, the request changes to `None`. A connection with the request `None` gets no VSYNC[^eventthread-669]. If no connection has a request, `EventThread` cancels its VSYNC callback and waits[^eventthread-555].
 
-`EventThread` schedules its VSYNC callback with its work duration and its ready duration[^eventthread-595]. SurfaceFlinger predicts the next VSYNC of the display. It calls the callback `workDuration + readyDuration` before that VSYNC. `workDuration` is the time that the client needs for its work[^vsyncdispatch-82][^vsyncdispatch-116].
+`EventThread` schedules its VSYNC callback with its work duration and its ready duration[^eventthread-595]. SurfaceFlinger predicts the next VSYNC of the display. It calls the callback `workDuration + readyDuration` before that VSYNC. `workDuration` is the time that the client needs for its work[^vsyncdispatch-82][^vsyncdispatch-116]. For an app, `readyDuration` is the time that SurfaceFlinger needs for the buffer of the app[^vsyncdispatch-82]. Thus the app gets its VSYNC before the VSYNC of the display. The time between the two is for the work of the app and of SurfaceFlinger.
 
 </GoDeeper>
 
