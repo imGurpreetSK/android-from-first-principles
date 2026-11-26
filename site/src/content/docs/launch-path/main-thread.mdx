@@ -399,7 +399,7 @@ Each line is one turn of `loopOnce()` on the main thread. A line gives the time 
 - `c=null`: the `sendMessage()` of `ActivityThread` sets no callback[^activitythread-4388].
 - Other lines can come between these two lines. For example, `handleBindApplication()` posts `m=164`, `SET_CONTENT_CAPTURE_OPTIONS_CALLBACK`[^activitythread-8276]. More lines come after the `m=159` line.
 
-At the end, set the property back to -1, so that the app logs no more dispatches:
+At the end, set the property back to -1, so that the next process of the app does not log each dispatch. The process that runs now keeps the threshold 0 until it stops, because it read the property when its loop started[^looper-390]:
 
 ```sh
 adb shell setprop log.looper.<uid>.main.slow -1
