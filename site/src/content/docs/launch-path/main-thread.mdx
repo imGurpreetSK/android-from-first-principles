@@ -93,7 +93,7 @@ The first test posts three messages with the delays 300, 100 and 200. The looper
 
 <Snippet file="main-thread/src/test/kotlin/NaiveLooperTest.kt" region="order" />
 
-Other tests show that two messages with the same `when` run in the order of their posts, and that a message can post a new message.
+Three other tests pass. Two messages with the same `when` run in the order of their posts. A message can post a new message. A message that another thread posts during a sleep runs on time if it is due after the head.
 
 ## Where it breaks
 
