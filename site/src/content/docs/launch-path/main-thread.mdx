@@ -243,14 +243,14 @@ If the queue has no due message, `next()` runs the `IdleHandler` objects of the 
 
 ## Mental model
 
-The main thread of an app runs one message loop. `ActivityThread.main()` prepares the main `Looper` and calls `Looper.loop()`, which does not return. In each turn, the loop takes the next due message from the `MessageQueue` and calls `dispatchMessage()` of its target `Handler`. If no message is due, `next()` sleeps in the kernel, in `epoll_wait()`, with a timeout until the head is due. Other threads, for example binder threads, post work with a `Handler`. The `Handler` gives the message its time and its target, and the queue keeps the messages in order of `when`. If a new message is due before the deadline of the sleep, the queue wakes the looper through the eventfd. The rebuild does not have this wake-up, so a new message waits until the old deadline. The cold start, `runOnUiThread()`, `View.post()` and `Dispatchers.Main` all run as messages on this one loop.
+The main thread of an app runs one message loop. `ActivityThread.main()` prepares the main `Looper` and calls `Looper.loop()`, which does not return. In each turn, the loop takes the next due message from the `MessageQueue` and calls `dispatchMessage()` of its target `Handler`. If no message is due, `next()` sleeps in `nativePollOnce()`, in the kernel, until the head is due. If the queue is empty, the legacy queue sleeps with no time limit, and DeliQueue sleeps for about 7 days. Other threads, for example binder threads, post work with a `Handler`. The `Handler` gives the message its time and its target, and the queue keeps the messages in order of `when`. If a new message is due before the deadline of the sleep, the queue wakes the looper with `nativeWake()`. The rebuild does not have this wake-up, so a new message waits until the old deadline. The cold start, `runOnUiThread()`, `View.post()` and `Dispatchers.Main` all run as messages on this one loop.
 
 ```mermaid
 flowchart LR
   other["Binder thread or worker thread"] -->|Handler sets when and target| queue["MessageQueue, in order of when"]
   queue -->|due before the deadline, nativeWake| sleep
   loop["Looper.loop on the main thread"] --> next["MessageQueue.next"]
-  next -->|no due message| sleep["nativePollOnce: epoll_wait until the head is due"]
+  next -->|no due message| sleep["nativePollOnce: sleep until the head is due"]
   sleep --> next
   next -->|due message| dispatch["msg.target.dispatchMessage"]
   dispatch --> loop
