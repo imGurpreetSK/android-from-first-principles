@@ -124,7 +124,7 @@ Then the app calls `attachApplication` through the proxy:
 
 <Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="attach" />
 
-The test passes. The server keeps one record. The thread of the record is a `BinderProxy`, and `startSeq` is 7. Another test makes a second `Proxy` from the binder of the record. `recordFor` finds the record for the second `Proxy`, because the two proxies have the same `BinderProxy`. These tests are not breaking tests.
+The test passes. The server keeps one record. In the record, `asBinder()` of the `IApplicationThread` is a `BinderProxy`, and `startSeq` is 7. Another test makes a second `Proxy` from the binder of the record. `recordFor` finds the record for the second `Proxy`, because the two proxies have the same `BinderProxy`. These tests are not breaking tests.
 
 ## Where it breaks
 
