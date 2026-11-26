@@ -49,7 +49,7 @@ Section 1 follows one cold start of the launch app. In `onCreate`, the activity 
 
 Code can change a view many times before the display shows the next frame. Each change asks for new work. For example, if a `TextView` has a text layout, `setText` calls `checkForRelayout`[^textview-7524]. `checkForRelayout` calls `invalidate`. If the new text can change the size of the view, it also calls `requestLayout`[^textview-11770].
 
-The display does not show each change. A VSYNC (vertical sync) is a signal at the start of a display frame. If an app asks for a VSYNC, the system sends one VSYNC when the next display frame begins[^displayeventreceiver-341]. The app draws a frame. Then it asks for the next VSYNC[^displayeventreceiver-240].
+The display does not show each change. A VSYNC (vertical sync) is a signal at the start of a display frame. If an app asks for a VSYNC, the system sends one VSYNC when the next display frame begins[^displayeventreceiver-341]. For the next VSYNC, the app must ask again[^displayeventreceiver-240].
 
 Thus the app must decide when it runs a traversal. This chapter builds a renderer that runs a traversal for each change, and shows where it breaks. Then it shows how `ViewRootImpl` and `Choreographer` collect the changes and run one traversal at the next VSYNC. At the end, it follows the first frame of the launch app to `system_server`, which measures the time to the first frame.
 
