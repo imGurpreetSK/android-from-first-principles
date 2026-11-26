@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { checkChapters } from '../src/sections';
+import { bySection, checkChapters } from '../src/sections';
 
 // A docs entry as the docs loader stores it. If section is set, the entry is a chapter.
 const entry = (id: string, section?: string, filePath = `src/content/docs/${id}.md`, order?: number) => ({
@@ -49,5 +49,20 @@ describe('checkChapters', () => {
     expect(() =>
       checkChapters([entry('launch-path/main-thread', 'The Launch Path', undefined, 1), entry('state-survival/config-changes', 'State & Survival', undefined, 1)]),
     ).not.toThrow();
+  });
+});
+
+describe('bySection', () => {
+  const chapter = (id: string, section: string, order: number) => ({ id, data: { section, sidebar: { order } } });
+
+  test('gives each section with a chapter in the order of the curriculum, and its chapters in sidebar order', () => {
+    const flow = chapter('concurrency/flow', 'Concurrency', 1);
+    const zygote = chapter('launch-path/zygote', 'The Launch Path', 2);
+    const binder = chapter('launch-path/binder', 'The Launch Path', 3);
+    // The input order and the order of the ids are not the order of the result. "State & Survival", the second section, has no chapter.
+    expect(bySection([flow, binder, zygote])).toEqual([
+      { label: 'The Launch Path', chapters: [zygote, binder] },
+      { label: 'Concurrency', chapters: [flow] },
+    ]);
   });
 });

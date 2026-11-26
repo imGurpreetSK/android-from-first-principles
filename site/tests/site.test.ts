@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, expect, test } from 'vitest';
+import { sections } from '../src/sections';
 import { build } from './astro';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -46,6 +47,25 @@ test('the hero links "Start reading" to the first chapter in the sidebar and "Ab
     ['About', '/about/'],
   ]);
   for (const [, href] of links) expect(existsSync(join(outDir, href, 'index.html')), href).toBe(true);
+});
+
+test('the home page lists each chapter page of the build under the heading of its section, in the order of the sidebar, with the title of the page', () => {
+  const content = readFileSync(join(outDir, 'index.html'), 'utf8').match(/<div class="(?:[^"]* )?sl-markdown-content[ "][^>]*>([\s\S]*?)<footer\b/)?.[1] ?? '';
+  const home = content
+    .split(/<h2\b[^>]*>/)
+    .slice(1)
+    .map((part) => ({ section: part.slice(0, part.indexOf('<')), links: [...part.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(([, href, text]) => ({ href, text })) }));
+  expect(home.map(({ section, links }) => ({ section, links: links.map(({ href }) => href) }))).toEqual(sidebar());
+  // The pages in the directory of a section. The id of a chapter is <section-slug>/<chapter-slug> (src/sections.ts).
+  const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' })
+    .filter((name) => sections.some((s) => name.startsWith(`${s.slug}/`)) && name.endsWith('/index.html'))
+    .map((name) => `/${name.slice(0, -'index.html'.length)}`);
+  const links = home.flatMap((s) => s.links);
+  expect(pages).not.toHaveLength(0);
+  expect(links.map(({ href }) => href).sort()).toEqual(pages.sort());
+  for (const { href, text } of links) {
+    expect(readFileSync(join(outDir, href, 'index.html'), 'utf8').match(/<h1 id="_top"[^>]*>([^<]*)<\/h1>/)?.[1], href).toBe(text);
+  }
 });
 
 test('astro build makes an About page with each sentence of the AI disclosure in docs/DESIGN.md', () => {

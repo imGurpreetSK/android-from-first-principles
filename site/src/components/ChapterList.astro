@@ -1,0 +1,22 @@
+---
+import { getChapters } from '../chapters';
+import { bySection } from '../sections';
+
+// The sections with a chapter on the site, as the sidebar shows them. The id of a chapter is its URL without the slashes at the start and the end (src/sections.ts).
+const groups = bySection(await getChapters());
+---
+
+{
+  groups.map(({ label, chapters }) => (
+    <>
+      <h2>{label}</h2>
+      <ul>
+        {chapters.map(({ id, data }) => (
+          <li>
+            <a href={`/${id}/`}>{data.title}</a>
+          </li>
+        ))}
+      </ul>
+    </>
+  ))
+}
