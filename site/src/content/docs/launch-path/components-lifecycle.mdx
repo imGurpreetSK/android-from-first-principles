@@ -236,6 +236,26 @@ Since Android 16, if an app targets Android 16 or higher, the predictive Back an
 
 </GoDeeper>
 
+## Mental model
+
+An app has no `main()`. `system_server` keeps the state of each activity. For each change, it sends the app a transaction. For a cold start, the transaction has a `LaunchActivityItem` and a `ResumeActivityItem` with the target state `ON_RESUME`. A binder thread of the app receives the transaction, and the main thread runs it. `ActivityThread` creates the `Application` one time, and creates each component from its class name through `AppComponentFactory`. For each lifecycle item, `TransactionExecutor` gets the path from the current state to the target from `getLifecyclePath`, and calls the callback of each step in order. Thus `onStart` comes before `onResume`, and `onRestart` comes before `onStart` after a stop, but no item asks for these steps. The rebuild calls only the callback of the target, so it skips them. Jetpack `Lifecycle` follows the platform callbacks through `ActivityLifecycleCallbacks`.
+
+```mermaid
+flowchart LR
+  pre["PRE_ON_CREATE"] -->|"onCreate"| create["ON_CREATE"]
+  create -->|"onStart"| start["ON_START"]
+  start -->|"onResume"| resume["ON_RESUME"]
+  resume -->|"onPause"| pause["ON_PAUSE"]
+  pause -->|"onResume"| resume
+  pause -->|"onStop"| stop["ON_STOP"]
+  start -->|"onStop"| stop
+  stop -->|"onRestart"| restart["ON_RESTART"]
+  restart -->|"onStart"| start
+  stop -->|"onDestroy"| destroy["ON_DESTROY"]
+  launch["LaunchActivityItem"] -.-> create
+  resumeItem["ResumeActivityItem, target ON_RESUME"] -.-> resume
+```
+
 [^fundamentals-components]: Application fundamentals, "App components": [https://developer.android.com/guide/components/fundamentals#Components](https://developer.android.com/guide/components/fundamentals#Components)
 [^fundamentals-declaring]: Application fundamentals, "Declare components": [https://developer.android.com/guide/components/fundamentals#DeclaringComponents](https://developer.android.com/guide/components/fundamentals#DeclaringComponents)
 [^fundamentals-activating]: Application fundamentals, "Activate components": [https://developer.android.com/guide/components/fundamentals#ActivatingComponents](https://developer.android.com/guide/components/fundamentals#ActivatingComponents)
