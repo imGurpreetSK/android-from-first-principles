@@ -39,3 +39,21 @@ device: true
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
+## The problem
+
+Section 1 follows one cold start of the launch app. In `onCreate`, the activity of the launch app makes a `TextView`, sets its text and sets the `TextView` as its content view. When `onCreate` returns, the screen does not show the text. The app must measure the view, lay it out and draw it. In this chapter, one pass of these three steps is a traversal.
+
+Code can change a view many times before the screen shows the next frame. Each change asks for new work. For example, if a `TextView` has a text layout, `setText` calls `checkForRelayout`[^textview-7524]. `checkForRelayout` calls `invalidate`. If the new text can change the size of the view, it also calls `requestLayout`[^textview-11770].
+
+The display does not show each change. If an app asks for a VSYNC (vertical sync) pulse, the system sends one pulse when the next display frame begins[^displayeventreceiver-341]. The app draws a frame. Then it asks for the next pulse[^displayeventreceiver-240].
+
+Thus the app must decide when it runs a traversal. This chapter builds a renderer that runs a traversal for each change, and shows where it breaks. Then it shows how `ViewRootImpl` and `Choreographer` collect the changes and run one traversal at the next VSYNC. At the end, it follows the first frame of the launch app to `system_server`, which measures the time to the first frame.
+
+[^textview-7524]: TextView.java, lines 7524–7526: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524)
+[^textview-11770]: TextView.java, lines 11770–11822: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770)
+[^displayeventreceiver-341]: DisplayEventReceiver.java, lines 341–353: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#341](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#341)
+[^displayeventreceiver-240]: DisplayEventReceiver.java, lines 240–253: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#240](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#240)
