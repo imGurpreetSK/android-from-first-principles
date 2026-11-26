@@ -352,7 +352,7 @@ The same dump shows the binder threads, `binder:<pid>_<number>`, next to the mai
 
 ### 3. List the messages of the cold start
 
-This prompt needs the root shell of prompt 2. If you did not run prompt 2, run `adb root` first.
+This prompt needs the launch app and the root shell of prompt 2. If you did not run prompt 2, first do the steps of prompt 2 until `adb root`, and run `adb root`.
 
 `loop()` reads a threshold for the slow dispatch log from a system property. It reads the property one time, when the loop starts[^looper-390]. `getThresholdOverride()` reads three properties. For one thread of one app, the property is `log.looper.<uid>.<thread name>.slow`. If none of the three properties has a value, the threshold is -1[^looper-404]. If the threshold is 0 or more, `loopOnce()` logs each dispatch that takes at least the threshold. Thus the threshold 0 logs each dispatch[^looper-267][^looper-338][^looper-460].
 
