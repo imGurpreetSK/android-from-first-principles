@@ -21,4 +21,19 @@ class NaiveRendererTest {
         display.vsync()
         assertEquals(1, display.shownFrames)
     }
+
+    // region flaw
+    @Test
+    fun naiveRenderer_drawsThreeTimes_whenTextChangesThreeTimesBeforeOneVsync() {
+        val display = FakeDisplay(width = 100)
+        val renderer = NaiveRenderer(display)
+        renderer.setText("a")
+        renderer.setText("b")
+        renderer.setText("c")
+        display.vsync()
+        // The display shows one frame, so two of the three traversals are wasted work.
+        assertEquals(3, renderer.draws)
+        assertEquals(1, display.shownFrames)
+    }
+    // endregion
 }
