@@ -107,7 +107,7 @@ The breaking test posts A with the delay 1000, so the looper sleeps until t=1000
 
 <Snippet file="main-thread/src/test/kotlin/NaiveLooperTest.kt" region="flaw" />
 
-B has `when` = 10, so B is due at t=10. The looper does not wake. It runs B at t=1000, 990 ms late, and then A. The test passes, so the flaw occurs.
+B has `when` = 10, so B is due at t=10. The looper does not wake. It runs B at t=1000, 990 after its `when`, and then A. The test passes, so the flaw occurs.
 
 On a real main thread, the flaw is worse. If the queue is empty, the real queue has no head to sleep until. The legacy queue polls with the timeout -1, no time limit[^mq-871][^mq-885]. DeliQueue, the new queue of Android 17, polls with a timeout of 600,000,000 ms, about 7 days[^mq-569][^mq-707]. Without a wake-up, a message that a binder thread posts to an idle main thread can wait that long.
 
