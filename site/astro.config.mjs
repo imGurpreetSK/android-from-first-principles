@@ -101,7 +101,8 @@ export default defineConfig({
     // enableLog: false keeps the info logs of the script out of the browser console.
     // The default layout of mermaid 12.3.0 is ELK. Its chunk adds about 457 KB gzip to each page with a diagram, so use dagre.
     // A flowchart label wraps at 120 px by default, so a long Android class name, for example ActivityTaskManager, breaks in the word.
-    astroMermaid({ enableLog: false, mermaidConfig: { layout: 'dagre', flowchart: { wrappingWidth: 200 } } }),
+    // Without suppressErrorRendering, a diagram with a syntax error leaves an error image at the end of <body> for each render.
+    astroMermaid({ enableLog: false, mermaidConfig: { layout: 'dagre', flowchart: { wrappingWidth: 200 }, suppressErrorRendering: true } }),
     starlight({
       title: 'Android from First Principles',
       editLink: {
