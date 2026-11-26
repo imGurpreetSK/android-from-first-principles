@@ -45,11 +45,11 @@ import GoDeeper from '../../../components/GoDeeper.astro';
 
 ## The problem
 
-Section 1 follows one cold start of the launch app. In `onCreate`, the activity of the launch app makes a `TextView`, sets its text and sets the `TextView` as its content view. When `onCreate` returns, the screen does not show the text. The app must measure the view, lay it out and draw it. In this chapter, one pass of these three steps is a traversal.
+Section 1 follows one cold start of the launch app. In `onCreate`, the activity of the launch app makes a `TextView`, sets its text and sets the `TextView` as its content view. When `onCreate` returns, the display does not show the text. The app must measure the view, lay it out and draw it. In this chapter, one pass of these three steps is a traversal.
 
-Code can change a view many times before the screen shows the next frame. Each change asks for new work. For example, if a `TextView` has a text layout, `setText` calls `checkForRelayout`[^textview-7524]. `checkForRelayout` calls `invalidate`. If the new text can change the size of the view, it also calls `requestLayout`[^textview-11770].
+Code can change a view many times before the display shows the next frame. Each change asks for new work. For example, if a `TextView` has a text layout, `setText` calls `checkForRelayout`[^textview-7524]. `checkForRelayout` calls `invalidate`. If the new text can change the size of the view, it also calls `requestLayout`[^textview-11770].
 
-The display does not show each change. If an app asks for a VSYNC (vertical sync) pulse, the system sends one pulse when the next display frame begins[^displayeventreceiver-341]. The app draws a frame. Then it asks for the next pulse[^displayeventreceiver-240].
+The display does not show each change. A VSYNC (vertical sync) is a signal at the start of a display frame. If an app asks for a VSYNC, the system sends one VSYNC when the next display frame begins[^displayeventreceiver-341]. The app draws a frame. Then it asks for the next VSYNC[^displayeventreceiver-240].
 
 Thus the app must decide when it runs a traversal. This chapter builds a renderer that runs a traversal for each change, and shows where it breaks. Then it shows how `ViewRootImpl` and `Choreographer` collect the changes and run one traversal at the next VSYNC. At the end, it follows the first frame of the launch app to `system_server`, which measures the time to the first frame.
 
@@ -79,7 +79,7 @@ The renderer runs a traversal at once for each change. It does not wait for the 
 
 <Snippet file="first-frame/src/test/kotlin/NaiveRendererTest.kt" region="flaw" />
 
-The test passes, so the flaw occurs. The renderer ran three traversals, but the display showed one frame. The work of two traversals did not reach the screen.
+The test passes, so the flaw occurs. The renderer ran three traversals, but the display showed one frame. The work of two traversals did not reach the display.
 
 Each `setText` call on a real `TextView` with a text layout asks for a new draw, and sometimes for a new layout[^textview-11770]. But the real code does not run a traversal for each request. It collects the requests and runs one traversal at the next VSYNC.
 
@@ -87,7 +87,7 @@ Each `setText` call on a real `TextView` with a text layout asks for a new draw,
 
 ### One Choreographer for each Looper thread
 
-Each `Looper` thread has its own `Choreographer`. Code on other threads can post callbacks to it, but the callbacks run on its `Looper` thread[^choreographer-88]. `Choreographer.getInstance()` returns the `Choreographer` of the calling thread. It makes the instance on the first call on each thread. If the thread has no `Looper`, it throws an exception[^choreographer-127][^choreographer-409].
+Each `Looper` thread has its own `Choreographer`. Code on other threads can post callbacks to it, but the callbacks run on its `Looper` thread[^choreographer-88]. `Choreographer.getInstance()` returns the `Choreographer` of the thread that calls it. It makes the instance on the first call on each thread. If the thread has no `Looper`, it throws an exception[^choreographer-127][^choreographer-409].
 
 For each window that the app adds, `WindowManagerGlobal.addView` makes a `ViewRootImpl`[^windowmanagerglobal-501]. `ViewRootImpl` is the parent of the root view of the window[^viewrootimpl-338][^viewrootimpl-1905]. The constructor of `ViewRootImpl` gets the `Choreographer` of its thread[^viewrootimpl-1440].
 
@@ -101,7 +101,7 @@ This flag is the first half of the fix for the rebuild. The first `setText` sets
 
 ### Choreographer asks for one VSYNC
 
-`Choreographer` keeps one callback queue for each callback type. If a posted callback is due now, `Choreographer` calls `scheduleFrameLocked`[^choreographer-622]. `scheduleFrameLocked` acts only if the flag `mFrameScheduled` is false. It sets the flag. On the `Looper` thread, it asks for a VSYNC immediately. On another thread, it posts an asynchronous message that asks for the VSYNC on the `Looper` thread[^choreographer-919]. To ask, it calls `scheduleVsync` of its `DisplayEventReceiver`[^choreographer-1287]. `scheduleVsync` asks for one pulse when the next display frame begins[^displayeventreceiver-341].
+`Choreographer` keeps one callback queue for each callback type. If a posted callback is due now, `Choreographer` calls `scheduleFrameLocked`[^choreographer-622]. `scheduleFrameLocked` acts only if the flag `mFrameScheduled` is false. It sets the flag. On the `Looper` thread, it asks for a VSYNC immediately. On another thread, it posts an asynchronous message that asks for the VSYNC on the `Looper` thread[^choreographer-919]. To ask, it calls `scheduleVsync` of its `DisplayEventReceiver`[^choreographer-1287]. `scheduleVsync` asks for one VSYNC when the next display frame begins[^displayeventreceiver-341].
 
 This flag is the second half of the fix. Until the next frame runs, each new callback finds the flag set and asks for no new VSYNC.
 
@@ -117,7 +117,7 @@ In SurfaceFlinger, `EventThread` keeps a VSYNC request for each connection. `req
 
 ### One VSYNC runs one frame
 
-When the pulse comes, `FrameDisplayEventReceiver.onVsync` posts an asynchronous message to the `Looper` thread. The message calls `doFrame`[^choreographer-1593]. The message is asynchronous, so the sync barrier of `ViewRootImpl` does not stop it[^viewrootimpl-3311].
+When the VSYNC comes, `FrameDisplayEventReceiver.onVsync` posts an asynchronous message to the `Looper` thread. The message calls `doFrame`[^choreographer-1593]. The message is asynchronous, so the sync barrier of `ViewRootImpl` does not stop it[^viewrootimpl-3311].
 
 If `mFrameScheduled` is false, `doFrame` does nothing. Otherwise, it clears the flag[^choreographer-1113][^choreographer-1187]. Then it runs the callback queues one time, in a fixed order: input, animation, insets animation, traversal and commit[^choreographer-1201]. Thus input and animations run before the traversal of the same frame.
 
@@ -176,7 +176,7 @@ Time to initial display (TTID) is the time to display the first frame of the app
 
 `system_server` measures TTID. `ActivityMetricsLogger.notifyWindowsDrawn` calculates the delay from the start of the launch to the time when `system_server` marks all windows of the activity as drawn[^activitymetricslogger-1047][^activitymetricslogger-516]. It also stores this time as `START_TIMESTAMP_FIRST_FRAME` in the `ApplicationStartInfo` of the process[^activitymetricslogger-1067]. Thus TTID ends when `system_server` marks the windows as drawn. It does not end when the display shows the frame.
 
-For a cold or a warm launch, `logAppDisplayed` writes the delay in the Logcat line `Displayed <component> for user <id>: +<time>`[^activitymetricslogger-1514][^activitymetricslogger-609]. `onWindowsDrawn` gives the same delay and the launch state to `ActivityTaskSupervisor.reportActivityLaunched`[^activityrecord-6649]. `reportActivityLaunched` writes them into the `WaitResult` of each `am start -W` call that waits for the activity[^activitytasksupervisor-657]. The Android docs give the `Displayed` line and `am start -S -W` as two ways to get TTID[^launch-time-retrieve-ttid]. Prompt 2 of "Try it" uses both.
+For a cold or a warm start, `logAppDisplayed` writes the delay in the Logcat line `Displayed <component> for user <id>: +<time>`[^activitymetricslogger-1514][^activitymetricslogger-609]. `onWindowsDrawn` gives the same delay and the launch state to `ActivityTaskSupervisor.reportActivityLaunched`[^activityrecord-6649]. `reportActivityLaunched` writes them into the `WaitResult` of each `am start -W` call that waits for the activity[^activitytasksupervisor-657]. The Android docs give the `Displayed` line and `am start -S -W` as two ways to get TTID[^launch-time-retrieve-ttid]. Prompt 2 of "Try it" uses both.
 
 ## Mental model
 
