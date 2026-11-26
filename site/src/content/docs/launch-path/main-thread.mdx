@@ -34,3 +34,33 @@ device: true
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+## The problem
+
+The [Binder chapter](/launch-path/binder/) ends with a call from `system_server` into the launch app: `bindApplication`. A call from another process does not run on the main thread of the app. It runs on a thread from a pool that the system keeps in the process of the app[^pt-threadsafe]: a binder thread.
+
+When an app starts, the system creates one main thread for it. This thread dispatches the events to the UI widgets, draw events included. The system callbacks of the components, for example the lifecycle callbacks, also run on this thread. The docs also call it the UI thread[^pt-threads]. The Android UI toolkit is not thread-safe. A long operation on the main thread, for example a network access, blocks all events. If the main thread stays blocked for more than a few seconds, the user sees the "application not responding" (ANR) dialog. Thus the docs give two rules[^pt-threads]:
+
+1. Do not block the UI thread.
+2. Do not access the UI toolkit from outside the UI thread.
+
+The platform enforces the second rule. `ViewRootImpl` records the thread that creates it[^viewrootimpl-1416]. On each other thread, `checkThread()` throws `CalledFromWrongThreadException`: "Only the original thread that created a view hierarchy can touch its views."[^viewrootimpl-12136]
+
+Thus other threads cannot do UI work. They must give the work to the main thread. Android uses a message loop for this. Three classes make the loop:
+
+- A `MessageQueue` holds the messages that a `Looper` dispatches. Code does not add a message to the queue directly. It adds the message through a `Handler`[^messagequeue-55].
+- A `Looper` runs the message loop of one thread[^looper-43].
+- A `Handler` binds to one `Looper`. It puts messages into the queue of that `Looper`, and runs them on the thread of that `Looper`[^handler-33].
+
+`bindApplication` uses this loop. On the binder thread, it puts its arguments into an `AppBindData` object. Then it sends the message `BIND_APPLICATION` to the main thread[^activitythread-1511].
+
+This chapter builds a queue and a loop in plain Kotlin. Its breaking test shows a message that runs late. Then the chapter follows the real loop of the main thread, from `ActivityThread.main()` down to the kernel.
+
+[^pt-threadsafe]: Processes and threads overview, "Thread-safe methods": [https://developer.android.com/guide/components/processes-and-threads#ThreadSafe](https://developer.android.com/guide/components/processes-and-threads#ThreadSafe)
+[^pt-threads]: Processes and threads overview, "Threads": [https://developer.android.com/guide/components/processes-and-threads#Threads](https://developer.android.com/guide/components/processes-and-threads#Threads)
+[^viewrootimpl-1416]: ViewRootImpl.java, line 1416: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416)
+[^viewrootimpl-12136]: ViewRootImpl.java, lines 12136–12155: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#12136](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#12136)
+[^messagequeue-55]: MessageQueue.java, lines 55–62: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#55](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#55)
+[^looper-43]: Looper.java, lines 43–47: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#43](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#43)
+[^handler-33]: Handler.java, lines 33–39: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#33](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#33)
+[^activitythread-1511]: ActivityThread.java, lines 1511–1543: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1511](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1511)
