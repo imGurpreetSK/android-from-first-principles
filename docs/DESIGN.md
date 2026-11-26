@@ -203,7 +203,8 @@ Three repo-level Claude commands run the steps, so all chapters go through the s
 - **Look:** the Starlight layout with a minimal theme:
   - An Android-green accent color.
   - Roboto for text and Roboto Mono for code. The site hosts both fonts.
-  - A short home-page hero with the tagline.
+  - A short home-page hero with the tagline and two links: "Start reading" to the first published chapter in the sidebar, and "About" to the About page.
+  - Under the hero, a list of the sections that have a published chapter, in the order of the curriculum. Under each section, a link to each of its published chapters, with the chapter title, in sidebar order. The build makes the list from the chapter files, so the list grows each time that the maintainer merges a chapter.
 - **Diagrams:** Mermaid in MDX. `astro-mermaid` renders the diagrams in the browser, so the build needs no headless browser. The diagrams follow dark mode.
 - **Host:** Vercel, on the free subdomain. Each PR gets a preview deploy.
 
