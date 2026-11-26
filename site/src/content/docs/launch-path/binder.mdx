@@ -282,7 +282,7 @@ sequenceDiagram
 
 ### 1. Keep the identity in the rebuild
 
-Fix the driver first. In `NaiveDriver.send`, if the owner of the local object is `to`, return the local object. Otherwise, if the table of `to` already has the object, return a proxy for its index. Add the object to the table only if the table does not have it. From the repo root, run the tests of the rebuild:
+Fix the driver first. In `NaiveDriver.send`, if the owner of the local object is `to`, return the local object. If the table of `to` already has the object, return a proxy for its index. Otherwise, add the object to the table, and return a proxy for the new index. From the repo root, run the tests of the rebuild:
 
 ```sh
 samples/gradlew -p samples :binder:test
@@ -299,7 +299,7 @@ NaiveDriverTest > naiveDriver_givesOwnerAProxy_whenBinderGoesBack() FAILED
 
 The app now gets its own `AppThread` back, as `binder_translate_handle` gives the owner its local object[^binder-c-2479]. But `naiveDriver_losesIdentity_whenSameBinderCrossesTwice` still passes. When `appThread` crosses the second time, the server gets the same handle, but `proxyFor` makes a new `BinderProxy` for it.
 
-Then fix the process. In `Process`, keep a map from each handle to its `BinderProxy`. In `proxyFor`, return the proxy from the map, and make a new proxy only for a new handle. In a real process, `getStrongProxyForHandle` and `BinderProxy.getInstance` do this work[^processstate-339][^binderproxy-464]. Run the tests again. The output includes these lines:
+Then fix the process. In `Process`, keep a map from each handle to its `BinderProxy`. In `proxyFor`, if the map has a proxy for the handle, return that proxy. Otherwise, make a new proxy, put it in the map, and return it. In a real process, `getStrongProxyForHandle` and `BinderProxy.getInstance` do this work[^processstate-339][^binderproxy-464]. Run the tests again. The output includes these lines:
 
 ```
 NaiveDriverTest > naiveDriver_losesIdentity_whenSameBinderCrossesTwice() FAILED
