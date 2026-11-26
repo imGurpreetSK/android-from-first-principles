@@ -17,3 +17,4 @@ dependencyResolutionManagement {
 rootProject.name = "samples"
 
 include(":launch-app")
+include(":apk")
