@@ -27,7 +27,7 @@ class NaiveZygote(private val classNames: List<String>, private val seed: Long) 
         }
     }
 
-    // The JVM cannot call fork(). A deep copy gives the child its own copy of the full image.
+    // Plain Kotlin has no fork(). A deep copy gives the child its own copy of the full image.
     fun fork(): ProcessImage {
         val bytes = ByteArrayOutputStream()
         ObjectOutputStream(bytes).use { it.writeObject(image) }

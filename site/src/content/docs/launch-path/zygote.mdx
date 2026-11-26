@@ -60,7 +60,7 @@ The child of a fork starts with the state of the Zygote. Some of that state must
 
 ## Build it naive
 
-The rebuild is a zygote in plain Kotlin, in the module `samples/zygote`. The JVM cannot call `fork()`. Thus the rebuild copies a stand-in for the memory of a process, `ProcessImage`:
+The rebuild is a zygote in plain Kotlin, in the module `samples/zygote`. The real Zygote calls `fork()` in native code[^zygote-cpp-2532]. Plain Kotlin has no `fork()` call. Thus the rebuild copies a stand-in for the memory of a process, `ProcessImage`:
 
 <Snippet file="zygote/src/main/kotlin/NaiveZygote.kt" region="image" />
 
