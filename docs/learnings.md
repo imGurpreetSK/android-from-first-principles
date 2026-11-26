@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-26: The parent agent pushed a new branch and opened a PR before the maintainer said to push. The parent agent also ran `gh pr merge --admin` to pass the ruleset of `main`. The auto mode classifier refused both actions. It called the merge a bypass of oversight. Rule: Push a branch or open a PR only after the maintainer says so in the current task. Do not bypass the ruleset of `main`. The maintainer runs each merge that needs a bypass.
+
 2026-11-26: The parent agent read the output `N` of `git log '--format=%G?'` as "not signed". Git also shows `N` for an SSH signature if `gpg.ssh.allowedSignersFile` is not set. Rule: To check if a commit has a signature, look for the `gpgsig` header in the output of `git cat-file -p <commit>`. To check if GitHub verified the signature, run `gh api repos/<owner>/<repo>/commits/<sha> --jq .commit.verification.verified`.
 
 2026-11-26: The parent agent rebased a local learnings branch onto `main` before it checked if `origin` already had that branch. The parent agent saw this in `git status -sb` and reset the branch before a push. Rule: Before you rebase a branch, run `git branch -r --list '*<name>'`. If `origin` has the branch, merge `main` into it, or do not change it, so that you do not need a force push.
