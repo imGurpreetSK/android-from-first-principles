@@ -244,7 +244,7 @@ If a thread waits for the reply to a call, and the thread that handles that call
 
 The doc of `TransactionTooLargeException` says that the binder transaction buffer of a process has a fixed size, now 1 MB. All the transactions in progress for the process share it[^ttle-30]. libbinder maps a receive buffer of 1 MB minus two pages, read-only[^processstate-48][^processstate-624]. The driver limits the buffer of a process to 4 MB[^binder-alloc-925]. It gives `oneway` transactions only half of the buffer[^binder-alloc-951].
 
-If a transaction fails and its parcel is larger than 200 KB, JNI throws `TransactionTooLargeException`. Otherwise, it throws `DeadObjectException`. The message says that the remote process probably died, or that the binder buffer is full[^android-util-binder-1146].
+If a transaction fails with the status `FAILED_TRANSACTION`, and its parcel is larger than 200 KB, JNI throws `TransactionTooLargeException`. For a parcel of 200 KB or less, it throws `DeadObjectException`. The message says that the remote process probably died, or that the binder buffer is full[^android-util-binder-1146].
 
 </GoDeeper>
 
