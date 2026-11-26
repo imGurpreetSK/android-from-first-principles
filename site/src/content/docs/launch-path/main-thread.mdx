@@ -241,6 +241,21 @@ If the queue has no due message, `next()` runs the `IdleHandler` objects of the 
 
 </GoDeeper>
 
+## Mental model
+
+The main thread of an app runs one message loop. `ActivityThread.main()` prepares the main `Looper` and calls `Looper.loop()`, which does not return. In each turn, the loop takes the next due message from the `MessageQueue` and calls `dispatchMessage()` of its target `Handler`. If no message is due, `next()` sleeps in the kernel, in `epoll_wait()`, with a timeout until the head is due. Other threads, for example binder threads, post work with a `Handler`. The `Handler` gives the message its time and its target, and the queue keeps the messages in order of `when`. If a new message is due before the wake-up time, the queue wakes the looper through the eventfd. The rebuild does not have this wake-up, so a new message waits until the old deadline. The cold start, `runOnUiThread()`, `View.post()` and `Dispatchers.Main` all run as messages on this one loop.
+
+```mermaid
+flowchart LR
+  other["Binder thread or worker thread"] -->|Handler sets when and target| queue["MessageQueue, in order of when"]
+  queue -->|due before the wake-up time, nativeWake| sleep
+  loop["Looper.loop on the main thread"] --> next["MessageQueue.next"]
+  next -->|no due message| sleep["nativePollOnce: epoll_wait until the head is due"]
+  sleep --> next
+  next -->|due message| dispatch["msg.target.dispatchMessage"]
+  dispatch --> loop
+```
+
 [^pt-threadsafe]: Processes and threads overview, "Thread-safe methods": [https://developer.android.com/guide/components/processes-and-threads#ThreadSafe](https://developer.android.com/guide/components/processes-and-threads#ThreadSafe)
 [^pt-threads]: Processes and threads overview, "Threads": [https://developer.android.com/guide/components/processes-and-threads#Threads](https://developer.android.com/guide/components/processes-and-threads#Threads)
 [^viewrootimpl-1416]: ViewRootImpl.java, line 1416: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416)
