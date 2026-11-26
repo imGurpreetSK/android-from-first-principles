@@ -49,4 +49,14 @@ class NaiveDriverTest {
         assertNull(activityManager.recordFor(again))
     }
     // endregion
+
+    // region back
+    @Test
+    fun naiveDriver_givesOwnerAProxy_whenBinderGoesBack() {
+        activityManagerProxy.attachApplication(appThread, startSeq = 7)
+        val thread = activityManager.records.single().thread
+        val received = IApplicationThread.Stub.asInterface(driver.send(thread.asBinder(), from = server, to = app))
+        assertNotSame(appThread, received)
+    }
+    // endregion
 }
