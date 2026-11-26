@@ -59,6 +59,30 @@ The app does not decide when the state of an activity changes. `system_server` k
 
 This chapter builds a client that calls only the callback of the target state. Its breaking tests show the callbacks that it skips. Then the chapter follows the real client in `ActivityThread`, from `bindApplication` to `onResume`.
 
+## Build it naive
+
+The rebuild is in the module `samples/components-lifecycle`. It has no `android.*` classes and no threads. An enum stands for the lifecycle states of the client:
+
+<Snippet file="components-lifecycle/src/main/kotlin/NaiveLifecycleClient.kt" region="state" />
+
+In `ActivityLifecycleItem`, the states are integers from `PRE_ON_CREATE` (0) to `ON_RESTART` (7), and `UNDEFINED` is -1[^activitylifecycleitem-47]. The rebuild leaves out `UNDEFINED`. The ordinal of each other entry is the number of its real state. The states are ordered numbers, so the real client can compare two states and go up one state at a time.
+
+A `FakeActivity` stands for an `Activity`. Each callback adds its name to a log:
+
+<Snippet file="components-lifecycle/src/main/kotlin/NaiveLifecycleClient.kt" region="activity" />
+
+`NaiveLifecycleClient` stands for the app side of the lifecycle. It keeps the current state. `moveTo` takes the target state of one request from the system. It calls the callback of the target state, and then makes the target the current state:
+
+<Snippet file="components-lifecycle/src/main/kotlin/NaiveLifecycleClient.kt" region="client" />
+
+`perform` maps each state to one callback, as the real `performLifecycleSequence` maps each state to one handler[^transactionexecutor-198]. No callback moves an activity to `PRE_ON_CREATE`, so `perform` throws an exception for it.
+
+The first test asks for each state from `ON_CREATE` to `ON_DESTROY`, one step at a time:
+
+<Snippet file="components-lifecycle/src/test/kotlin/NaiveLifecycleClientTest.kt" region="steps" />
+
+The test passes. The log has the six core callbacks in order, and the client ends in `ON_DESTROY`. This test is not a breaking test. If the system asks for each step, the naive client calls each callback.
+
 [^fundamentals-components]: Application fundamentals, "App components": [https://developer.android.com/guide/components/fundamentals#Components](https://developer.android.com/guide/components/fundamentals#Components)
 [^fundamentals-declaring]: Application fundamentals, "Declare components": [https://developer.android.com/guide/components/fundamentals#DeclaringComponents](https://developer.android.com/guide/components/fundamentals#DeclaringComponents)
 [^fundamentals-activating]: Application fundamentals, "Activate components": [https://developer.android.com/guide/components/fundamentals#ActivatingComponents](https://developer.android.com/guide/components/fundamentals#ActivatingComponents)
@@ -71,3 +95,5 @@ This chapter builds a client that calls only the callback of the target state. I
 [^activitytasksupervisor-1060]: ActivityTaskSupervisor.java, lines 1060–1069: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1060](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1060)
 [^activitytasksupervisor-1079]: ActivityTaskSupervisor.java, lines 1079–1084: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1079](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java#1079)
 [^resumeactivityitem-86]: ResumeActivityItem.java, lines 86–89: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ResumeActivityItem.java#86](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ResumeActivityItem.java#86)
+[^activitylifecycleitem-47]: ActivityLifecycleItem.java, lines 47–55: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ActivityLifecycleItem.java#47](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/ActivityLifecycleItem.java#47)
+[^transactionexecutor-198]: TransactionExecutor.java, lines 198–245: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/TransactionExecutor.java#198](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/servertransaction/TransactionExecutor.java#198)
