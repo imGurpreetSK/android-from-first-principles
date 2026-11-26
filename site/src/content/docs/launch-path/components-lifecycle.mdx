@@ -85,7 +85,7 @@ The test passes. The log has the six core callbacks in order, and the client end
 
 ## Where it breaks
 
-The real system does not ask for each step. `LaunchActivityItem` is not a lifecycle item: it extends `ClientTransactionItem`, not `ActivityLifecycleItem`[^launchactivityitem-61]. Its `execute` makes an `ActivityClientRecord` and calls `handleLaunchActivity`[^launchactivityitem-216]. `handleLaunchActivity` calls `performLaunchActivity`[^activitythread-4781]. `performLaunchActivity` calls `onCreate`, and then sets the state of the record to `ON_CREATE`[^activitythread-4556][^activitythread-4568]. Thus the tests treat a `LaunchActivityItem` as a request for `ON_CREATE`.
+The real system does not ask for each step. `LaunchActivityItem` is not a lifecycle item: it extends `ClientTransactionItem`, not `ActivityLifecycleItem`[^launchactivityitem-61]. Its `execute` makes an `ActivityClientRecord` and calls `handleLaunchActivity`[^launchactivityitem-216]. `handleLaunchActivity` calls `performLaunchActivity`[^activitythread-4781]. `performLaunchActivity` calls `onCreate`, and then sets the state of the `ActivityClientRecord` to `ON_CREATE`[^activitythread-4556][^activitythread-4568]. Thus the tests treat a `LaunchActivityItem` as a request for `ON_CREATE`.
 
 The first breaking test sends the two requests of a cold start, `ON_CREATE` and then `ON_RESUME`:
 
@@ -139,7 +139,7 @@ The transaction reaches the app as a call to `scheduleTransaction` on its `Appli
 
 Before the system can start a component, the manifest of the app must tell the system that the component exists[^fundamentals-manifest]. `performLaunchActivity` gives the class name of the activity to `Instrumentation.newActivity`[^activitythread-4471]. `newActivity` asks the `AppComponentFactory` of the package for the object[^instrumentation-1454]. The default `instantiateActivity` loads the class and calls `newInstance()`[^appcomponentfactory-96]. Thus an activity class needs a constructor with no arguments. An app can supply its own factory, for example for dependency injection[^appcomponentfactory-83].
 
-Then `performLaunchActivity` gets the `Application`[^activitythread-4488] and calls `attach` on the activity[^activitythread-4528]. Then it calls `Instrumentation.callActivityOnCreate`[^activitythread-4556], which calls `Activity.performCreate`[^instrumentation-1541]. If `onCreate` did not call `super.onCreate`, `performLaunchActivity` throws `SuperNotCalledException`[^activitythread-4561]. Last, it sets the state of the record to `ON_CREATE`[^activitythread-4568].
+Then `performLaunchActivity` gets the `Application`[^activitythread-4488] and calls `attach` on the activity[^activitythread-4528]. Then it calls `Instrumentation.callActivityOnCreate`[^activitythread-4556], which calls `Activity.performCreate`[^instrumentation-1541]. If `onCreate` did not call `super.onCreate`, `performLaunchActivity` throws `SuperNotCalledException`[^activitythread-4561]. Last, it sets the state of the `ActivityClientRecord` to `ON_CREATE`[^activitythread-4568].
 
 The `perform` methods of `Activity` wrap the callbacks of the app:
 
@@ -199,7 +199,7 @@ Each of these items names one target state, and the client walks the path to it.
 
 The lifecycle doc says that `onStart` makes the activity visible to the user[^lifecycle-onstart]. On the first launch, the code does this later. `handleStartActivity` calls `updateVisibility`[^activitythread-4639]. `updateVisibility` changes nothing if the activity has no decor view[^activitythread-6394].
 
-On the first launch, `handleResumeActivity` first calls `performResumeActivity`, which calls `onResume`[^activitythread-6006][^activitythread-5963]. Then, if the record has no window, it sets the decor view of the activity and adds the decor view to the window manager with `wm.addView`[^activitythread-6035]. Then it calls `makeVisible`[^activitythread-6100]. Thus at the first `onStart`, the window manager does not have the window of the activity.
+On the first launch, `handleResumeActivity` first calls `performResumeActivity`, which calls `onResume`[^activitythread-6006][^activitythread-5963]. Then, if the `ActivityClientRecord` has no window, it sets the decor view of the activity and adds the decor view to the window manager with `wm.addView`[^activitythread-6035]. Then it calls `makeVisible`[^activitythread-6100]. Thus at the first `onStart`, the window manager does not have the window of the activity.
 
 </GoDeeper>
 
