@@ -397,7 +397,7 @@ Each line is one turn of `loopOnce()` on the main thread. A line gives the durat
 - `m=110` is `BIND_APPLICATION`[^activitythread-2616]. `bindApplication()` sent it from a binder thread[^activitythread-1511].
 - `m=159` is `EXECUTE_TRANSACTION`. `H` runs a `ClientTransaction` from `system_server` in it[^activitythread-2668][^activitythread-3026].
 - `c=null`: the `sendMessage()` of `ActivityThread` sets no callback[^activitythread-4388].
-- Other lines can come between these two lines. For example, `handleBindApplication()` posts `m=164`, `SET_CONTENT_CAPTURE_OPTIONS_CALLBACK`[^activitythread-8276]. More lines come after the `m=159` line.
+- Other lines can come between these two lines. For example, `handleBindApplication()` posts `m=164`, `SET_CONTENT_CAPTURE_OPTIONS_CALLBACK`[^activitythread-2673][^activitythread-8276]. More lines come after the `m=159` line.
 
 At the end, set the property back to -1, so that the next process of the app does not log each dispatch. The process that runs now keeps the threshold 0 until it stops, because it read the property when its loop started[^looper-390]:
 
@@ -525,3 +525,4 @@ adb shell setprop log.looper.<uid>.main.slow -1
 [^looper-338]: Looper.java, lines 338–340: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#338](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#338)
 [^looper-460]: Looper.java, lines 460–478: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#460](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#460)
 [^activitythread-8276]: ActivityThread.java, line 8276: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8276](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8276)
+[^activitythread-2673]: ActivityThread.java, line 2673: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2673](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2673)
