@@ -256,6 +256,155 @@ flowchart LR
   dispatch --> loop
 ```
 
+## Try it
+
+### 1. Wake the looper in the rebuild
+
+Give the rebuild the fix of the real queue:
+
+1. Add `fun wake()` to `Sleeper`. Then `Sleeper` has two methods, so change `fun interface Sleeper` to `interface Sleeper`.
+2. Give `NaiveMessageQueue` the sleeper and a field for the deadline of the current sleep. In `loop()`, set the deadline before the call to `sleepUntil()`, and clear it after the call.
+3. In `enqueue`, if the queue has a deadline and the new message is due before it, call `sleeper.wake()`.
+4. In `FakeTime`, make `wake()` set a flag. In `sleepUntil()`, after each event, if the flag is set, clear the flag and return. The time stays at the time of the event.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :main-thread:test
+```
+
+The breaking test fails, because the flaw is gone. B now runs at t=10. The other tests pass. The Gradle output includes these lines:
+
+```
+NaiveLooperTest > naiveLooper_runsPostedMessageLate_whenLooperSleepsUntilLaterMessage() FAILED
+    org.opentest4j.AssertionFailedError at NaiveLooperTest.kt:58
+
+5 tests completed, 1 failed
+```
+
+The real queues do the same work. The legacy queue calls `nativeWake()` for a new head while `mBlocked` is set[^mq-511][^mq-559]. DeliQueue compares the `when` of the new message with the deadline in `mWaitState`[^mq-430].
+
+### 2. Find the loop in the stack of the main thread
+
+Start an emulator with the system image of the checked stamp, a `google_apis` image. The prompts of this chapter need `adb root`. `adb root` works only on a debuggable build, where `ro.debuggable` is 1. Eng and userdebug builds set this value[^adbd-66]. Make sure that the image is debuggable:
+
+```sh
+adb shell getprop ro.debuggable
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+1
+```
+
+From the repo root, install the release build of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installLaunchPathRelease
+```
+
+Start the app:
+
+```sh
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+```
+
+Wait until the app shows its text. Then restart adbd as root:
+
+```sh
+adb root
+```
+
+`debuggerd -j` collects the Java stacks of a process[^debuggerd-36][^debuggerd-54]. It needs root[^debuggerd-66]. Dump the Java stacks of the launch app:
+
+```sh
+adb shell 'debuggerd -j $(pidof io.github.imgurpreetsk.afp.launchapp)'
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+…
+"main" …
+…
+  at android.os.MessageQueue.nativePollOnce(Native method)
+  at android.os.MessageQueue.nextDeliQueue(MessageQueue.java:…)
+  at android.os.MessageQueue.next(MessageQueue.java:…)
+  at android.os.Looper.loopOnce(Looper.java:…)
+  at android.os.Looper.loop(Looper.java:…)
+  at android.app.ActivityThread.main(ActivityThread.java:…)
+…
+  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:…)
+…
+"binder:…_1" …
+…
+```
+
+In the block, a line `…` stands for lines that the block leaves out. Find the thread "main". Its stack, from the top:
+
+- `nativePollOnce` is the native sleep. The idle main thread does no work. It waits in the kernel for the next message[^mq-791][^looper-cpp-244].
+- `nextDeliQueue` is the DeliQueue path of `next()`[^mq-769]. Thus the launch app, with `targetSdk` 37, uses the lock-free queue.
+- `Looper.loopOnce` calls `next()`[^looper-232]. `Looper.loop` calls `loopOnce`[^looper-373].
+- `ActivityThread.main` calls `Looper.loop()`[^activitythread-9523]. The frames below it start the process. The [Zygote chapter](/launch-path/zygote/) explains them.
+
+The same dump shows the binder threads, `binder:<pid>_<number>`, next to the main thread. The [Binder chapter](/launch-path/binder/) explains them.
+
+### 3. List the messages of the cold start
+
+This prompt needs the root shell of prompt 2. If you did not run prompt 2, run `adb root` first.
+
+`loop()` reads a threshold for the slow dispatch log from a system property. It reads the property one time, when the loop starts[^looper-390]. `getThresholdOverride()` reads three properties. For one thread of one app, the property is `log.looper.<uid>.<thread name>.slow`. If none of the three properties has a value, the threshold is -1[^looper-404]. If the threshold is 0 or more, `loopOnce()` logs each dispatch that takes at least the threshold. Thus the threshold 0 logs each dispatch[^looper-267][^looper-338][^looper-460].
+
+Get the UID of the launch app:
+
+```sh
+adb shell pm list packages -U io.github.imgurpreetsk.afp.launchapp
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+package:io.github.imgurpreetsk.afp.launchapp uid:…
+```
+
+Run these commands in this order. Put the UID in place of `<uid>`:
+
+```sh
+adb shell am force-stop io.github.imgurpreetsk.afp.launchapp
+adb shell setprop log.looper.<uid>.main.slow 0
+adb logcat -c
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+```
+
+The new process of the app reads the property when its main thread starts the loop. Print the slow dispatch lines of the log:
+
+```sh
+adb shell 'logcat -d -s Looper | grep "Slow dispatch"'
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… Slow dispatch took …ms main app=io.github.imgurpreetsk.afp.launchapp main=true group=… h=android.app.ActivityThread$H c=null m=110
+…
+… Slow dispatch took …ms main app=io.github.imgurpreetsk.afp.launchapp main=true group=… h=android.app.ActivityThread$H c=null m=159
+…
+```
+
+Each line is one turn of `loopOnce()` on the main thread. A line gives the time of the dispatch, the thread name, the process name, the class of the `Handler` (`h=`), the callback (`c=`) and `what` (`m=`)[^looper-460]:
+
+- `m=110` is `BIND_APPLICATION`[^activitythread-2616]. `bindApplication()` sent it from a binder thread[^activitythread-1511].
+- `m=159` is `EXECUTE_TRANSACTION`. `H` runs a `ClientTransaction` from `system_server` in it[^activitythread-2668][^activitythread-3026].
+- `c=null`: the `sendMessage()` of `ActivityThread` sets no callback[^activitythread-4388].
+- Other lines can come between these two lines. For example, `handleBindApplication()` posts `m=164`, `SET_CONTENT_CAPTURE_OPTIONS_CALLBACK`[^activitythread-8276]. More lines come after the `m=159` line.
+
+At the end, set the property back to -1, so that the app logs no more dispatches:
+
+```sh
+adb shell setprop log.looper.<uid>.main.slow -1
+```
+
 [^pt-threadsafe]: Processes and threads overview, "Thread-safe methods": [https://developer.android.com/guide/components/processes-and-threads#ThreadSafe](https://developer.android.com/guide/components/processes-and-threads#ThreadSafe)
 [^pt-threads]: Processes and threads overview, "Threads": [https://developer.android.com/guide/components/processes-and-threads#Threads](https://developer.android.com/guide/components/processes-and-threads#Threads)
 [^viewrootimpl-1416]: ViewRootImpl.java, line 1416: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416)
@@ -366,3 +515,13 @@ flowchart LR
 [^mq-453]: MessageQueue.java, lines 453–467: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#453](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#453)
 [^mq-923]: MessageQueue.java, lines 923–967: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#923](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#923)
 [^mq-807]: MessageQueue.java, lines 807–851: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#807](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#807)
+[^adbd-66]: main.cpp, lines 66–96: [https://android.googlesource.com/platform/packages/modules/adb/+/refs/tags/android-17.0.0_r1/daemon/main.cpp#66](https://android.googlesource.com/platform/packages/modules/adb/+/refs/tags/android-17.0.0_r1/daemon/main.cpp#66)
+[^debuggerd-36]: debuggerd.cpp, lines 36–41: [https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/debuggerd/debuggerd.cpp#36](https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/debuggerd/debuggerd.cpp#36)
+[^debuggerd-54]: debuggerd.cpp, lines 54–55: [https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/debuggerd/debuggerd.cpp#54](https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/debuggerd/debuggerd.cpp#54)
+[^debuggerd-66]: debuggerd.cpp, lines 66–68: [https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/debuggerd/debuggerd.cpp#66](https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/debuggerd/debuggerd.cpp#66)
+[^looper-390]: Looper.java, lines 390–392: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#390](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#390)
+[^looper-404]: Looper.java, lines 404–426: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#404](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#404)
+[^looper-267]: Looper.java, lines 267–274: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#267](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#267)
+[^looper-338]: Looper.java, lines 338–340: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#338](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#338)
+[^looper-460]: Looper.java, lines 460–478: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#460](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#460)
+[^activitythread-8276]: ActivityThread.java, line 8276: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8276](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8276)
