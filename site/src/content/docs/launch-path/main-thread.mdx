@@ -47,7 +47,7 @@ When an app starts, the system creates one main thread for it. This thread dispa
 1. Do not block the UI thread.
 2. Do not access the UI toolkit from outside the UI thread.
 
-The platform enforces the second rule. `ViewRootImpl` records the thread that creates it[^viewrootimpl-1416]. On each other thread, `checkThread()` throws `CalledFromWrongThreadException`: "Only the original thread that created a view hierarchy can touch its views."[^viewrootimpl-12136]
+The platform checks the second rule in some calls. `ViewRootImpl` records the thread that creates it[^viewrootimpl-1416]. Some of its methods, for example `requestLayout()`, call `checkThread()`[^viewrootimpl-2842]. On each other thread, `checkThread()` throws `CalledFromWrongThreadException`: "Only the original thread that created a view hierarchy can touch its views."[^viewrootimpl-12136]
 
 Thus other threads cannot do UI work. They must give the work to the main thread. Android uses a message loop for this. Three classes make the loop:
 
@@ -408,6 +408,7 @@ adb shell setprop log.looper.<uid>.main.slow -1
 [^pt-threadsafe]: Processes and threads overview, "Thread-safe methods": [https://developer.android.com/guide/components/processes-and-threads#ThreadSafe](https://developer.android.com/guide/components/processes-and-threads#ThreadSafe)
 [^pt-threads]: Processes and threads overview, "Threads": [https://developer.android.com/guide/components/processes-and-threads#Threads](https://developer.android.com/guide/components/processes-and-threads#Threads)
 [^viewrootimpl-1416]: ViewRootImpl.java, line 1416: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#1416)
+[^viewrootimpl-2842]: ViewRootImpl.java, lines 2842–2848: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#2842](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#2842)
 [^viewrootimpl-12136]: ViewRootImpl.java, lines 12136–12155: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#12136](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#12136)
 [^messagequeue-55]: MessageQueue.java, lines 55–62: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#55](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/CombinedDeliMessageQueue/MessageQueue.java#55)
 [^looper-43]: Looper.java, lines 43–47: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#43](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#43)
