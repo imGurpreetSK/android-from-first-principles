@@ -97,7 +97,7 @@ The real Zygote must prevent the same flaw for `Math.random()`, which uses one g
 
 `init.rc` imports the service file `init.${ro.zygote}.rc`[^init-rc-12]. On the trigger `zygote-start`, init starts the services `zygote` and `zygote_secondary`[^init-rc-1091]. The file `init.zygote64.rc` defines the service `zygote`. The service runs `/system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote` as the user root[^init-zygote64-rc-1]. init also creates the Unix socket `zygote`, with the mode 660, the owner root and the group system[^init-zygote64-rc-6]. Thus only root and the group system can connect to the socket.
 
-The Zygote is the root of all system processes and app processes of one ABI[^zygote-doc]. A device can have a 64-bit Zygote and a 32-bit Zygote. Android also has a WebView Zygote for processes that run WebViews[^zygote-doc]. This chapter follows the 64-bit Zygote.
+The Zygote is the root of `system_server` and of all app processes of one ABI[^zygote-doc]. A device can have a 64-bit Zygote and a 32-bit Zygote. Android also has a WebView Zygote for processes that run WebViews[^zygote-doc]. This chapter follows the 64-bit Zygote.
 
 ### app_process starts the VM
 
