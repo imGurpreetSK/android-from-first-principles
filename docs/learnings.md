@@ -11,6 +11,8 @@ Entry format, one or two lines:
 
 ## Log
 
+2026-11-26: The parent agent rebased a local learnings branch onto `main` before it checked if `origin` already had that branch. The parent agent saw this in `git status -sb` and reset the branch before a push. Rule: Before you rebase a branch, run `git branch -r --list '*<name>'`. If `origin` has the branch, merge `main` into it, or do not change it, so that you do not need a force push.
+
 2026-11-26: Two site lanes ran at the same time. Two citation markers next to each other showed as "2526". The lanes fixed this problem in two different ways: one lane with a CSS space, and the other lane with commas. The maintainer then had to choose. Rule: If two lanes change the same output, give each reviewer the diff of the other lane.
 
 2026-11-15: Most of the 120 agents of the run ran Bash commands before they read `docs/learnings.md`. Then they broke rules of the log. They joined commands with `;`, and they ran `echo ======` unquoted in zsh. After a hook changed a Bash call, they sent later Bash calls in the plain form, and auto mode refused them. Rule: In your first tool call, read `docs/learnings.md` with the Read tool. Do not run a command before it.
