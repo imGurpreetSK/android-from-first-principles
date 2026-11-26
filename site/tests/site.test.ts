@@ -28,6 +28,26 @@ test('astro build makes a home page with the page title, the hero title and the 
   expect(html).toMatch(/<div class="hero[ "][^>]*>[\s\S]*?<h1[^>]*>Android from First Principles<\/h1>[\s\S]*?<div class="tagline[ "][^>]*>The machinery under Android app development\.<\/div>/);
 });
 
+// The sidebar of the About page: each section with a published chapter, and the links of its chapters, in section and sidebar order.
+// Each group label has the class "large". The sidebar has no nested group.
+const sidebar = () =>
+  readFileSync(join(outDir, 'about/index.html'), 'utf8')
+    .match(/<nav\b[^>]*\baria-label="Main"[^>]*>[\s\S]*?<\/nav>/)![0]
+    .split(/<span class="large[ "][^>]*>/)
+    .slice(1)
+    .map((group) => ({ section: group.slice(0, group.indexOf('<')), links: [...group.matchAll(/<a\b[^>]*\bhref="([^"]*)"/g)].map(([, href]) => href) }));
+
+test('the hero links "Start reading" to the first chapter in the sidebar and "About" to the About page, and each link has a page', () => {
+  const html = readFileSync(join(outDir, 'index.html'), 'utf8');
+  const actions = html.match(/<div class="(?:[^"]* )?actions[ "][^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
+  const links = [...actions.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(([, href, text]) => [text, href]);
+  expect(links).toEqual([
+    ['Start reading', sidebar()[0].links[0]],
+    ['About', '/about/'],
+  ]);
+  for (const [, href] of links) expect(existsSync(join(outDir, href, 'index.html')), href).toBe(true);
+});
+
 test('astro build makes an About page with each sentence of the AI disclosure in docs/DESIGN.md', () => {
   // The disclosure is the nested list in the "AI disclosure" section of docs/DESIGN.md.
   const section = readFileSync(new URL('../../docs/DESIGN.md', import.meta.url), 'utf8').match(/^## AI disclosure\n([\s\S]*?)^## /m)![1];
