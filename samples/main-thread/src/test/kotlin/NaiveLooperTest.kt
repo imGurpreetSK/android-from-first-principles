@@ -46,6 +46,18 @@ class NaiveLooperTest {
         looper.loop()
         assertEquals(listOf("A" to 1000L, "B" to 2010L), ran)
     }
+
+    // region flaw
+    @Test
+    fun naiveLooper_runsPostedMessageLate_whenLooperSleepsUntilLaterMessage() {
+        post("A", delay = 1000)
+        lateinit var b: NaiveMessage
+        time.at(10) { b = post("B", delay = 0) }
+        looper.loop()
+        assertEquals(10L, b.`when`)
+        assertEquals(listOf("B" to 1000L, "A" to 1000L), ran)
+    }
+    // endregion
 }
 
 // region fakes

@@ -23,6 +23,7 @@ class NaiveMessageQueue {
         // The new message goes after each message with the same `when`, so these messages run in post order.
         val index = messages.indexOfFirst { it.`when` > msg.`when` }
         messages.add(if (index == -1) messages.size else index, msg)
+        // The flaw: enqueue does not wake the looper. If the looper sleeps, the new message waits until the sleep ends, also if it is due earlier.
     }
 
     fun peek(): NaiveMessage? = messages.firstOrNull()
