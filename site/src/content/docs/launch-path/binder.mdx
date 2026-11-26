@@ -1,0 +1,489 @@
+---
+title: "Binder & system_server"
+section: The Launch Path
+sidebar:
+  order: 3
+checked:
+  android: 17
+  aosp: android-17.0.0_r1
+  emulator: { image: "system-images;android-37.0;google_apis;arm64-v8a", revision: 8 }
+sources:
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Parcel.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ServiceManager.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/TransactionTooLargeException.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityManager.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/IActivityManager.aidl
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/IApplicationThread.aidl
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ApplicationThreadDeferred.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteInit.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/AndroidRuntime.cpp
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/cmds/app_process/app_main.cpp
+  - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp
+  - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/Parcel.cpp
+  - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp
+  - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/main.cpp
+  - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/ServiceManager.cpp
+  - https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c
+  - https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder_alloc.c
+  - https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/arch/arm64/configs/gki_defconfig
+  - https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/rootdir/init.rc
+  - https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp
+  - https://source.android.com/docs/core/architecture/ipc/binder-overview
+  - https://source.android.com/docs/core/architecture/ipc/binder-threading
+  - https://developer.android.com/develop/background-work/services/aidl
+  - https://source.android.com/docs/core/architecture/ipc/binder-freezer
+  - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-11.0.0_r1/cmds/servicemanager/main.cpp
+  - https://android.googlesource.com/platform/system/core/+/refs/tags/android-11.0.0_r1/rootdir/init.rc
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java
+  - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/binder/ProcessState.cpp
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-14.0.0_r1/core/java/android/app/IActivityManager.aidl
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r1/core/java/android/os/IBinder.java
+rebuild: true
+device: true
+drafted: ai
+edited_by: Gurpreet Singh
+---
+
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
+## The problem
+
+The [Zygote chapter](/launch-path/zygote/) ends in `ActivityThread.main`, in the new process of the launch app. `main` makes an `ActivityThread` and attaches it. Then it starts the loop of the main thread[^activitythread-9507]. To attach, `ActivityThread` gets the activity manager from `ActivityManager.getService()` and calls `attachApplication(mAppThread, startSeq)`[^activitythread-9282].
+
+The app and `system_server` are two processes. On Android, one process cannot usually read the memory of another process[^aidl-intro]. Thus the app cannot give `system_server` a pointer to `mAppThread`. But `system_server` must call `mAppThread` later, for example with `bindApplication`[^ams-5451]. When the app calls `system_server` again, `system_server` must also find the record of the app.
+
+Android uses Binder for this problem. With Binder, a process calls a method of an object in another process. For the caller, the call looks like a local call[^binder-overview]. By default, a binder call is synchronous: `transact()` returns only after the target returns from `onTransact()`[^ibinder-39]. A binder object also keeps its identity across processes. If a process sends an `IBinder` to a second process, and the second process sends the same `IBinder` back, the first process gets the same object back. Thus a binder object can be a unique token across processes[^ibinder-50].
+
+This chapter builds a binder in plain Kotlin that does not keep this identity. Its breaking tests show what then fails in the launch path. Then the chapter follows the real `attachApplication` call from the app into `system_server`.
+
+## Build it naive
+
+The rebuild is in the module `samples/binder`. It has no threads and no real processes. A `Process` object stands for one process. A `NaiveDriver` object stands for the binder driver in the kernel. Two processes share objects only through the driver.
+
+The rebuild has two kinds of `IBinder`:
+
+<Snippet file="binder/src/main/kotlin/Binder.kt" region="binder" />
+
+- A `Binder` is a local object. Its `transact` calls its own `onTransact`. The real `Binder` is the local implementation of `IBinder`. Usually the AIDL tool generates its subclass[^binder-java-49].
+- A `BinderProxy` stands for an object in another process. It holds a process and a handle: a number that the driver gave to that process. Its `transact` sends the call through the driver. The real `BinderProxy` is the Java proxy for a native `IBinder` object[^binderproxy-48].
+
+A `Parcel` holds the arguments of a call. It keeps plain values and binders in the order of the writes:
+
+<Snippet file="binder/src/main/kotlin/Binder.kt" region="parcel" />
+
+The real `Parcel` holds flattened data and references to live `IBinder` objects. For a reference, the other side gets a proxy that is connected to the original `IBinder`[^parcel-90].
+
+A process gets a handle only from the driver. For each handle, `proxyFor` makes a `BinderProxy`:
+
+<Snippet file="binder/src/main/kotlin/NaiveDriver.kt" region="process" />
+
+The driver keeps a handle table for each process. A handle is an index in the table of one process. `send` moves one binder from one process to another process:
+
+<Snippet file="binder/src/main/kotlin/NaiveDriver.kt" region="send" />
+
+- If the binder is a local `Binder`, the driver records `from` as its owner.
+- If the binder is a `BinderProxy`, the driver finds the local object in the table of `from`.
+- Then the driver adds the local object to the table of `to`, and `to` makes a proxy for the new handle.
+
+`transact` sends one call. The driver finds the target object from the handle, in the table of the caller. It finds the owner of the target, copies the parcel into the owner, calls the target and copies the reply back. A copy keeps each value as it is. It sends each binder through `send`, so the receiver gets a handle in its own table:
+
+<Snippet file="binder/src/main/kotlin/NaiveDriver.kt" region="transact" />
+
+App code does not call `transact` directly. From an `.aidl` file, the build tools generate a Java interface with an inner `Stub` class that extends `Binder`[^aidl-defining]. The rebuild has this code, written by hand, for `IActivityManager` with one method, `attachApplication`:
+
+<Snippet file="binder/src/main/kotlin/Aidl.kt" region="aidl" />
+
+- `Stub` is the local side. It extends `Binder`, and its `asBinder()` returns the object itself. Its `onTransact` reads the arguments in the order of the writes and calls the method.
+- `Proxy` is the remote side. It wraps a binder proxy, and its `asBinder()` returns that binder proxy. Its method writes the arguments into a `Parcel` and calls `transact` with the transaction code of the method.
+- If the binder is a local object of the interface, `asInterface` returns the object itself. Otherwise, it returns a new `Proxy`.
+
+`IApplicationThread` has the same shape, with no methods. `AppThread` is its stub: the binder object of the app.
+
+The server of the rebuild stands for `ActivityManagerService` in `system_server`:
+
+<Snippet file="binder/src/main/kotlin/LaunchPath.kt" region="server" />
+
+`attachApplication` keeps a `ProcessRecord` with the `IApplicationThread` of the app and `startSeq`. `recordFor` finds the record of an app. Each `asInterface` call can make a new `Proxy`, so `recordFor` does not compare the interface objects. It compares their binders, `asBinder()`, by identity (`===`).
+
+The tests make two processes, `app` and `server`. The rebuild has no servicemanager, so the test gives the app its first binder with `send`:
+
+<Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="setup" />
+
+Then the app calls `attachApplication` through the proxy:
+
+<Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="attach" />
+
+The test passes. The server keeps one record. In the record, `asBinder()` of the `IApplicationThread` is a `BinderProxy`, and `startSeq` is 7. Another test makes a second `Proxy` from the binder of the record. `recordFor` finds the record for the second `Proxy`, because the two proxies have the same `BinderProxy`. These tests are not breaking tests.
+
+## Where it breaks
+
+`send` gives `to` a new handle each time that a binder crosses. It does not look for a handle that `to` already has for the object. It also gives a handle to the owner of the object. And `proxyFor` makes a new `BinderProxy` for each handle. Thus the same object can reach a process as two different proxies.
+
+The first breaking test sends `appThread` to the server two times. The first time is `attachApplication`. The second time is a direct `send`, the step that `transact` does for each binder in a parcel:
+
+<Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="identity" />
+
+The test passes, so the flaw occurs. The server has two `BinderProxy` objects for one `AppThread`. `recordFor` compares `asBinder()` by identity, so it finds no record for the second proxy. The real `ActivityManagerService` finds a `ProcessRecord` in the same way: it compares `asBinder()` with `==`[^processlist-4351][^ams-3978]. With this flaw, a lookup with a second proxy of the same `AppThread` finds no record.
+
+The second breaking test sends the binder of the record back to the app, the owner of `appThread`:
+
+<Snippet file="binder/src/test/kotlin/NaiveDriverTest.kt" region="back" />
+
+The test passes. The app gets a new `Proxy`, not its own `AppThread`. The real `IBinder` gives the opposite result: the original process gets the same `IBinder` object back[^ibinder-50].
+
+The tests use one thread, no clock and no sleep, so they give the same result on each run.
+
+## The real thing
+
+### system_server publishes the activity manager
+
+servicemanager keeps a map from service names to binders[^servicemanager-cpp-583]. At boot, servicemanager opens `/dev/binder`, adds itself as the service `manager` and becomes the context manager of the driver[^sm-main-153].
+
+In `startBootstrapServices`, `system_server` calls `setSystemProcess`[^systemserver-1416]. `setSystemProcess` adds `ActivityManagerService` to servicemanager with the name `Context.ACTIVITY_SERVICE`[^ams-2127].
+
+The app finds the service by this name. `ActivityManager.getService()` gets the `IBinder` of `Context.ACTIVITY_SERVICE` from `ServiceManager`, and wraps it with `IActivityManager.Stub.asInterface`[^activitymanager-6105]. `ServiceManager.getService` looks in a cache of the process first. If the cache has no entry for the name, it asks servicemanager[^servicemanager-java-150]. `ServiceManager` reaches servicemanager through the context object[^servicemanager-java-130]. The JNI method of `BinderInternal.getContextObject` gets the context object from libbinder[^android-util-binder-1434]. libbinder gives the proxy for handle 0 as the context object[^processstate-183]. The rebuild has no servicemanager. Its test gives the app the first binder with `send`.
+
+<GoDeeper title="servicemanager">
+
+servicemanager refuses `addService` from an app UID[^servicemanager-cpp-512]. Before it adds or finds a service, it does an access check. If the check fails, servicemanager returns the error "SELinux denied for service."[^servicemanager-cpp-1134] In each process, the driver keeps the handle 0 for the context manager[^binder-c-1259].
+
+Since Android 11, servicemanager uses libbinder: `ProcessState` and `IPCThreadState`. It adds itself as the service `manager`[^sm-main-11-121].
+
+</GoDeeper>
+
+### AIDL generates the Stub and the Proxy
+
+`IActivityManager.aidl` declares `void attachApplication(in IApplicationThread app, long startSeq)`[^iactivitymanager-209]. The method is not `oneway`, so it is synchronous[^binder-threading-indicate]. `IApplicationThread.aidl` declares the whole interface `oneway`[^iapplicationthread-72]. A `oneway` call does not wait: the thread of the caller continues when the kernel has the transaction[^binder-threading-asynch]. Thus `system_server` does not wait for the app when it calls `bindApplication`.
+
+The AIDL compiler makes this Java code from an `.aidl` file:
+
+- A `Stub` class that extends `android.os.Binder`. Its `asBinder()` returns `this`[^aidl-gen-126].
+- A transaction code for each method, `TRANSACTION_<method>`: `FIRST_CALL_TRANSACTION` plus an index[^aidl-gen-878]. `FIRST_CALL_TRANSACTION` is 1[^ibinder-100].
+- A `Stub.Proxy` class with the field `mRemote`. Its `asBinder()` returns `mRemote`[^aidl-gen-368]. Each method of the proxy writes the interface token and the arguments into a `Parcel`. Then it calls `mRemote.transact` with the transaction code. For a `oneway` method, it adds `FLAG_ONEWAY`[^aidl-gen-772].
+- The method `asInterface`. For null, it returns null. If `queryLocalInterface` gives a local object of the interface, it returns that object. Otherwise, it returns a new `Stub.Proxy`[^aidl-gen-319].
+
+The rebuild has the same shape. Its `TRANSACTION_attachApplication` is 1. In the app, `ApplicationThread` extends `IApplicationThread.Stub`[^activitythread-1202].
+
+### One call crosses
+
+The binder overview calls the endpoint in the called process a node. It gives the steps of one call[^binder-overview]:
+
+1. The client calls the proxy. The proxy makes a transaction with an identifier for the node, an identifier for the method and a copy of the arguments.
+2. The binder driver in the kernel finds the process of the node. It copies the transaction into the address space of that process.
+3. The driver gives the transaction to a thread in that process. The thread finds the node and calls the method.
+4. The reply goes back through the driver to the proxy.
+
+In libbinder, `IPCThreadState::transact` writes a `BC_TRANSACTION` command for the handle. If the call is not `oneway`, it waits for the reply[^ipcthreadstate-941]. It talks to the driver with the `BINDER_WRITE_READ` ioctl[^ipcthreadstate-1304]. While the thread waits for the reply, it runs each other command that the driver sends[^ipcthreadstate-1228].
+
+For each transaction, the driver gives the receiver the effective UID of the sender. For a synchronous transaction, it also gives the PID of the sender[^binder-c-3349][^binder-c-5312]. The thread that gets the transaction keeps them as the UID and the PID of the caller[^ipcthreadstate-1529]. Then JNI calls `Binder.execTransact`[^android-util-binder-431], which calls `onTransact`[^binder-java-1302].
+
+`attachApplication` in `ActivityManagerService` reads the PID and the UID of the caller with `Binder.getCallingPid()` and `Binder.getCallingUid()`[^ams-5550]. `attachApplicationLocked` finds the `ProcessRecord` by the PID. If the start UID or the `startSeq` of that record is different from the call, it does not use that record. If it then has no record, it looks for a pending start with the same `startSeq` and UID[^ams-5201]. The doc of `getCallingPid` says not to use the PID as a security identifier, because the system can use a PID again[^binder-java-307].
+
+Then `attachApplicationLocked` does these steps:
+
+1. It links to the death of the binder of the app, with an `AppDeathRecipient`[^ams-5283]. `linkToDeath` registers a recipient that the system calls when the process of the binder goes away[^ibinder-80].
+2. It calls `thread.bindApplication`[^ams-5451].
+3. It keeps the `IApplicationThread` in the `ProcessRecord`, in an `ApplicationThreadDeferred` wrapper[^ams-5501]. The field `mThread` of `ProcessRecord` holds this wrapper[^processrecord-161].
+
+In the app, `bindApplication` fills the service cache of `ServiceManager`[^activitythread-1482]. `initServiceCache` throws an exception if the cache is not empty[^servicemanager-java-361]. Then `bindApplication` sends the message `H.BIND_APPLICATION`[^activitythread-1543]. After `Application.onCreate`[^activitythread-8307], the app calls `finishAttachApplication` on the activity manager[^activitythread-8359].
+
+Since Android 14, `IActivityManager` has the synchronous method `finishAttachApplication`[^iactivitymanager-14-199].
+
+### The driver and each process keep the identity
+
+This is the real fix for the flaw of the rebuild. One part is in the kernel driver. The other part is in each process.
+
+The driver gives each node one handle in each process[^binder-c-1646]. If the handle of a node goes back to the process that owns the node, the driver gives that process its original local object, not a handle[^binder-c-2479]. The rebuild makes a new handle each time that a binder crosses, and gives the owner a new handle. The box "the binder driver" shows the driver code.
+
+In each process, libbinder reads each binder from a `Parcel` with `unflattenBinder`. For a local object, it gives back the original object. For a handle, it calls `getStrongProxyForHandle`[^parcel-cpp-466]. `getStrongProxyForHandle` makes a new `BpBinder` only if the handle has no live `BpBinder`[^processstate-339]. In Java, `javaObjectForIBinder` returns the original Java object for a local Java binder. For a remote object, it calls `BinderProxy.getInstance`[^android-util-binder-1010]. `getInstance` returns the same `BinderProxy` for the same native `IBinder`, while that `BinderProxy` is in use[^binderproxy-464]. Thus a process has one `BinderProxy` for each remote object. The rebuild makes a new proxy for each handle.
+
+`ActivityManagerService` depends on this identity. `getRecordForAppLOSP` calls `ProcessList.getLRURecordForAppLOSP`, which compares `t.asBinder() == threadBinder` for each record in the LRU list[^processlist-4351]. If that call finds no record, `getRecordForAppLOSP` checks each `ProcessRecord` with `procThread.asBinder() == threadBinder`[^ams-3978]. The record keeps an `ApplicationThreadDeferred`. Its `asBinder()` returns the binder of the wrapped `IApplicationThread`[^applicationthreaddeferred-96]. Thus the comparison uses the `BinderProxy` of the app.
+
+<GoDeeper title="the binder driver">
+
+When libbinder writes a binder into a `Parcel`, it writes a local object as `BINDER_TYPE_BINDER`, and a `BpBinder` as `BINDER_TYPE_HANDLE` with its handle[^parcel-cpp-291]. The driver keeps a node for each local object that a process sends, and a ref for each handle. A ref connects a handle of one process to a node.
+
+When a transaction carries a local object, `binder_translate_binder` finds or makes the node of the object. It calls `binder_inc_ref_for_node` for the target process, and puts the handle of that ref into the transaction[^binder-c-2426]. `binder_inc_ref_for_node` makes a new ref only if the target process has no ref for the node[^binder-c-1646]. Thus one node has one handle in each process.
+
+When a transaction carries a handle, `binder_translate_handle` finds the node of the handle. If the node is in the target process, the driver puts the original local object into the transaction, not a handle[^binder-c-2479]. Otherwise, it puts the handle of the target process for the node[^binder-c-2526].
+
+The arm64 GKI kernel builds the C binder driver into the kernel. It builds the Rust binder driver only as a module. It also builds binderfs into the kernel[^gki-defconfig-674]. Thus this chapter cites `binder.c`.
+
+Since Android 11, init mounts binderfs at `/dev/binderfs` and makes `/dev/binder` a symlink to `/dev/binderfs/binder`[^init-rc-11-175][^init-rc-231].
+
+For a nested call, the driver looks at the transaction stack of the thread that calls. If a thread of the target process waits in that stack, the driver sends the transaction to that thread[^binder-c-3505].
+
+</GoDeeper>
+
+### The binder threads
+
+The code of the launch app starts no thread, but its process has binder threads. `ZygoteInit.zygoteInit` calls `nativeZygoteInit` before `RuntimeInit.applicationInit`[^zygoteinit-983]. The JNI method calls `onZygoteInit` of the runtime[^androidruntime-284]. In an app process, `AppRuntime::onZygoteInit` calls `ProcessState::startThreadPool`[^app-main-92], which starts the first binder thread[^processstate-220]. A child zygote skips this step[^zygoteinit-998].
+
+A process that hosts a node needs a pool of binder threads[^binder-threading]. When a transaction comes in, the kernel wakes a thread of the pool[^binder-threading-synch]. Thus a call from `system_server` to `ApplicationThread` runs on a binder thread of the app[^ibinder-61][^aidl-intro].
+
+The driver sends `BR_SPAWN_LOOPER` if no thread of the process waits for work, no request for a new thread is open, and fewer threads than the maximum have started on a request of the driver[^binder-c-5421]. Then libbinder starts one more binder thread[^ipcthreadstate-1679]. The default maximum of libbinder is 15[^processstate-48][^binder-threading-configure]. The first binder thread from `startThreadPool` is in addition to this maximum[^processstate-482]. `system_server` sets its maximum to 31[^systemserver-508][^systemserver-947].
+
+libbinder gives each binder thread the name `<driver>:<pid>_<number>`. The number is in hex[^processstate-422] and starts at 1[^processstate-617]. Prompt 2 of "Try it" shows these threads.
+
+Since Android 13, the name of a binder thread starts with the name of the driver, `binder`[^processstate-13-369].
+
+If a thread waits for the reply to a call, and the thread that handles that call calls back into the process of the thread that waits, the thread that waits runs the new call[^ibinder-72][^binder-threading-nested].
+
+<GoDeeper title="the transaction buffer">
+
+The doc of `TransactionTooLargeException` says that the binder transaction buffer of a process has a fixed size, now 1 MB. All the transactions in progress for the process share it[^ttle-30]. libbinder maps a receive buffer of 1 MB minus two pages, read-only[^processstate-48][^processstate-624]. The driver limits the buffer of a process to 4 MB[^binder-alloc-925]. It gives `oneway` transactions only half of the buffer[^binder-alloc-951].
+
+If a transaction fails with the status `FAILED_TRANSACTION`, and its parcel is larger than 200 KB, JNI throws `TransactionTooLargeException`. For a parcel of 200 KB or less, it throws `DeadObjectException`. The message says that the remote process probably died, or that the binder buffer is full[^android-util-binder-1146].
+
+</GoDeeper>
+
+<GoDeeper title="oneway calls and frozen apps">
+
+The system runs the `oneway` calls to one `IBinder` one at a time, in the order of the calls[^ibinder-163].
+
+The system can freeze a cached app. A frozen app gets no CPU time. If a process sends a synchronous call to a frozen process, the system kills the frozen process. A `oneway` call to a frozen process stays in a buffer until the system unfreezes the process[^binder-freezer-frozen-state][^ibinder-403]. In the driver, a synchronous call to a frozen process gets `BR_FROZEN_REPLY`[^binder-c-3042]. When `system_server` unfreezes a process, it reads the binder freeze info. If the process got a synchronous transaction while it was frozen, `system_server` kills it[^cachedappoptimizer-1477].
+
+`IApplicationThread` is `oneway`[^iapplicationthread-72], so a call from `system_server` to a frozen app stays in the buffer, and the system does not kill the app. If the buffer overflows, the app can crash[^binder-freezer-frozen-state]. `ApplicationThreadDeferred` also holds back four calls while the process is paused (frozen). It runs them when the process is unpaused[^applicationthreaddeferred-33][^applicationthreaddeferred-46].
+
+Since Android 12, the cached apps freezer is on by default[^cachedappoptimizer-12-104]. `system_server` freezes the binder of a cached app before it freezes the process[^cachedappoptimizer-12-1358].
+
+Since Android 16, a process can register a `FrozenStateChangeCallback` on a remote binder[^ibinder-16-433].
+
+</GoDeeper>
+
+## Mental model
+
+Binder lets a process call an object in another process through the binder driver. The caller calls a proxy. The proxy writes the arguments into a `Parcel` and calls `transact`. The driver copies the transaction into the target process, and a binder thread there calls `onTransact` of the `Stub`. A binder in a `Parcel` crosses as a handle. The driver gives each node one handle in each process, and gives the owner its own object back. Each process keeps one `BinderProxy` for each remote object. Thus `asBinder()` gives the same object each time, and `system_server` can find the `ProcessRecord` of an app by its binder. In the launch path, the app gets the activity service from servicemanager and calls `attachApplication` with its `ApplicationThread`. `system_server` keeps the `BinderProxy` of that `ApplicationThread` in the `ProcessRecord`. It calls the app back with `oneway` calls, for example `bindApplication`. The rebuild gives a new handle and a new proxy each time that a binder crosses, so it loses the identity.
+
+```mermaid
+sequenceDiagram
+  participant App as app process
+  participant Driver as binder driver
+  participant SS as system_server
+  App->>Driver: getService activity, to servicemanager at handle 0
+  Driver-->>App: handle of ActivityManagerService
+  App->>Driver: attachApplication(ApplicationThread, startSeq)
+  Driver->>SS: handle of ApplicationThread, PID and UID of the app
+  Note over SS: ProcessRecord keeps the BinderProxy. Lookups compare asBinder().
+  SS->>Driver: bindApplication, oneway
+  Driver->>App: bindApplication on a binder thread
+```
+
+## Try it
+
+### 1. Keep the identity in the rebuild
+
+Fix the driver first. In `NaiveDriver.send`, if the owner of the local object is `to`, return the local object. If the table of `to` already has the object, return a proxy for its index. Otherwise, add the object to the table, and return a proxy for the new index. From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :binder:test
+```
+
+The Gradle output includes these lines:
+
+```
+NaiveDriverTest > naiveDriver_givesOwnerAProxy_whenBinderGoesBack() FAILED
+    org.opentest4j.AssertionFailedError at NaiveDriverTest.kt:61
+
+5 tests completed, 1 failed
+```
+
+The app now gets its own `AppThread` back, as the real driver gives the owner its original local object[^binder-c-2479]. But `naiveDriver_losesIdentity_whenSameBinderCrossesTwice` still passes. When `appThread` crosses the second time, the server gets the same handle, but `proxyFor` makes a new `BinderProxy` for it.
+
+Then fix the process. In `Process`, keep a map from each handle to its `BinderProxy`. In `proxyFor`, if the map has a proxy for the handle, return that proxy. Otherwise, make a new proxy, put it in the map, and return it. In a real process, `getStrongProxyForHandle` and `BinderProxy.getInstance` do this work[^processstate-339][^binderproxy-464]. Run the tests again. The output includes these lines:
+
+```
+NaiveDriverTest > naiveDriver_losesIdentity_whenSameBinderCrossesTwice() FAILED
+    org.opentest4j.AssertionFailedError at NaiveDriverTest.kt:50
+
+NaiveDriverTest > naiveDriver_givesOwnerAProxy_whenBinderGoesBack() FAILED
+    org.opentest4j.AssertionFailedError at NaiveDriverTest.kt:61
+
+5 tests completed, 2 failed
+```
+
+The two breaking tests fail, because the flaw is gone. The three other tests pass, so a call and a lookup by `asBinder()` still work.
+
+### 2. List the binder threads of the launch app
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installLaunchPathRelease
+```
+
+Start the app:
+
+```sh
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+```
+
+List the threads of its process:
+
+```sh
+adb shell ps -T -p $(adb shell pidof io.github.imgurpreetsk.afp.launchapp)
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+…
+… binder:…_1
+… binder:…_2
+…
+```
+
+The output includes lines that end in thread names of the form `binder:<pid>_<number>`. In the block, a line `…` stands for lines that the block leaves out. The number of binder threads can change between runs.
+
+The code of the launch app starts no thread. libbinder started these threads. `startThreadPool` starts the first binder thread[^processstate-220], and the driver can ask for more[^binder-c-5421]. libbinder gives each thread the name `<driver>:<pid>_<number>`, with the number in hex from 1[^processstate-422][^processstate-617].
+
+### 3. Find the record of the launch app in system_server
+
+If the app does not run, install and start it as in prompt 2. Print the process records of its package:
+
+```sh
+adb shell dumpsys activity processes io.github.imgurpreetsk.afp.launchapp
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
+  All known processes:
+  *APP* UID … ProcessRecord{… …:io.github.imgurpreetsk.afp.launchapp/u0a…}
+    user #0 uid=… gids={…}
+    …
+    thread=com.android.server.am.ApplicationThreadDeferred@…
+    pid=…
+    …
+```
+
+The output includes these lines. In the block, a line `…` stands for lines that the block leaves out.
+
+- The argument after `processes` is a package filter[^ams-11642]. For each `ProcessRecord` of the package, `dumpProcessesLSP` prints `*APP*`, the UID and the record. Then it prints the fields of the record[^processlist-4680][^processrecord-1504].
+- The record prints the user, the UID and the GIDs first[^processrecord-472]. Later, it prints `thread=` and `pid=`[^processrecord-527].
+- `thread=` shows `mThread`: the `ApplicationThreadDeferred` that `attachApplicationLocked` made around the binder of the app[^ams-5501]. Thus `system_server` keeps the binder that the app sent in `attachApplication`.
+
+[^activitythread-9507]: ActivityThread.java, lines 9507–9523: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9507)
+[^activitythread-9282]: ActivityThread.java, lines 9282–9291: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#9282)
+[^aidl-intro]: Android Interface Definition Language (AIDL): [https://developer.android.com/develop/background-work/services/aidl](https://developer.android.com/develop/background-work/services/aidl)
+[^ams-5451]: ActivityManagerService.java, line 5451: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5451](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5451)
+[^binder-overview]: Binder overview: [https://source.android.com/docs/core/architecture/ipc/binder-overview](https://source.android.com/docs/core/architecture/ipc/binder-overview)
+[^ibinder-39]: IBinder.java, lines 39–48: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#39](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#39)
+[^ibinder-50]: IBinder.java, lines 50–59: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#50](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#50)
+[^binder-java-49]: Binder.java, lines 49–60: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java#49](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java#49)
+[^binderproxy-48]: BinderProxy.java, lines 48–57: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java#48](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java#48)
+[^parcel-90]: Parcel.java, lines 90–97: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Parcel.java#90](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Parcel.java#90)
+[^aidl-defining]: AIDL, "Defining an AIDL interface": [https://developer.android.com/develop/background-work/services/aidl#Defining](https://developer.android.com/develop/background-work/services/aidl#Defining)
+[^processlist-4351]: ProcessList.java, lines 4351–4364: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4351](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4351)
+[^ams-3978]: ActivityManagerService.java, lines 3978–4013: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#3978](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#3978)
+[^servicemanager-cpp-583]: servicemanager/ServiceManager.cpp, lines 583–590: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/ServiceManager.cpp#583](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/ServiceManager.cpp#583)
+[^sm-main-153]: servicemanager/main.cpp, lines 153–176: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/main.cpp#153](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/main.cpp#153)
+[^systemserver-1416]: SystemServer.java, lines 1416–1418: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#1416](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#1416)
+[^ams-2127]: ActivityManagerService.java, lines 2127–2130: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#2127](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#2127)
+[^activitymanager-6105]: ActivityManager.java, lines 6105–6122: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityManager.java#6105](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityManager.java#6105)
+[^servicemanager-java-150]: ServiceManager.java, lines 150–162: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ServiceManager.java#150](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ServiceManager.java#150)
+[^servicemanager-java-130]: ServiceManager.java, lines 130–139: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ServiceManager.java#130](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ServiceManager.java#130)
+[^android-util-binder-1434]: android_util_Binder.cpp, lines 1434–1438: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp#1434](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp#1434)
+[^processstate-183]: ProcessState.cpp, lines 183–185: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#183](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#183)
+[^servicemanager-cpp-512]: servicemanager/ServiceManager.cpp, lines 512–520: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/ServiceManager.cpp#512](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/ServiceManager.cpp#512)
+[^servicemanager-cpp-1134]: servicemanager/ServiceManager.cpp, lines 1134–1166: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/ServiceManager.cpp#1134](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/cmds/servicemanager/ServiceManager.cpp#1134)
+[^binder-c-1259]: binder.c, lines 1259–1260: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#1259](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#1259)
+[^sm-main-11-121]: servicemanager/main.cpp at android-11.0.0_r1, lines 121–133: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-11.0.0_r1/cmds/servicemanager/main.cpp#121](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-11.0.0_r1/cmds/servicemanager/main.cpp#121)
+[^iactivitymanager-209]: IActivityManager.aidl, line 209: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/IActivityManager.aidl#209](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/IActivityManager.aidl#209)
+[^binder-threading-indicate]: Binder threading model, "Identify a synchronous or asynchronous function": [https://source.android.com/docs/core/architecture/ipc/binder-threading#indicate](https://source.android.com/docs/core/architecture/ipc/binder-threading#indicate)
+[^iapplicationthread-72]: IApplicationThread.aidl, line 72: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/IApplicationThread.aidl#72](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/IApplicationThread.aidl#72)
+[^binder-threading-asynch]: Binder threading model, "Asynchronous transactions": [https://source.android.com/docs/core/architecture/ipc/binder-threading#asynch](https://source.android.com/docs/core/architecture/ipc/binder-threading#asynch)
+[^aidl-gen-126]: generate_java_binder.cpp, lines 126–146: [https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#126](https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#126)
+[^aidl-gen-878]: generate_java_binder.cpp, lines 878–886: [https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#878](https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#878)
+[^ibinder-100]: IBinder.java, line 100: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#100](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#100)
+[^aidl-gen-368]: generate_java_binder.cpp, lines 368–408: [https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#368](https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#368)
+[^aidl-gen-772]: generate_java_binder.cpp, lines 772–796: [https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#772](https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#772)
+[^aidl-gen-319]: generate_java_binder.cpp, lines 319–354: [https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#319](https://android.googlesource.com/platform/system/tools/aidl/+/refs/tags/android-17.0.0_r1/generate_java_binder.cpp#319)
+[^activitythread-1202]: ActivityThread.java, line 1202: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1202](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1202)
+[^ipcthreadstate-941]: IPCThreadState.cpp, lines 941–971: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#941](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#941)
+[^ipcthreadstate-1304]: IPCThreadState.cpp, line 1304: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#1304](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#1304)
+[^ipcthreadstate-1228]: IPCThreadState.cpp, lines 1228–1231: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#1228](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#1228)
+[^binder-c-3349]: binder.c, lines 3349–3350: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#3349](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#3349)
+[^binder-c-5312]: binder.c, lines 5312–5324: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#5312](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#5312)
+[^ipcthreadstate-1529]: IPCThreadState.cpp, lines 1529–1531: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#1529](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#1529)
+[^android-util-binder-431]: android_util_Binder.cpp, lines 431–432: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp#431](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp#431)
+[^binder-java-1302]: Binder.java, lines 1302–1370: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java#1302](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java#1302)
+[^ams-5550]: ActivityManagerService.java, lines 5550–5561: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5550](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5550)
+[^ams-5201]: ActivityManagerService.java, lines 5201–5238: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5201](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5201)
+[^binder-java-307]: Binder.java, lines 307–324: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java#307](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Binder.java#307)
+[^ams-5283]: ActivityManagerService.java, lines 5283–5286: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5283](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5283)
+[^ibinder-80]: IBinder.java, lines 80–91: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#80](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#80)
+[^ams-5501]: ActivityManagerService.java, lines 5501–5504: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5501](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#5501)
+[^processrecord-161]: ProcessRecord.java, line 161: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#161](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#161)
+[^activitythread-1482]: ActivityThread.java, lines 1482–1483: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1482](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1482)
+[^servicemanager-java-361]: ServiceManager.java, lines 361–374: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ServiceManager.java#361](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ServiceManager.java#361)
+[^activitythread-1543]: ActivityThread.java, line 1543: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1543](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#1543)
+[^activitythread-8307]: ActivityThread.java, lines 8307–8308: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8307](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8307)
+[^activitythread-8359]: ActivityThread.java, lines 8359–8360: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8359](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8359)
+[^iactivitymanager-14-199]: IActivityManager.aidl at android-14.0.0_r1, line 199: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-14.0.0_r1/core/java/android/app/IActivityManager.aidl#199](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-14.0.0_r1/core/java/android/app/IActivityManager.aidl#199)
+[^parcel-cpp-291]: Parcel.cpp, lines 291–331: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/Parcel.cpp#291](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/Parcel.cpp#291)
+[^binder-c-2426]: binder.c, lines 2426–2477: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#2426](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#2426)
+[^binder-c-1646]: binder.c, lines 1646–1688: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#1646](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#1646)
+[^binder-c-2479]: binder.c, lines 2479–2525: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#2479](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#2479)
+[^binder-c-2526]: binder.c, lines 2526–2546: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#2526](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#2526)
+[^parcel-cpp-466]: Parcel.cpp, lines 466–475: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/Parcel.cpp#466](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/Parcel.cpp#466)
+[^processstate-339]: ProcessState.cpp, lines 339–401: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#339](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#339)
+[^android-util-binder-1010]: android_util_Binder.cpp, lines 1010–1033: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp#1010](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp#1010)
+[^binderproxy-464]: BinderProxy.java, lines 464–496: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java#464](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/BinderProxy.java#464)
+[^applicationthreaddeferred-96]: ApplicationThreadDeferred.java, lines 96–102: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ApplicationThreadDeferred.java#96](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ApplicationThreadDeferred.java#96)
+[^gki-defconfig-674]: gki_defconfig, lines 674–676: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/arch/arm64/configs/gki_defconfig#674](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/arch/arm64/configs/gki_defconfig#674)
+[^init-rc-231]: init.rc, lines 231–239: [https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/rootdir/init.rc#231](https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/rootdir/init.rc#231)
+[^init-rc-11-175]: init.rc at android-11.0.0_r1, lines 175–183: [https://android.googlesource.com/platform/system/core/+/refs/tags/android-11.0.0_r1/rootdir/init.rc#175](https://android.googlesource.com/platform/system/core/+/refs/tags/android-11.0.0_r1/rootdir/init.rc#175)
+[^binder-c-3505]: binder.c, lines 3505–3536: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#3505](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#3505)
+[^zygoteinit-983]: ZygoteInit.java, lines 983–996: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteInit.java#983](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteInit.java#983)
+[^androidruntime-284]: AndroidRuntime.cpp, lines 284–287: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/AndroidRuntime.cpp#284](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/AndroidRuntime.cpp#284)
+[^app-main-92]: app_main.cpp, lines 92–97: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/cmds/app_process/app_main.cpp#92](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/cmds/app_process/app_main.cpp#92)
+[^processstate-220]: ProcessState.cpp, lines 220–232: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#220](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#220)
+[^zygoteinit-998]: ZygoteInit.java, lines 998–1006: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteInit.java#998](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteInit.java#998)
+[^binder-threading]: Binder threading model: [https://source.android.com/docs/core/architecture/ipc/binder-threading](https://source.android.com/docs/core/architecture/ipc/binder-threading)
+[^binder-threading-synch]: Binder threading model, "Synchronous transactions": [https://source.android.com/docs/core/architecture/ipc/binder-threading#synch](https://source.android.com/docs/core/architecture/ipc/binder-threading#synch)
+[^ibinder-61]: IBinder.java, lines 61–70: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#61](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#61)
+[^binder-c-5421]: binder.c, lines 5421–5434: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#5421](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#5421)
+[^ipcthreadstate-1679]: IPCThreadState.cpp, lines 1679–1680: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#1679](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/IPCThreadState.cpp#1679)
+[^processstate-48]: ProcessState.cpp, lines 48–49: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#48](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#48)
+[^binder-threading-configure]: Binder threading model, "Configure threadpool size": [https://source.android.com/docs/core/architecture/ipc/binder-threading#configure](https://source.android.com/docs/core/architecture/ipc/binder-threading#configure)
+[^processstate-482]: ProcessState.cpp, lines 482–486: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#482](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#482)
+[^systemserver-508]: SystemServer.java, lines 508–510: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#508](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#508)
+[^systemserver-947]: SystemServer.java, lines 947–948: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#947](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#947)
+[^processstate-422]: ProcessState.cpp, lines 422–433: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#422](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#422)
+[^processstate-617]: ProcessState.cpp, line 617: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#617](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#617)
+[^processstate-13-369]: ProcessState.cpp at android-13.0.0_r1, lines 369–380: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/binder/ProcessState.cpp#369](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/binder/ProcessState.cpp#369)
+[^ibinder-72]: IBinder.java, lines 72–78: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#72](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#72)
+[^binder-threading-nested]: Binder threading model, "Nested transactions": [https://source.android.com/docs/core/architecture/ipc/binder-threading#nested](https://source.android.com/docs/core/architecture/ipc/binder-threading#nested)
+[^ttle-30]: TransactionTooLargeException.java, lines 30–33: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/TransactionTooLargeException.java#30](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/TransactionTooLargeException.java#30)
+[^processstate-624]: ProcessState.cpp, lines 624–626: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#624](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#624)
+[^binder-alloc-925]: binder_alloc.c, lines 925–926: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder_alloc.c#925](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder_alloc.c#925)
+[^binder-alloc-951]: binder_alloc.c, line 951: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder_alloc.c#951](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder_alloc.c#951)
+[^android-util-binder-1146]: android_util_Binder.cpp, lines 1146–1172: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp#1146](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/jni/android_util_Binder.cpp#1146)
+[^ibinder-163]: IBinder.java, lines 163–177: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#163](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#163)
+[^binder-freezer-frozen-state]: Binder and the freezer, "Frozen state": [https://source.android.com/docs/core/architecture/ipc/binder-freezer#frozen-state](https://source.android.com/docs/core/architecture/ipc/binder-freezer#frozen-state)
+[^ibinder-403]: IBinder.java, lines 403–414: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#403](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#403)
+[^binder-c-3042]: binder.c, lines 3042–3083: [https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#3042](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r13/drivers/android/binder.c#3042)
+[^cachedappoptimizer-1477]: CachedAppOptimizer.java, lines 1477–1491: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#1477](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#1477)
+[^applicationthreaddeferred-33]: ApplicationThreadDeferred.java, lines 33–41: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ApplicationThreadDeferred.java#33](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ApplicationThreadDeferred.java#33)
+[^applicationthreaddeferred-46]: ApplicationThreadDeferred.java, lines 46–50: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ApplicationThreadDeferred.java#46](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ApplicationThreadDeferred.java#46)
+[^cachedappoptimizer-12-104]: CachedAppOptimizer.java at android-12.0.0_r1, line 104: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#104](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#104)
+[^cachedappoptimizer-12-1358]: CachedAppOptimizer.java at android-12.0.0_r1, lines 1358–1361: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#1358](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#1358)
+[^ibinder-16-433]: IBinder.java at android-16.0.0_r1, lines 433–461: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r1/core/java/android/os/IBinder.java#433](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r1/core/java/android/os/IBinder.java#433)
+[^ams-11642]: ActivityManagerService.java, lines 11642–11652: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11642](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11642)
+[^processlist-4680]: ProcessList.java, lines 4680–4698: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4680](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4680)
+[^processrecord-1504]: ProcessRecord.java, lines 1504–1546: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#1504](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#1504)
+[^processrecord-472]: ProcessRecord.java, lines 472–485: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#472](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#472)
+[^processrecord-527]: ProcessRecord.java, lines 527–528: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#527](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#527)
