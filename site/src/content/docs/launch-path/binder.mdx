@@ -252,7 +252,7 @@ The system runs the `oneway` calls to one `IBinder` one at a time, in the order 
 
 The system can freeze a cached app. A frozen app gets no CPU time. If a process sends a synchronous call to a frozen process, the system kills the frozen process. A `oneway` call to a frozen process stays in a buffer until the system unfreezes the process[^binder-freezer-frozen-state][^ibinder-403]. In the driver, a synchronous call to a frozen process gets `BR_FROZEN_REPLY`[^binder-c-3042]. When `system_server` unfreezes a process, it reads the binder freeze info. If the process got a synchronous transaction while it was frozen, `system_server` kills it[^cachedappoptimizer-1477].
 
-`IApplicationThread` is `oneway`, so a call from `system_server` to a frozen app does not kill the app. `ApplicationThreadDeferred` also holds back four calls while the process is paused (frozen). It runs them when the process is unpaused[^applicationthreaddeferred-33][^applicationthreaddeferred-46].
+`IApplicationThread` is `oneway`[^iapplicationthread-72], so a call from `system_server` to a frozen app stays in the buffer, and the system does not kill the app. If the buffer overflows, the app can crash[^binder-freezer-frozen-state]. `ApplicationThreadDeferred` also holds back four calls while the process is paused (frozen). It runs them when the process is unpaused[^applicationthreaddeferred-33][^applicationthreaddeferred-46].
 
 Since Android 12, the cached apps freezer is on by default[^cachedappoptimizer-12-104]. `system_server` freezes the binder of a cached app before it freezes the process[^cachedappoptimizer-12-1358].
 
