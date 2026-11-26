@@ -100,7 +100,8 @@ export default defineConfig({
     // astro-mermaid imports @astrojs/markdown-satteri, the processor package of astro. If the import fails, astro-mermaid logs a warning and adds remark and rehype plugins. The site does not install @astrojs/markdown-remark, so astro build fails.
     // enableLog: false keeps the info logs of the script out of the browser console.
     // The default layout of mermaid 12.3.0 is ELK. Its chunk adds about 457 KB gzip to each page with a diagram, so use dagre.
-    astroMermaid({ enableLog: false, mermaidConfig: { layout: 'dagre' } }),
+    // A flowchart label wraps at 120 px by default, so a long Android class name, for example ActivityTaskManager, breaks in the word.
+    astroMermaid({ enableLog: false, mermaidConfig: { layout: 'dagre', flowchart: { wrappingWidth: 200 } } }),
     starlight({
       title: 'Android from First Principles',
       editLink: {
