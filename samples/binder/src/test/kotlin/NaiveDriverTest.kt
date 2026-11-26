@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 
 class NaiveDriverTest {
+    // region setup
     private val driver = NaiveDriver()
     private val app = Process(driver)
     private val server = Process(driver)
@@ -15,6 +16,7 @@ class NaiveDriverTest {
     // The rebuild has no servicemanager, so the app gets its first binder from send().
     private val activityManagerProxy =
         IActivityManager.Stub.asInterface(driver.send(activityManager, from = server, to = app))
+    // endregion
 
     // region attach
     @Test
