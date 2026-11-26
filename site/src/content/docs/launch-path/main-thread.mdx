@@ -169,7 +169,7 @@ Thus the cold start of the app is a series of messages on one loop. Prompt 3 of 
 App code uses the same loop. The docs name `Activity.runOnUiThread(Runnable)`, `View.post(Runnable)` and `View.postDelayed(Runnable, long)` as ways to reach the main thread from other threads[^pt-worker]:
 
 - `Activity.runOnUiThread()` runs the action at once if the caller is on the UI thread. On other threads, it posts the action with a `Handler` of the `Activity`[^activity-8339].
-- If a view is attached, `View.post()` posts the action with the `Handler` of its `AttachInfo`. If not, the view keeps the action in a run queue until it is attached[^view-21721].
+- If the view has an `AttachInfo`, `View.post()` posts the action with the `Handler` of that `AttachInfo`. If not, the view keeps the action in a run queue until it gets an `AttachInfo`[^view-21721].
 
 Coroutines use the same loop. On Android, the main dispatcher factory of kotlinx.coroutines wraps `Looper.getMainLooper()` in an asynchronous `Handler`[^handlerdispatcher-50][^handlerdispatcher-80]. `dispatch()` calls `handler.post(block)`[^handlerdispatcher-133]. `scheduleResumeAfterDelay()` posts the resume of a delayed coroutine with `handler.postDelayed()`[^handlerdispatcher-139]. Thus each dispatch to `Dispatchers.Main` is one message in the main queue. `Dispatchers.Main.immediate` needs a dispatch only if the current `Looper` is not the `Looper` of the `Handler`[^handlerdispatcher-129].
 
