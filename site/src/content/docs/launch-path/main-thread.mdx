@@ -35,6 +35,8 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
+import Snippet from '../../../components/Snippet.astro';
+
 ## The problem
 
 The [Binder chapter](/launch-path/binder/) ends with a call from `system_server` into the launch app: `bindApplication`. A call from another process does not run on the main thread of the app. It runs on a thread from a pool that the system keeps in the process of the app[^pt-threadsafe]: a binder thread.
@@ -55,6 +57,42 @@ Thus other threads cannot do UI work. They must give the work to the main thread
 `bindApplication` uses this loop. On the binder thread, it puts its arguments into an `AppBindData` object. Then it sends the message `BIND_APPLICATION` to the main thread[^activitythread-1511].
 
 This chapter builds a queue and a loop in plain Kotlin. Its breaking test shows a message that runs late. Then the chapter follows the real loop of the main thread, from `ActivityThread.main()` down to the kernel.
+
+## Build it naive
+
+The rebuild is in the module `samples/main-thread`. It has no threads and no real time. The looper reads the time and sleeps only through two interfaces, `Clock` and `Sleeper`. Thus a test can control both:
+
+<Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="time" />
+
+A message holds the code to run, `block`, and the time at which the message is due, `when`:
+
+<Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="message" />
+
+The queue keeps the messages in a list, in order of `when`. The head of the list is the next message to run. A new message goes after each message with the same `when`, so these messages run in the order of their posts:
+
+<Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="queue" />
+
+The handler posts a message with a delay. It sets `when` to the current time plus the delay:
+
+<Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="handler" />
+
+The looper runs the loop:
+
+- If the head is due, the looper removes the head and runs it.
+- If the head is not due, the looper sleeps until the `when` of the head.
+- If the queue is empty, `loop()` returns, so that a test can end. At this point, a real `Looper` waits for a new message.
+
+<Snippet file="main-thread/src/main/kotlin/NaiveLooper.kt" region="loop" />
+
+Each test makes a looper and a handler. One fake, `FakeTime`, is both the clock and the sleeper. Each message adds its name and the time at which it ran to the list `ran`:
+
+<Snippet file="main-thread/src/test/kotlin/NaiveLooperTest.kt" region="setup" />
+
+The first test posts three messages with the delays 300, 100 and 200. The looper runs them at t=100, t=200 and t=300, in order of `when`:
+
+<Snippet file="main-thread/src/test/kotlin/NaiveLooperTest.kt" region="order" />
+
+Other tests show that two messages with the same `when` run in the order of their posts, and that a message can post a new message.
 
 [^pt-threadsafe]: Processes and threads overview, "Thread-safe methods": [https://developer.android.com/guide/components/processes-and-threads#ThreadSafe](https://developer.android.com/guide/components/processes-and-threads#ThreadSafe)
 [^pt-threads]: Processes and threads overview, "Threads": [https://developer.android.com/guide/components/processes-and-threads#Threads](https://developer.android.com/guide/components/processes-and-threads#Threads)
