@@ -176,7 +176,7 @@ Time to initial display (TTID) is the time to display the first frame of the app
 
 `system_server` measures TTID. `ActivityMetricsLogger.notifyWindowsDrawn` calculates the delay from the start of the launch to the time when `system_server` marks all windows of the activity as drawn[^activitymetricslogger-1047][^activitymetricslogger-516]. It also stores this time as `START_TIMESTAMP_FIRST_FRAME` in the `ApplicationStartInfo` of the process[^activitymetricslogger-1067]. Thus TTID ends when `system_server` marks the windows as drawn. It does not end when the display shows the frame.
 
-For a cold or a warm launch, `logAppDisplayed` writes the delay in the Logcat line `Displayed <component> for user <id>: +<time>`[^activitymetricslogger-1514][^activitymetricslogger-609]. `onWindowsDrawn` gives the same delay and the launch state to `ActivityTaskSupervisor.reportActivityLaunched`[^activityrecord-6649]. `reportActivityLaunched` writes them into the `WaitResult` of each `am start -W` call that waits for the activity[^activitytasksupervisor-657]. The Android docs give the `Displayed` line and `am start -S -W` as two ways to get TTID[^launch-time-retrieve-ttid].
+For a cold or a warm launch, `logAppDisplayed` writes the delay in the Logcat line `Displayed <component> for user <id>: +<time>`[^activitymetricslogger-1514][^activitymetricslogger-609]. `onWindowsDrawn` gives the same delay and the launch state to `ActivityTaskSupervisor.reportActivityLaunched`[^activityrecord-6649]. `reportActivityLaunched` writes them into the `WaitResult` of each `am start -W` call that waits for the activity[^activitytasksupervisor-657]. The Android docs give the `Displayed` line and `am start -S -W` as two ways to get TTID[^launch-time-retrieve-ttid]. Prompt 2 of "Try it" uses both.
 
 ## Mental model
 
@@ -198,6 +198,98 @@ sequenceDiagram
   VRI->>SS: finishDrawing of the first frame
   Note over SS: show the window, remove the splash screen, log Displayed
 ```
+
+## Try it
+
+### 1. Tie the rebuild to VSYNC
+
+Change the rebuild so that `setText` asks for one traversal at the next VSYNC, as `scheduleTraversals` does:
+
+1. In `FakeDisplay`, add `postFrameCallback(callback: () -> Unit)`. It adds the callback to a list. In `vsync()`, first run the callbacks and clear the list. Then show the newest frame.
+2. In `NaiveRenderer`, add the flag `traversalScheduled`. In `setText`, change the text. If the flag is false, set it and post one callback with `postFrameCallback`. The callback clears the flag and calls `traverse()`.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :first-frame:test
+```
+
+The breaking test fails, because the flaw is gone: three `setText` calls give one draw. The other two tests pass, so the display still shows the text at the next VSYNC, and it still shows no new frame without a draw. The Gradle output includes these lines:
+
+```
+NaiveRendererTest > naiveRenderer_drawsThreeTimes_whenTextChangesThreeTimesBeforeOneVsync() FAILED
+    org.opentest4j.AssertionFailedError at NaiveRendererTest.kt:35
+
+3 tests completed, 1 failed
+```
+
+### 2. Measure TTID of the launch app
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installLaunchPathRelease
+```
+
+Stop the app, start it again and wait for its first frame:
+
+```sh
+adb shell am start -S -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+Stopping: io.github.imgurpreetsk.afp.launchapp
+Starting: Intent { … }
+Status: ok
+LaunchState: COLD
+Activity: io.github.imgurpreetsk.afp.launchapp/.MainActivity
+TotalTime: …
+WaitTime: …
+Complete
+```
+
+- With `-S`, `am start` stops the app first and prints `Stopping:`[^activitymanagershellcommand-809]. Thus the launch starts a new process. `LAUNCH_STATE_COLD` is a launch in which a new process starts, and `launchStateToString` gives `COLD` for it[^waitresult-57][^waitresult-133].
+- With `-W`, `am start` calls `startActivityAndWait`. Then it prints `Status`, `LaunchState`, `Activity`, `TotalTime`, `WaitTime` and `Complete`[^activitymanagershellcommand-894][^activitymanagershellcommand-982]. `TotalTime` is the delay that `reportActivityLaunched` wrote into the `WaitResult`[^activitytasksupervisor-657]: the TTID that `system_server` measured.
+
+Find the `Displayed` line of the launch:
+
+```sh
+adb logcat -d -e "Displayed io.github.imgurpreetsk.afp.launchapp"
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I ActivityTaskManager: Displayed io.github.imgurpreetsk.afp.launchapp/.MainActivity for user 0: +…ms
+```
+
+`system_server` writes this line in `logAppDisplayed`[^activitymetricslogger-1514]. The time after `+` and `TotalTime` are the same value, because both come from the delay of `notifyWindowsDrawn`[^activityrecord-6649][^activitymetricslogger-1047]. On this cold start, the time includes the process start, `onCreate`, the resume step, the first traversal and the first draw[^launch-time-ttid]. It ends when `system_server` marks the windows of the activity as drawn, not when the display shows the frame[^activitymetricslogger-1047].
+
+### 3. Count the frames of an idle app
+
+After prompt 2, do not touch the emulator. Print the frame count of the app two times, 10 seconds apart:
+
+```sh
+adb shell "dumpsys gfxinfo io.github.imgurpreetsk.afp.launchapp | grep -m 1 'Total frames rendered'"
+sleep 10
+adb shell "dumpsys gfxinfo io.github.imgurpreetsk.afp.launchapp | grep -m 1 'Total frames rendered'"
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+Total frames rendered: …
+Total frames rendered: …
+```
+
+The two values are equal. Thus the idle app rendered no frame in 10 seconds.
+
+- The app answers `dumpsys gfxinfo` in `handleDumpGfxInfo`[^activitythread-5724][^threadedrenderer-695]. `ProfileData::dump` prints the line `Total frames rendered`[^profiledata-112]. `reportFrame` adds 1 to the count[^profiledata-175]. `JankTracker::finishFrame` calls `reportFrame` for each finished frame[^janktracker-170]. With `-m 1`, `grep` prints only the first line that matches.
+- The `TextView` of the launch app does not change, so no code posts a callback to `Choreographer`. Thus `Choreographer` does not call `scheduleVsync`[^choreographer-622][^choreographer-919]. SurfaceFlinger sends no VSYNC to a connection that did not ask for one[^eventthread-669]. Without a VSYNC, `doFrame` does not run[^choreographer-1593], and the app draws no frame.
+
+The rebuild shows the same behavior. In its second test, a VSYNC with no new draw gives no new frame.
 
 [^textview-7524]: TextView.java, lines 7524–7526: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524)
 [^textview-11770]: TextView.java, lines 11770–11822: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770)
@@ -283,3 +375,13 @@ sequenceDiagram
 [^android-12-splash]: Android 12 behavior changes for all apps, "App splash screens": [https://developer.android.com/about/versions/12/behavior-changes-all#splash-screen-migration](https://developer.android.com/about/versions/12/behavior-changes-all#splash-screen-migration)
 [^launch-time-ttid]: App startup time, "Time to initial display": [https://developer.android.com/topic/performance/vitals/launch-time#time-initial](https://developer.android.com/topic/performance/vitals/launch-time#time-initial)
 [^launch-time-retrieve-ttid]: App startup time, "Retrieve TTID": [https://developer.android.com/topic/performance/vitals/launch-time#retrieve-TTID](https://developer.android.com/topic/performance/vitals/launch-time#retrieve-TTID)
+[^activitymanagershellcommand-809]: ActivityManagerShellCommand.java, lines 809–815: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerShellCommand.java#809](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerShellCommand.java#809)
+[^waitresult-57]: WaitResult.java, lines 57–60: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/WaitResult.java#57](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/WaitResult.java#57)
+[^waitresult-133]: WaitResult.java, lines 133–136: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/WaitResult.java#133](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/WaitResult.java#133)
+[^activitymanagershellcommand-894]: ActivityManagerShellCommand.java, lines 894–898: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerShellCommand.java#894](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerShellCommand.java#894)
+[^activitymanagershellcommand-982]: ActivityManagerShellCommand.java, lines 982–991: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerShellCommand.java#982](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerShellCommand.java#982)
+[^activitythread-5724]: ActivityThread.java, lines 5724–5727: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#5724](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#5724)
+[^threadedrenderer-695]: ThreadedRenderer.java, lines 695–698: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ThreadedRenderer.java#695](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ThreadedRenderer.java#695)
+[^profiledata-112]: ProfileData.cpp, lines 112–115: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/hwui/ProfileData.cpp#112](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/hwui/ProfileData.cpp#112)
+[^profiledata-175]: ProfileData.cpp, lines 175–176: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/hwui/ProfileData.cpp#175](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/hwui/ProfileData.cpp#175)
+[^janktracker-170]: JankTracker.cpp, lines 170–185: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/hwui/JankTracker.cpp#170](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/libs/hwui/JankTracker.cpp#170)
