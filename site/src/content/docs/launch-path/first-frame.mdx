@@ -53,6 +53,26 @@ The display does not show each change. If an app asks for a VSYNC (vertical sync
 
 Thus the app must decide when it runs a traversal. This chapter builds a renderer that runs a traversal for each change, and shows where it breaks. Then it shows how `ViewRootImpl` and `Choreographer` collect the changes and run one traversal at the next VSYNC. At the end, it follows the first frame of the launch app to `system_server`, which measures the time to the first frame.
 
+## Build it naive
+
+The rebuild is a renderer in plain Kotlin, in the module `samples/first-frame`. It uses no `android.*` types. A data class with one text field stands in for `TextView`. A `Frame` is the result of one draw: the text, its x position and its width:
+
+<Snippet file="first-frame/src/main/kotlin/NaiveRenderer.kt" region="view" />
+
+A fake display stands in for the display and for its VSYNC source. The test fires each VSYNC with `vsync()`, so the rebuild has no clock and no thread. At each VSYNC, the fake display shows the newest frame and adds 1 to `shownFrames`. If the app drew nothing after the last VSYNC, the fake display shows no new frame. `post` keeps only the newest frame, so a later draw before the next VSYNC replaces an earlier draw. This is a choice of the fake display. It is not a claim about the real display:
+
+<Snippet file="first-frame/src/main/kotlin/NaiveRenderer.kt" region="display" />
+
+The renderer runs a full traversal for each `setText` call:
+
+- Measure gives the width of the text: 10 px for each character. This value stands in for a font.
+- Layout puts the view in the center of the display.
+- Draw posts a `Frame` to the display and adds 1 to `draws`.
+
+<Snippet file="first-frame/src/main/kotlin/NaiveRenderer.kt" region="renderer" />
+
+Two tests show that the rebuild works. In the first test, the text "Hi" on a display 100 px wide gives `Frame("Hi", x = 40, width = 20)` at the next VSYNC. In the second test, a second VSYNC with no new draw keeps `shownFrames` at 1. Thus the display shows a new frame only if the app draws one.
+
 [^textview-7524]: TextView.java, lines 7524–7526: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#7524)
 [^textview-11770]: TextView.java, lines 11770–11822: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/widget/TextView.java#11770)
 [^displayeventreceiver-341]: DisplayEventReceiver.java, lines 341–353: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#341](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/DisplayEventReceiver.java#341)
