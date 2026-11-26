@@ -9,7 +9,7 @@ import { build } from './astro';
 const root = fileURLToPath(new URL('..', import.meta.url));
 // A separate output directory, so the test does not change dist/.
 const outDir = mkdtempSync(join(tmpdir(), 'afp-site-'));
-// The site has no chapters yet, so the build has only the home page, the About page and the Starlight 404 page. Each page loads the custom CSS.
+// The build has the home page, the About page, the chapter pages and the Starlight 404 page. Each page loads the custom CSS.
 let files: { name: string; text: string }[] = [];
 
 beforeAll(() => {
