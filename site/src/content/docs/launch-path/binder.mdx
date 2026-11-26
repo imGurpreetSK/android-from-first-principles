@@ -236,7 +236,7 @@ libbinder gives each binder thread the name `<driver>:<pid>_<number>`. The numbe
 
 Since Android 13, the name of a binder thread starts with the name of the driver, `binder`[^processstate-13-369].
 
-If a thread waits for a reply, and the other process calls back into the process of the thread, the thread that waits runs the call[^ibinder-72][^binder-threading-nested].
+If a thread waits for the reply to a call, and the thread that handles that call calls back into the process of the thread that waits, the thread that waits runs the new call[^ibinder-72][^binder-threading-nested].
 
 <GoDeeper title="the transaction buffer">
 
