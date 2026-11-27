@@ -170,7 +170,7 @@ Other types of ANR also use a timer. `system_server` starts the timer when it gi
 
 Since Android 14, the modern broadcast queue, `BroadcastQueueModernImpl`, extends the timeout one time by the time that the process waited for the CPU, at most by the timeout itself[^broadcastqueuemodernimpl-14-1009][^broadcastqueuemodernimpl-14-1152]. Thus the timeout is 10 to 20 s for a foreground broadcast, and 60 to 120 s for a background broadcast. Before, the timeouts were 10 s and 60 s[^diagnose-timeout-periods].
 
-JobScheduler expects `onStartJob` and `onStopJob` of a `JobService` to return in a few seconds. Since Android 14, if an app targets Android 14 or higher, and one of these callbacks takes longer than the granted time on the main thread, the app gets an ANR with the message "No response to onStartJob" or "No response to onStopJob". Before, the job stopped and failed silently[^behavior-changes-14-jobscheduler].
+JobScheduler expects `onStartJob` and `onStopJob` of a `JobService` to return in a few seconds. Since Android 14, if an app targets Android 14 or higher and one of these callbacks takes longer than the granted time on the main thread, the app gets an ANR. The message of the ANR is "No response to onStartJob" or "No response to onStopJob". Before, the job stopped and failed silently[^behavior-changes-14-jobscheduler].
 
 ### A Java thread is a Linux thread
 
