@@ -303,7 +303,7 @@ NaiveJobTest > naiveDelay_resumesBody_whenJobIsCancelledWhileSuspended() FAILED
 11 tests completed, 1 failed
 ```
 
-If you also made the change of prompt 1, the three breaking tests fail, and the other eight tests pass. Then the rule of prompt 1 for `CancellationException` is necessary: a cancelled `naiveDelay` throws a `CancellationException`, and this exception must not cancel the parent.
+If you also made the change of prompt 1, the three breaking tests fail, and the other eight tests pass. Then the rule of prompt 1 for `CancellationException` is necessary: a cancelled `naiveDelay` throws a `CancellationException`, and in the real tree, a normal cancellation does not cancel the parent[^job-100].
 
 Compare your fix with the real code. `ChildContinuation` links the job to the continuation[^ccimpl-691], and `resumeImpl` ignores a resume after the cancellation[^ccimpl-508].
 
