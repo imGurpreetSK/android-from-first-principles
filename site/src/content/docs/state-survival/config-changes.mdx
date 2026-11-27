@@ -231,6 +231,124 @@ flowchart TD
   clear --> cleared["ViewModel: viewModelScope canceled, then onCleared"]
 ```
 
+## Try it
+
+### 1. Give each activity its own entry
+
+Change the rebuild, so that the store can tell two activities apart, and can tell a relaunch from a finish:
+
+1. In `NaiveViewModelStore.getOrCreate`, use `activity.token` as the key.
+2. In `FakeActivityThread.finish`, after the thread removes the token, remove the entry of the token from `NaiveViewModelStore.viewModels`. Call `onCleared` on the `ViewModel` of the removed entry.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :config-changes:test
+```
+
+The two breaking tests fail, because the flaws are gone. The other three tests pass, so a relaunch still keeps the `ViewModel`. The Gradle output includes these lines:
+
+```
+NaiveViewModelStoreTest > naiveStore_keepsViewModel_afterActivityFinishes() FAILED
+    org.opentest4j.AssertionFailedError at NaiveViewModelStoreTest.kt:57
+
+NaiveViewModelStoreTest > naiveStore_sharesViewModel_betweenTwoActivityInstances() FAILED
+    org.opentest4j.AssertionFailedError at NaiveViewModelStoreTest.kt:68
+
+5 tests completed, 2 failed
+```
+
+Compare your fix with the real code. The real `ActivityThread` does not clear a store. It marks a relaunch: `handleRelaunchActivity` sets `mChangingConfigurations` to true[^activitythread-6862]. On `ON_DESTROY`, `ComponentActivity` reads the mark, and clears its own store only if the mark is not set[^componentactivity-278]. Each store belongs to one activity, and the record of the token keeps it across the relaunch[^activitythread-6607][^activitythread-4528].
+
+### 2. Watch a recreation keep the ViewModel
+
+This prompt and the next prompt use the `configChanges` flavor of the launch app, in `samples/launch-app/src/configChanges/`. The flavor adds two classes:
+
+- `RetainActivity`, a `ComponentActivity` with no `android:configChanges`. In `onCreate`, it gets its `CounterViewModel` from a `ViewModelProvider`, and adds 1 to the counter.
+- `CounterViewModel`, a `ViewModel` with a counter.
+
+Each class numbers its objects from 1 in each process. Both classes write to the log with the tag `ConfigChanges`.
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the flavor. Turn off the dark theme, start `RetainActivity`, and clear the log:
+
+```sh
+samples/gradlew -p samples :launch-app:installConfigChangesRelease
+adb shell cmd uimode night no
+adb shell am start -S -W -n io.github.imgurpreetsk.afp.launchapp.configChanges/io.github.imgurpreetsk.afp.launchapp.RetainActivity
+adb logcat -b main -b events -c
+```
+
+`cmd uimode night` calls `setNightMode`[^uimodemanagerservice-2544]. `setNightMode` changes the configuration only if the night mode changes[^uimodemanagerservice-1015]. Thus the first `cmd uimode night` makes sure that the next one is a change. The [Zygote chapter](/launch-path/zygote/) explains `am start -W`.
+
+Turn on the dark theme:
+
+```sh
+adb shell cmd uimode night yes
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+Night mode: yes
+```
+
+After the change, the command prints the night mode[^uimodemanagerservice-2570]. Wait two seconds. Then print the log of the app and three events:
+
+```sh
+adb logcat -d -b main -b events -s ConfigChanges wm_relaunch_resume_activity wm_on_destroy_called wm_on_create_called
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I wm_relaunch_resume_activity: [0,…,…,io.github.imgurpreetsk.afp.launchapp.configChanges/io.github.imgurpreetsk.afp.launchapp.RetainActivity,200]
+… I ConfigChanges: onDestroy activity=#1 isChangingConfigurations=true
+… I wm_on_destroy_called: […,io.github.imgurpreetsk.afp.launchapp.RetainActivity,performDestroy,…]
+… I ConfigChanges: onCreate activity=#2 viewModel=#1 count=2
+… I wm_on_create_called: […,io.github.imgurpreetsk.afp.launchapp.RetainActivity,performCreate,…]
+```
+
+Each line starts with the date, the time, the PID and the thread ID. The block shows them as `…`.
+
+- `system_server` decides first. `wm_relaunch_resume_activity` has the user, the hash code of the `ActivityRecord`, the task ID, the component and the mask of changes[^activityrecord-8948]. The mask is `200` in hexadecimal: `CONFIG_UI_MODE`[^activityinfo-1034]. `RetainActivity` does not handle `uiMode`, so `system_server` recreates it.
+- The old object `#1` gets `onDestroy` with `isChangingConfigurations=true`[^activitythread-6862]. `wm_on_destroy_called` comes after `onDestroy` returns[^activity-9652].
+- The new object `#2` gets `CounterViewModel` `#1`, and the counter is 2. Thus the second `onCreate` added 1 to the counter of the first `onCreate`. With a new `ViewModel`, the line shows `viewModel=#2 count=1`. `wm_on_create_called` comes after `onCreate` returns[^activity-9336].
+- The log has no `onCleared` line. `ComponentActivity` did not clear the store, because `isChangingConfigurations` was true[^componentactivity-278].
+
+Turn off the dark theme again:
+
+```sh
+adb shell cmd uimode night no
+```
+
+### 3. Press Back and watch the clear
+
+Start `RetainActivity` in a new process, clear the log, and press Back:
+
+```sh
+adb shell am start -S -W -n io.github.imgurpreetsk.afp.launchapp.configChanges/io.github.imgurpreetsk.afp.launchapp.RetainActivity
+adb logcat -b main -b events -c
+adb shell input keyevent KEYCODE_BACK
+```
+
+Wait two seconds. Then print the log of the app and three events:
+
+```sh
+adb logcat -d -b main -b events -s ConfigChanges wm_relaunch_resume_activity wm_relaunch_activity wm_on_destroy_called
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I ConfigChanges: onCleared viewModel=#1
+… I ConfigChanges: onDestroy activity=#1 isChangingConfigurations=false
+… I wm_on_destroy_called: […,io.github.imgurpreetsk.afp.launchapp.RetainActivity,performDestroy,…]
+```
+
+- The shell started `RetainActivity`, not the home screen, so the launch source is not the home screen[^activityrecord-2242]. Thus `shouldMoveTaskToBack` is false[^activityclientcontroller-2000], and `system_server` tells the app to finish the activity[^activityclientcontroller-1960].
+- `onCleared` comes before `onDestroy`. `ReportFragment` sends `ON_DESTROY` before `Activity.onDestroy` runs[^reportfragment-136][^activity-9652]. On `ON_DESTROY`, `isChangingConfigurations` is false, so `ComponentActivity` clears the store[^componentactivity-278].
+- The log has no `wm_relaunch` event. A finish is not a recreation.
+
 [^runtime-changes]: Handle configuration changes: [https://developer.android.com/guide/topics/resources/runtime-changes](https://developer.android.com/guide/topics/resources/runtime-changes)
 [^runtime-activity-recreation]: Handle configuration changes, "Activity recreation": [https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation](https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation)
 [^compose-state-in-composables]: State and Jetpack Compose, "State in composables": [https://developer.android.com/develop/ui/compose/state#state-in-composables](https://developer.android.com/develop/ui/compose/state#state-in-composables)
@@ -308,3 +426,8 @@ flowchart TD
 [^activity-4383]: Activity.java, lines 4383–4388: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#4383](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#4383)
 [^activityclientcontroller-1960]: ActivityClientController.java, lines 1960–1989: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityClientController.java#1960](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityClientController.java#1960)
 [^activityclientcontroller-2000]: ActivityClientController.java, lines 2000–2032: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityClientController.java#2000](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityClientController.java#2000)
+[^uimodemanagerservice-2544]: UiModeManagerService.java, lines 2544–2568: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/UiModeManagerService.java#2544](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/UiModeManagerService.java#2544)
+[^uimodemanagerservice-1015]: UiModeManagerService.java, lines 1015–1036: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/UiModeManagerService.java#1015](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/UiModeManagerService.java#1015)
+[^uimodemanagerservice-2570]: UiModeManagerService.java, lines 2570–2576: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/UiModeManagerService.java#2570](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/UiModeManagerService.java#2570)
+[^activity-9336]: Activity.java, lines 9336–9344: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#9336](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#9336)
+[^activityrecord-2242]: ActivityRecord.java, lines 2242–2256: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#2242](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#2242)
