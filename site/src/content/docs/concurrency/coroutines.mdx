@@ -42,6 +42,8 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
+import Snippet from '../../../components/Snippet.astro';
+
 ## The problem
 
 A network request on the main thread blocks the thread until the response comes. Then the OS cannot call `onDraw()`. The app freezes, and an Application Not Responding (ANR) dialog can show[^android-background-thread]. The [main thread chapter](/launch-path/main-thread/) shows the loop that the main thread runs.
@@ -52,8 +54,52 @@ Coroutines add two operations to call and return: suspend and resume. Suspend st
 
 Thus one function stops in the middle, and later the same function continues on the main thread, with its local variables. Kotlin implements each suspend function as a state machine, because a state machine needs no special support from the runtime[^spec-state-machine]. This chapter builds such a state machine by hand. Then it shows what the state machine alone does not do: send each resume back to the main thread.
 
+## Build it naive
+
+The rebuild is a coroutine written by hand, in plain Kotlin, in the module `samples/coroutines`. It does not use the `suspend` keyword or kotlinx.coroutines. Two fake loops act as the main thread and an I/O thread.
+
+The compiler gives each suspend function an extra parameter, a continuation[^spec-continuation]. `Continuation<in T>` is the interface of a continuation after a suspension point. It has a context and the function `resumeWith`[^continuation-13]. `resumeWith` gives the result of the last suspension point to the coroutine, and the coroutine continues[^spec-continuation]. The rebuild has a smaller stand-in, `Cont`, with only `resume`:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="cont" />
+
+The compiler also changes the return type of a suspend function to `Any?`. If the function has its result, it returns the result. If it suspends, it returns the marker `COROUTINE_SUSPENDED`[^spec-cps]. The rebuild has its own marker:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="marker" />
+
+`FakeLoop` acts as a thread with a message loop. It keeps a queue of blocks. `runAll()` runs the blocks in order. While a block runs, `currentLoop` is that loop. No real thread runs, so a test sets the order of the loops:
+
+<Snippet file="coroutines/src/main/kotlin/FakeLoop.kt" region="loop" />
+
+The rebuild has two loops: `main` for the UI and `io` for the network requests:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="loops" />
+
+`fetchUser` is the suspension point. It posts the request to `io` and returns `SUSPENDED` at once. Later, the `io` loop calls `cont.resume` with the user:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="fetch" />
+
+`LoadAndShow` is the state machine of the suspend function in its comment. The compiler splits a suspend function into steps. Each step, except the last step, ends with a suspending call. The field `label` holds the step that the next call of the state machine runs. Before the suspending call, the code sets `label` to the next step. If the call returns `COROUTINE_SUSPENDED`, the caller also returns `COROUTINE_SUSPENDED`. On resume, the state machine runs again, and `label` makes it jump to the next step[^codegen-state-machine].
+
+Step 1 runs in a new call of `resume`, so it does not have the local variables of step 0. Thus, before a suspension point, the compiler saves the live local variables into fields of the continuation. After the resume, it reads them back. The codegen doc of the Kotlin compiler calls this "spilling"[^codegen-spilling]. The arguments of a suspend function are local variables, so the compiler spills them too[^codegen-parameters]. In the rebuild, the field `userId` holds the spilled argument:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="state-machine" />
+
+`start` stores the argument and calls `resume(Unit)`. The library function `startCoroutine` also starts a coroutine with `resume(Unit)`[^continuation-112]. The first step of the state machine does not use this value[^codegen-startcoroutine].
+
+A test drains `main`, `io` and `main` again. It checks that `show` gets `42` and the user. Thus the spilled `userId` lives across the suspension point:
+
+<Snippet file="coroutines/src/test/kotlin/NaiveContinuationTest.kt" region="spill" />
+
 [^android-background-thread]: Kotlin coroutines on Android, "Executing in a background thread": [https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread](https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread)
 [^android-main-safety]: Kotlin coroutines on Android, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety](https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety)
 [^adv-manage]: Improve app performance with Kotlin coroutines, "Manage long-running tasks": [https://developer.android.com/kotlin/coroutines/coroutines-adv#manage](https://developer.android.com/kotlin/coroutines/coroutines-adv#manage)
 [^adv-main-safety]: Improve app performance with Kotlin coroutines, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines/coroutines-adv#main-safety](https://developer.android.com/kotlin/coroutines/coroutines-adv#main-safety)
 [^spec-state-machine]: Kotlin specification, "Coroutine state machine": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#coroutine-state-machine](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#coroutine-state-machine)
+[^spec-continuation]: Kotlin specification, "kotlin.coroutines.Continuation": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#kotlin.coroutines.continuationt](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#kotlin.coroutines.continuationt)
+[^continuation-13]: Continuation.kt, lines 13–26: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L13-L26](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L13-L26)
+[^spec-cps]: Kotlin specification, "Continuation Passing Style": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#continuation-passing-style](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#continuation-passing-style)
+[^codegen-state-machine]: coroutines-codegen.md, "State-Machine": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#state-machine](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#state-machine)
+[^codegen-spilling]: coroutines-codegen.md, "Variables Spilling": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#variables-spilling](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#variables-spilling)
+[^codegen-parameters]: coroutines-codegen.md, "JVM: Parameters": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#jvm-parameters](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#jvm-parameters)
+[^continuation-112]: Continuation.kt, lines 112–116: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L112-L116](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L112-L116)
+[^codegen-startcoroutine]: coroutines-codegen.md, "startCoroutine": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#startcoroutine](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#startcoroutine)
