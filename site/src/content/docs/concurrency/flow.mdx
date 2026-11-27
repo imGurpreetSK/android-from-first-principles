@@ -176,7 +176,7 @@ A shared flow keeps a number of the most recent values in its replay cache[^shar
 
 `shareIn` makes a cold flow hot. It takes a `CoroutineScope` that shares the flow, the number of values to replay to each new subscriber, and a start policy[^stateflow-doc-sharein]. `stateIn` converts any flow to a `StateFlow`[^stateflow-doc].
 
-Both operators share the emissions of one run of the upstream flow with all subscribers[^share-14][^share-241]. `stateIn` makes a `MutableStateFlow` with the initial value. Then it launches one coroutine in the scope[^share-303][^share-205]. This coroutine collects the upstream flow into the state flow:
+Both operators share one run of the upstream flow with all subscribers[^share-14][^share-241]. `shareIn` shares the emissions of that run[^share-14]. `stateIn` shares the most recently emitted value of that run[^share-241]. `stateIn` makes a `MutableStateFlow` with the initial value. Then it launches one coroutine in the scope[^share-303][^share-205]. This coroutine collects the upstream flow into the state flow:
 
 - `SharingStarted.Eagerly` starts the collection with no wait for a subscriber. `SharingStarted.Lazily` starts it when the first subscriber appears[^share-205]. Neither policy stops the collection[^sharingstarted-74].
 - For other policies, the coroutine collects the commands of the policy with `collectLatest`. `START` collects the upstream flow into the state flow. A new command cancels the block of the last command, so `STOP` cancels the collection. `STOP_AND_RESET_REPLAY_CACHE` also sets a state flow back to its initial value[^share-217].
