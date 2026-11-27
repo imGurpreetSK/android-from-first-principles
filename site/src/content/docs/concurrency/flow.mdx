@@ -75,6 +75,18 @@ Each write to `value` posts one delivery task for each collector. Each task hold
 
 Three more tests check the parts. `FakeQueue` runs its tasks only in `runAll`, in post order. A new collector gets the current value. A write reaches each of two collectors only when the queue runs.
 
+## Where it breaks
+
+The setter posts one delivery task for each write. If the collector is behind, the queue holds one task for each write, and each task holds an old value. The breaking test writes four values before the queue runs:
+
+<Snippet file="flow/src/test/kotlin/NaiveStateFlowTest.kt" region="flaw" />
+
+1. `collect` gives the initial value 0 to the collector at once.
+2. The test sets `value` to 1, 2, 3 and 3. Each write posts one task, so the queue holds four tasks.
+3. `runAll` runs the four tasks in post order. The collector gets 1, 2, 3 and 3.
+
+The list is `[0, 1, 2, 3, 3]`. The test passes, so the flaw occurs. When the first task runs, the current value is already 3. But the collector gets the old values 1 and 2 first. Then it gets 3 two times, although the last write did not change the value. A UI that renders each value renders four times after the initial value, but it needs to render only one value: 3. Each write adds one more task, so a collector that is far behind has a long queue of old values.
+
 [^flow-doc]: Kotlin flows on Android: [https://developer.android.com/kotlin/flow](https://developer.android.com/kotlin/flow)
 [^flow-doc-collect]: Kotlin flows on Android, "Collecting from a flow": [https://developer.android.com/kotlin/flow#collect](https://developer.android.com/kotlin/flow#collect)
 [^stateflow-doc]: StateFlow and SharedFlow, "StateFlow": [https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow](https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow)
