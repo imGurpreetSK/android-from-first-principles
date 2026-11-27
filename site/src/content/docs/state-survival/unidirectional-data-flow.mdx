@@ -78,7 +78,7 @@ The breaking test has two writers. Two latches (`CountDownLatch`) set the order 
 2. The main thread is writer A. It waits at `bHasRead` until B has the state. Then it writes 0 + 1, so the state is 1. Then it opens `aHasWritten`, and waits until B ends.
 3. The transform of B continues and returns 0 + 1. B writes 1 over the 1 of writer A.
 
-The store got two increment events, but the state is 1. The test passes, so the store lost one update.
+Each writer called `update` with a function that adds 1, but the state is 1. The test passes, so the store lost one update.
 
 The private state and the read-only property did not prevent the loss. They control which code can write the state. They do not make the write atomic.
 
