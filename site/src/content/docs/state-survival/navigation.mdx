@@ -230,6 +230,143 @@ flowchart TD
   acc -->|"otherwise"| finish["Finish the activity: pop it from the task"]
 ```
 
+## Try it
+
+### 1. Give each entry an id
+
+Change `NaiveBackStack`, so that each entry has its own id, as each `NavBackStackEntry` has[^navbackstackentry-65]:
+
+1. Add a counter. In `navigate`, push an entry with the route and the next value of the counter.
+2. In `topState` and in `back`, use the id of the top entry as the key of the state map.
+3. Keep `top`. It returns the route of the top entry.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :navigation:test
+```
+
+The breaking test fails, because the flaw is gone. The other three tests pass, so Back still shows the route below, and a new entry still starts with no state. The Gradle output includes these lines:
+
+```
+NaiveBackStackTest > naiveBackStack_losesState_whenSameRouteIsTwiceOnStack() FAILED
+    org.opentest4j.AssertionFailedError at NaiveBackStackTest.kt:48
+
+4 tests completed, 1 failed
+```
+
+Compare your fix with the real code. The key of the real store is the id of the entry[^navbackstackentry-172]. A pop clears only the store of that id[^navcontrollerimpl-618].
+
+### 2. See the task and the default callback
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the launch app, and stop the app:
+
+```sh
+samples/gradlew -p samples :launch-app:installLaunchPathRelease
+adb shell am force-stop io.github.imgurpreetsk.afp.launchapp
+```
+
+In the emulator, tap the icon of the app on the home screen. Then start `MainActivity` again from the shell, and print the activities:
+
+```sh
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+adb shell dumpsys activity activities
+```
+
+In the output, find the task of the app. The task has these two lines:
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+* Hist  #1: ActivityRecord{… u0 io.github.imgurpreetsk.afp.launchapp/.MainActivity t…}
+* Hist  #0: ActivityRecord{… u0 io.github.imgurpreetsk.afp.launchapp/.MainActivity t…}
+```
+
+Print the dump of the top activity:
+
+```sh
+adb shell dumpsys activity top
+```
+
+In the output, find the `WindowOnBackDispatcher:` lines:
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+WindowOnBackDispatcher:
+    Top Callback: …
+    Callbacks: 
+      Callback: … Priority=-1
+```
+
+The [Zygote chapter](/launch-path/zygote/) explains `am force-stop` and `am start -W`. The blocks show hash codes, task IDs and the names of callback objects as `…`.
+
+- The tap started a new task, with `MainActivity` as its root activity[^tasks-life-cycle]. The intent of the shell has no `MAIN` action and no `LAUNCHER` category, so it is different from the intent of the root. Thus `ActivityStarter` adds a new instance on top of the same task[^activitystarter-2757]. The task holds two `ActivityRecord` entries of `MainActivity`. This task is the back stack of the platform.
+- In the dump of the activity, `Activity` prints the dump of its `ViewRootImpl`[^activity-8529], and that dump contains the back dispatcher[^viewrootimpl-10797]. The dispatcher prints the top callback, and then each callback with its priority[^windowonbackinvokeddispatcher-549].
+- The list has one callback, with `Priority=-1`: `PRIORITY_SYSTEM`[^onbackinvokeddispatcher-62]. It is the default callback that `Activity.onCreate` registered[^activity-1922]. The launch app targets API level 37, so the callback model is on[^parsingpackageutils-2461].
+- The list does not show the observer that `Activity.onCreate` also registered[^activity-1929]. The dump prints only the callbacks of `mAllCallbacks`[^windowonbackinvokeddispatcher-549], and the window keeps the observers in a separate set[^windowonbackinvokeddispatcher-106].
+- The launch app registers no callback of its own. Thus `system_server` knows before Back that Back runs the default behavior of the activity.
+
+### 3. Press Back two times
+
+Press Back, and print the activities again:
+
+```sh
+adb shell input keyevent KEYCODE_BACK
+adb shell dumpsys activity activities
+```
+
+The task of the app has one line:
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+* Hist  #0: ActivityRecord{… u0 io.github.imgurpreetsk.afp.launchapp/.MainActivity t…}
+```
+
+Press Back again. Then print the activities and the PID of the app:
+
+```sh
+adb shell input keyevent KEYCODE_BACK
+adb shell dumpsys activity activities
+adb shell pidof io.github.imgurpreetsk.afp.launchapp
+```
+
+The task still has its line, and `pidof` prints a PID:
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+* Hist  #0: ActivityRecord{… u0 io.github.imgurpreetsk.afp.launchapp/.MainActivity t…}
+…
+```
+
+Start the app with the intent of the launcher:
+
+```sh
+adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n io.github.imgurpreetsk.afp.launchapp/.MainActivity
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=io.github.imgurpreetsk.afp.launchapp/.MainActivity }
+Warning: Activity not started, its current task has been brought to the front
+Status: ok
+LaunchState: HOT
+Activity: io.github.imgurpreetsk.afp.launchapp/.MainActivity
+TotalTime: …
+WaitTime: …
+Complete
+```
+
+The blocks show the hash codes, the task IDs, the PID and the times as `…`.
+
+- `ViewRootImpl` catches each Back key and calls the top callback[^viewrootimpl-8232][^viewrootimpl-8271]. The top callback is the default callback, and it calls `ActivityClient.onBackPressed`[^activity-4383].
+- First Back: the top instance is not the root of the task, so `shouldMoveTaskToBack` is false[^activityclientcontroller-2000]. `system_server` finishes the activity[^activityclientcontroller-1984], and the task has one `ActivityRecord` again.
+- Second Back: the root is the top activity of the task. The home app launched it with a main intent. Thus `system_server` moves the task to the back and does not finish the activity[^activityclientcontroller-2021][^activityclientcontroller-1978]. The task keeps its `ActivityRecord`, and the process of the app stays.
+- The last `am start` finds the task and brings it to the front. The start returns `START_TASK_TO_FRONT` and starts no new activity[^activitystarter-2588]. The [first frame chapter](/launch-path/first-frame/) explains the other lines of `am start -W`.
+
 [^tasks-intro]: Tasks and the back stack: [https://developer.android.com/guide/components/activities/tasks-and-back-stack](https://developer.android.com/guide/components/activities/tasks-and-back-stack)
 [^tasks-life-cycle]: Tasks and the back stack, "Lifecycle of a task and its back stack": [https://developer.android.com/guide/components/activities/tasks-and-back-stack#life-cycle](https://developer.android.com/guide/components/activities/tasks-and-back-stack#life-cycle)
 [^tasks-multiple-instances]: Tasks and the back stack, "Multiple activity instances": [https://developer.android.com/guide/components/activities/tasks-and-back-stack#multiple-instances](https://developer.android.com/guide/components/activities/tasks-and-back-stack#multiple-instances)
@@ -319,3 +456,7 @@ flowchart TD
 [^navbackstack-25]: NavBackStack.kt, lines 25–55: [https://android.googlesource.com/platform/frameworks/support/+/65822252146d26e872acf03dc11bda43f11efa3b/navigation3/navigation3-runtime/src/commonMain/kotlin/androidx/navigation3/runtime/NavBackStack.kt#25](https://android.googlesource.com/platform/frameworks/support/+/65822252146d26e872acf03dc11bda43f11efa3b/navigation3/navigation3-runtime/src/commonMain/kotlin/androidx/navigation3/runtime/NavBackStack.kt#25)
 [^naventry-28]: NavEntry.kt, lines 28–35: [https://android.googlesource.com/platform/frameworks/support/+/65822252146d26e872acf03dc11bda43f11efa3b/navigation3/navigation3-runtime/src/commonMain/kotlin/androidx/navigation3/runtime/NavEntry.kt#28](https://android.googlesource.com/platform/frameworks/support/+/65822252146d26e872acf03dc11bda43f11efa3b/navigation3/navigation3-runtime/src/commonMain/kotlin/androidx/navigation3/runtime/NavEntry.kt#28)
 [^naventry-100]: NavEntry.kt, line 100: [https://android.googlesource.com/platform/frameworks/support/+/65822252146d26e872acf03dc11bda43f11efa3b/navigation3/navigation3-runtime/src/commonMain/kotlin/androidx/navigation3/runtime/NavEntry.kt#100](https://android.googlesource.com/platform/frameworks/support/+/65822252146d26e872acf03dc11bda43f11efa3b/navigation3/navigation3-runtime/src/commonMain/kotlin/androidx/navigation3/runtime/NavEntry.kt#100)
+[^activitystarter-2588]: ActivityStarter.java, lines 2588–2600: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityStarter.java#2588](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityStarter.java#2588)
+[^activity-8529]: Activity.java, lines 8529–8533: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#8529](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#8529)
+[^viewrootimpl-10797]: ViewRootImpl.java, line 10797: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#10797](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/ViewRootImpl.java#10797)
+[^windowonbackinvokeddispatcher-549]: WindowOnBackInvokedDispatcher.java, lines 549–568: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/window/WindowOnBackInvokedDispatcher.java#549](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/window/WindowOnBackInvokedDispatcher.java#549)
