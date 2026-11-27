@@ -48,6 +48,24 @@ The Compose guide also says that immutable values prevent concurrency problems, 
 
 This chapter builds a small state holder with UDF. It shows how the write of the holder loses an update. Then it shows how `MutableStateFlow` of kotlinx.coroutines prevents the loss.
 
+## Build it naive
+
+The rebuild is in the module `samples/unidirectional-data-flow`, in plain Kotlin. It has no Android types and no kotlinx.coroutines.
+
+`NaiveStore` is the state holder. It keeps the state in the private property `current`. Other code reads the state through the read-only property `state`. Only `update` writes the state. `update` gives the current state to a transform function, and writes the result. Then it gives the new state to each observer. `observe` adds an observer and gives it the current state at once, because the state always exists:
+
+<Snippet file="unidirectional-data-flow/src/main/kotlin/NaiveStore.kt" region="store" />
+
+`CounterHolder` acts as a `ViewModel`. Its UI state is one immutable object, `CounterUiState`. Its store is private, so the UI cannot write the state. The UI calls `onIncrement`. This call is the event that goes up. The holder gives each new state to the render function of the UI. This is the state that comes down:
+
+<Snippet file="unidirectional-data-flow/src/main/kotlin/NaiveStore.kt" region="holder" />
+
+A test acts as the UI. Its render function adds one line of text for each state. The test sends two increment events. The screen shows `Count: 0`, then `Count: 1`, then `Count: 2`:
+
+<Snippet file="unidirectional-data-flow/src/test/kotlin/NaiveStoreTest.kt" region="events" />
+
+The rebuild has the parts of UDF. One object owns the state, and other code gets a read-only view of it. Events go up as function calls. State comes down to each observer. Two more tests check that a new observer gets the current state, and that `update` gives each new state to each observer.
+
 [^architecture-ssot]: Guide to app architecture, "Single source of truth": [https://developer.android.com/topic/architecture#single-source-of-truth](https://developer.android.com/topic/architecture#single-source-of-truth)
 [^architecture-udf]: Guide to app architecture, "Unidirectional data flow": [https://developer.android.com/topic/architecture#unidirectional-data-flow](https://developer.android.com/topic/architecture#unidirectional-data-flow)
 [^ui-layer-state-holders]: UI layer, "State holders": [https://developer.android.com/topic/architecture/ui-layer#state-holders](https://developer.android.com/topic/architecture/ui-layer#state-holders)
