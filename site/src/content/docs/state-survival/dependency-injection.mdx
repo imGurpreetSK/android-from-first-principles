@@ -90,6 +90,22 @@ Three tests check the containers. The `AppContainer` gives each caller the same 
 
 <Snippet file="dependency-injection/src/test/kotlin/ContainersTest.kt" region="containers" />
 
+## Where it breaks
+
+An object that a container keeps lives as long as the container instance. The `ScreenContainer` belongs to one `FakeActivity` object. The breaking test writes a username through the first `FakeActivity` and calls `recreate()`:
+
+<Snippet file="dependency-injection/src/test/kotlin/ContainersTest.kt" region="flaw" />
+
+The new `FakeActivity` creates a new `ScreenContainer`, and the new `ScreenContainer` creates a new `LoginUserData`. Thus the new `FakeActivity` has a different `LoginUserData` object with an empty username. The test passes, so the flaw occurs: a configuration change loses the input of the login flow.
+
+Both versions of the manual DI guide say: if the container must survive configuration changes, follow the Saving UI States guide[^manual-flows][^manual-views-flows].
+
+A move of `LoginUserData` into `AppContainer` is not a fix. Then the object survives the configuration change, but it also survives into the next login flow. The manual DI guide wants a new `LoginUserData` for each new flow, so that the data of an old login flow of a different user does not stay[^manual-flows]. Prompt 1 of "Try it" shows this second flaw.
+
+In Compose, the lifetime of the flow container is the composition, not the activity[^manual-flows]. The problem stays the same: you manage the scope and the lifetime of each container yourself. If you do this incorrectly, you can get subtle bugs and memory leaks[^manual-conclusion].
+
+Thus the flow container needs a lifetime between the two lifetimes of the rebuild. The lifetime must be longer than one `Activity` object and shorter than the app.
+
 [^di-what]: Dependency injection in Android, "What is dependency injection?": [https://developer.android.com/training/dependency-injection#what-is-di](https://developer.android.com/training/dependency-injection#what-is-di)
 [^appcomponentfactory-96]: AppComponentFactory.java, lines 96–100: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96)
 [^appcomponentfactory-83]: AppComponentFactory.java, lines 83–95: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83)
@@ -101,3 +117,4 @@ Three tests check the containers. The `AppContainer` gives each caller the same 
 [^manual-container]: Manual dependency injection, "Managing dependencies with a container": [https://developer.android.com/training/dependency-injection/manual#dependencies-container](https://developer.android.com/training/dependency-injection/manual#dependencies-container)
 [^hilt-define-bindings]: Dependency injection with Hilt, "Define Hilt bindings": [https://developer.android.com/training/dependency-injection/hilt-android#define-bindings](https://developer.android.com/training/dependency-injection/hilt-android#define-bindings)
 [^manual-views-flows]: Manual dependency injection (Views), "Managing dependencies in application flows": [https://developer.android.com/topic/architecture/views/dependency-injection/manual-views#managing-in-app-flows](https://developer.android.com/topic/architecture/views/dependency-injection/manual-views#managing-in-app-flows)
+[^manual-conclusion]: Manual dependency injection, "Conclusion": [https://developer.android.com/training/dependency-injection/manual#conclusion](https://developer.android.com/training/dependency-injection/manual#conclusion)
