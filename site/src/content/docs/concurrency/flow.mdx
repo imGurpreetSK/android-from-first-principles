@@ -205,6 +205,48 @@ flowchart TD
   loop -->|"equal to the last emitted value"| skip["No emit"]
 ```
 
+## Try it
+
+### 1. Skip the old values
+
+Change `NaiveStateFlow` as `StateFlowImpl` does:
+
+1. For each collector, keep a pending flag and the last value that the collector got. In `collect`, set the last value to the current value.
+2. In the setter, post a task for a collector only if the flag of the collector is not set. Then set the flag.
+3. In the task, clear the flag and read `value`. If the value differs from the last value that the collector got, keep it as the last value and give it to the collector.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :flow:test
+```
+
+The breaking test fails, because the collector now gets `[0, 3]`. The other four tests pass. The Gradle output includes these lines:
+
+```
+NaiveStateFlowTest > naiveStateFlow_rendersStaleValues_whenCollectorIsBehind() FAILED
+    org.opentest4j.AssertionFailedError at NaiveStateFlowTest.kt:55
+
+5 tests completed, 1 failed
+```
+
+The four writes post one task. When the task runs, it reads 3, so the old values 1 and 2 never reach the collector. `StateFlowImpl` gets the same result with `makePending` and the collect loop[^stateflow-283][^stateflow-393].
+
+### 2. Remove the equality check
+
+Keep the change of prompt 1, but remove the equality check: in the task, give `value` to the collector each time. In the breaking test, make these changes:
+
+1. After `queue.runAll()`, add `state.value = 3` and `queue.runAll()`.
+2. Replace `assertEquals(listOf(0, 1, 2, 3, 3), rendered)` with `assertEquals(listOf(0, 3, 3), rendered)`.
+
+Run the tests of the rebuild again. All five tests pass. The Gradle output includes this line:
+
+```
+BUILD SUCCESSFUL in …
+```
+
+The new write of 3 does not change the value, but it posts a new task, and the task gives 3 to the collector again. `StateFlowImpl` stops this second 3 at two places. The setter returns at once for an equal value[^stateflow-332]. The collect loop does not emit a value that is equal to the last emitted value[^stateflow-400].
+
 [^flow-doc]: Kotlin flows on Android: [https://developer.android.com/kotlin/flow](https://developer.android.com/kotlin/flow)
 [^flow-doc-collect]: Kotlin flows on Android, "Collecting from a flow": [https://developer.android.com/kotlin/flow#collect](https://developer.android.com/kotlin/flow#collect)
 [^stateflow-doc]: StateFlow and SharedFlow, "StateFlow": [https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow](https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow)
