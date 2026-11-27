@@ -58,4 +58,14 @@ class NaiveViewModelStoreTest {
         assertEquals(0, activity.viewModel.onClearedCalls)
     }
     // endregion
+
+    // region share
+    @Test
+    fun naiveStore_sharesViewModel_betweenTwoActivityInstances() {
+        val thread = FakeActivityThread(day) { StoreActivity() }
+        val a = thread.launch("a")
+        val b = thread.launch("b")
+        assertSame(a.viewModel, b.viewModel)
+    }
+    // endregion
 }
