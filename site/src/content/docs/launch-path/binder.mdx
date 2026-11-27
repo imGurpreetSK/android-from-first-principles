@@ -240,7 +240,7 @@ The driver sends `BR_SPAWN_LOOPER` if no thread of the process waits for work, n
 
 libbinder gives each binder thread the name `<driver>:<pid>_<number>`. The number is in hex[^processstate-422] and starts at 1[^processstate-617]. Prompt 2 of "Try it" shows these threads.
 
-Since Android 13, the name of a binder thread starts with the name of the driver, `binder`[^processstate-13-369].
+Since Android 13, the name of a binder thread starts with the name of the driver, `binder`[^processstate-13-369]. Before Android 13, the name has the form `Binder:<pid>_<number>`, with a capital B[^processstate-12-335].
 
 If a thread waits for the reply to a call, and the thread that handles that call calls back into the process of the thread that waits, the thread that waits runs the new call[^ibinder-72][^binder-threading-nested].
 
@@ -468,6 +468,7 @@ The output includes these lines. In the block, a line `…` stands for lines tha
 [^systemserver-947]: SystemServer.java, lines 947–948: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#947](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#947)
 [^processstate-422]: ProcessState.cpp, lines 422–433: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#422](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#422)
 [^processstate-617]: ProcessState.cpp, line 617: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#617](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#617)
+[^processstate-12-335]: ProcessState.cpp at android-12.0.0_r1, line 335: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-12.0.0_r1/libs/binder/ProcessState.cpp#335](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-12.0.0_r1/libs/binder/ProcessState.cpp#335)
 [^processstate-13-369]: ProcessState.cpp at android-13.0.0_r1, lines 369–380: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/binder/ProcessState.cpp#369](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/binder/ProcessState.cpp#369)
 [^ibinder-72]: IBinder.java, lines 72–78: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#72](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#72)
 [^binder-threading-nested]: Binder threading model, "Nested transactions": [https://source.android.com/docs/core/architecture/ipc/binder-threading#nested](https://source.android.com/docs/core/architecture/ipc/binder-threading#nested)
