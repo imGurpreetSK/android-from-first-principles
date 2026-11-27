@@ -173,7 +173,7 @@ The codegen doc shows a resume inside the block of `suspendCoroutineUnintercepte
 
 In kotlinx.coroutines, the interceptor is the dispatcher. The dispatcher in the coroutine context decides which thread or threads run the coroutine[^docs-dispatchers]. All coroutines run in a dispatcher, also the coroutines on the main thread. The dispatcher resumes them[^adv-main-safety].
 
-`CoroutineDispatcher` is a `ContinuationInterceptor`[^coroutinedispatcher-60]. Its `interceptContinuation` wraps each continuation in a `DispatchedContinuation`[^coroutinedispatcher-281]. `DispatchedContinuation.resumeWith` does not run the coroutine at once:
+`CoroutineDispatcher` is a `ContinuationInterceptor`[^coroutinedispatcher-60]. Its `interceptContinuation` wraps each continuation in a `DispatchedContinuation`[^coroutinedispatcher-281]. `DispatchedContinuation.resumeWith` asks the dispatcher if a dispatch is necessary:
 
 1. It calls `isDispatchNeeded` on the dispatcher.
 2. If `isDispatchNeeded` returns true, it stores the result of the suspension point. Then it gives itself, as a `Runnable`, to `dispatch`[^dispatchedcontinuation-188][^dispatchedcontinuation-252]. `dispatch` can return before the `Runnable` runs[^coroutinedispatcher-41].
