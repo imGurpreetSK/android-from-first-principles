@@ -45,6 +45,36 @@ The [unidirectional data flow chapter](/state-survival/unidirectional-data-flow/
 
 A producer can write new states faster than a collector runs. Then the collector is behind. What does a state holder give to that collector: each old state in order, or only the newest state? This chapter builds a cold flow and a hot state holder in plain Kotlin. It shows how the state holder gives each old state to a collector that is behind. Then it shows how `StateFlow` of kotlinx.coroutines 1.11.0 gives the collector only the newest state.
 
+## Build it naive
+
+The rebuild is in the module `samples/flow`, in plain Kotlin. It has no Android types and no kotlinx.coroutines. Its functions do not suspend.
+
+### A cold flow
+
+`NaiveFlow` has one function, `collect`. `naiveFlow` makes a flow from a producer block. The flow keeps only the block, not the values. Each `collect` call runs the block again, with the collector of that call as `emit`:
+
+<Snippet file="flow/src/main/kotlin/NaiveFlow.kt" region="cold" />
+
+A test makes a flow that emits 1 and 2, and counts the runs of the block. Before the first `collect` call, the block does not run. Two `collect` calls run the block two times, and each collector gets 1 and 2:
+
+<Snippet file="flow/src/test/kotlin/NaiveFlowTest.kt" region="cold" />
+
+This test shows how a cold flow acts. It is not the breaking test.
+
+### A hot state holder
+
+`NaiveStateFlow` holds `value`. The value exists also when no code collects it, so the state holder is hot. `collect` adds the collector to a list, and gives the current value to the collector at once.
+
+On Android, each dispatch to `Dispatchers.Main` is one message in the main queue, as the [main thread chapter](/launch-path/main-thread/) shows. `FakeQueue` stands for such a queue: the queue of the thread of the collector. It runs its tasks in post order, and only when the test calls `runAll`. Thus the test decides when the collector runs:
+
+<Snippet file="flow/src/main/kotlin/NaiveStateFlow.kt" region="queue" />
+
+Each write to `value` posts one delivery task for each collector. Each task holds its own copy of the new value:
+
+<Snippet file="flow/src/main/kotlin/NaiveStateFlow.kt" region="state" />
+
+Three more tests check the parts. `FakeQueue` runs its tasks only in `runAll`, in post order. A new collector gets the current value. A write reaches each of two collectors only when the queue runs.
+
 [^flow-doc]: Kotlin flows on Android: [https://developer.android.com/kotlin/flow](https://developer.android.com/kotlin/flow)
 [^flow-doc-collect]: Kotlin flows on Android, "Collecting from a flow": [https://developer.android.com/kotlin/flow#collect](https://developer.android.com/kotlin/flow#collect)
 [^stateflow-doc]: StateFlow and SharedFlow, "StateFlow": [https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow](https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow)
