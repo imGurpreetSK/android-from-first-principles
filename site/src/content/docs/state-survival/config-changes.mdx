@@ -210,7 +210,13 @@ If no composable provides an owner, `LocalViewModelStoreOwner` uses a host defau
 
 `ViewModelStore.clear` empties the map, and then clears each `ViewModel`[^viewmodelstore-85]. On Android, `ViewModel.clear` first clears its `ViewModelImpl`, and then calls `onCleared`[^viewmodel-jvm-66]. `ViewModelImpl.clear` closes the closeables with a key first, and then the other closeables[^viewmodelimpl-74]. `viewModelScope` is a closeable with a key, so the clear cancels it[^viewmodel-207].
 
-On Back, the activity tells `system_server`[^activity-4383]. If no task organizer takes the Back press and `shouldMoveTaskToBack` is false, `system_server` tells the app to finish the activity[^activityclientcontroller-1960]. By default, `shouldMoveTaskToBack` is true only if these conditions are all true: the activity is the root of its task and the top activity of its `TaskFragment`, the home screen started it, and the intent of the task is the main intent[^activityclientcontroller-2000]. Then the task moves to the back. The activity does not finish, so its `ViewModel` objects stay. The [components and lifecycle chapter](/launch-path/components-lifecycle/) shows this case.
+On Back, the activity tells `system_server`[^activity-4383]. If no task organizer takes the Back press and `shouldMoveTaskToBack` is false, `system_server` tells the app to finish the activity[^activityclientcontroller-1960]. By default, `shouldMoveTaskToBack` is true only if all these conditions are true[^activityclientcontroller-2000]:
+
+- The activity is the root of its task and the top activity of its `TaskFragment`.
+- The home screen started the activity.
+- The intent of the task is the main intent.
+
+If `shouldMoveTaskToBack` is true, the task moves to the back[^activityclientcontroller-1960]. The activity does not finish, so its `ViewModel` objects stay. The [components and lifecycle chapter](/launch-path/components-lifecycle/) shows this case.
 
 Since Android 12, Back on a launcher activity at the root of its task moves the task to the background, and the activity does not finish. Other activities still finish on Back[^android-12-back]. Thus Back does not destroy such an activity, and nothing clears its `ViewModel` objects.
 
