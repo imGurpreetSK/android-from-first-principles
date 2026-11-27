@@ -133,7 +133,7 @@ The turn is the same as in the rebuild. Only the sleep is different. `NaiveLoope
 
 If an app gives `setMessageLogging()` a `Printer`, `loopOnce()` prints `>>>>> Dispatching to` before each dispatch[^looper-255] and `<<<<< Finished to` after it[^looper-342].
 
-Since Android 17, if an app targets `CINNAMON_BUN` (Android 17) or higher, `loopOnce()` clears the interrupted state of the thread after each dispatch. Thus an interrupt in one message does not reach the next message[^looper-127][^looper-297].
+Since Android 17, if an app targets `CINNAMON_BUN` (API level 37)[^build-1314] or higher, `loopOnce()` clears the interrupted state of the thread after each dispatch. Thus an interrupt in one message does not reach the next message[^looper-127][^looper-297].
 
 ### A `Handler` puts a message into the queue
 
@@ -437,6 +437,7 @@ adb shell setprop log.looper.<uid>.main.slow -1
 [^looper-361]: Looper.java, line 361: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#361](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#361)
 [^looper-255]: Looper.java, lines 255–259: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#255](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#255)
 [^looper-342]: Looper.java, lines 342–344: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#342](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#342)
+[^build-1314]: Build.java, lines 1314–1318: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Build.java#1314](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Build.java#1314)
 [^looper-127]: Looper.java, lines 127–139: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#127](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#127)
 [^looper-297]: Looper.java, lines 297–301: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#297](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#297)
 [^handler-297]: Handler.java, lines 297–304: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#297](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#297)
