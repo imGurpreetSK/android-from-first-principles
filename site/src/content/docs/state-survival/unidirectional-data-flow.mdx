@@ -66,6 +66,22 @@ A test acts as the UI. Its render function adds one line of text for each state.
 
 The rebuild has the parts of UDF. One object owns the state, and other code gets a read-only view of it. Events go up as function calls. State comes down to each observer. Two more tests check that a new observer gets the current state, and that `update` gives each new state to each observer.
 
+## Where it breaks
+
+`update` reads the state and writes the next state in two separate steps. If another writer changes the state between the two steps, `update` writes over that change. The value that `update` writes comes from the old state.
+
+The breaking test has two writers. Two `CountDownLatch` gates set the order of their steps, so each run gives the same result:
+
+<Snippet file="unidirectional-data-flow/src/test/kotlin/NaiveStoreTest.kt" region="lost-update" />
+
+1. Writer B runs on a second thread. Its transform gets the state 0. The transform opens the gate `bHasRead`, and then waits at the gate `aHasWritten`.
+2. The main thread is writer A. It waits at `bHasRead` until B has the state. Then it writes 0 + 1, so the state is 1. Then it opens `aHasWritten`, and waits until B ends.
+3. The transform of B continues and returns 0 + 1. B writes 1 over the 1 of writer A.
+
+The store got two increment events, but the state is 1. The test passes, so the store lost one update.
+
+The private state and the read-only property did not prevent the loss. They control which code can write the state. They do not make the write atomic.
+
 [^architecture-ssot]: Guide to app architecture, "Single source of truth": [https://developer.android.com/topic/architecture#single-source-of-truth](https://developer.android.com/topic/architecture#single-source-of-truth)
 [^architecture-udf]: Guide to app architecture, "Unidirectional data flow": [https://developer.android.com/topic/architecture#unidirectional-data-flow](https://developer.android.com/topic/architecture#unidirectional-data-flow)
 [^ui-layer-state-holders]: UI layer, "State holders": [https://developer.android.com/topic/architecture/ui-layer#state-holders](https://developer.android.com/topic/architecture/ui-layer#state-holders)
