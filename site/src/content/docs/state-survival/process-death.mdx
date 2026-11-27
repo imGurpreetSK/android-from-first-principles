@@ -203,6 +203,25 @@ Since Android 12, Back on a root launcher activity moves the task to the backgro
 
 </GoDeeper>
 
+## Mental model
+
+An app does not decide when its process dies. `system_server` gives each process an oom adj, and `lmkd` kills from the highest oom adj down. The system does not guarantee a call to `onDestroy` before the kill. Thus the app saves when the activity stops: `onSaveInstanceState` writes a `Bundle`, and a Binder call sends it to `system_server`. The `ActivityRecord` keeps the `Bundle` in `mIcicle` after the process dies, until the activity resumes. When the user goes back, `system_server` starts a new process and sends the `Bundle` in the `LaunchActivityItem`. `onCreate` gets the `Bundle`, and the `SavedStateRegistry` gives each component its state by key, one time. A component that the app does not create again does not consume its key. The next save must keep that key. The naive registry drops it, so a second process death loses the state. `SavedStateRegistryImpl` and `SavedStateHandlesProvider` merge the keys that no component consumed into each save.
+
+```mermaid
+sequenceDiagram
+  participant P1 as App process 1
+  participant SS as system_server
+  participant LMKD as lmkd
+  participant P2 as App process 2
+  P1->>P1: onStop, then onSaveInstanceState into a Bundle
+  P1->>SS: activityStopped with the Bundle
+  SS->>SS: ActivityRecord keeps the Bundle in mIcicle
+  LMKD->>P1: SIGKILL, from the highest oom_score_adj down
+  SS->>P2: LaunchActivityItem with the Bundle
+  P2->>P2: onCreate, each component consumes its key
+  P2->>SS: next stop, the Bundle has each provider and each key that no component consumed
+```
+
 [^process-lifecycle]: Processes and app lifecycle: [https://developer.android.com/guide/components/activities/process-lifecycle](https://developer.android.com/guide/components/activities/process-lifecycle)
 [^activity-lifecycle-state]: The activity lifecycle, "Activity state and ejection from memory": [https://developer.android.com/guide/components/activities/activity-lifecycle#activity-state](https://developer.android.com/guide/components/activities/activity-lifecycle#activity-state)
 [^saving-states-system]: Save UI states, "System-initiated UI state dismissal": [https://developer.android.com/topic/libraries/architecture/saving-states#ui-dismissal-system](https://developer.android.com/topic/libraries/architecture/saving-states#ui-dismissal-system)
