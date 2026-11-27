@@ -188,7 +188,7 @@ The hand-over belongs to the record of one token, not to a class. The record is 
 
 `androidx.activity.ComponentActivity` uses this platform hook. Its `onRetainNonConfigurationInstance` is final. It returns a `NonConfigurationInstances` object of AndroidX that holds `custom` and the `viewModelStore`. If both are null, it returns null[^componentactivity-366]. `ensureViewModelStore` takes the `ViewModelStore` from `lastNonConfigurationInstance`. If there is no store there, it creates a new store[^componentactivity-551].
 
-A `ViewModelStore` is a map from a key to a `ViewModel`. Its KDoc states that a new owner after a configuration change must use the store of the old owner. If the owner is destroyed and not recreated, it must call `clear`[^viewmodelstore-23].
+A `ViewModelStore` is a map from a key to a `ViewModel`. Its KDoc states that a new owner after a configuration change must use the store of the old owner. The KDoc also states that the owner should call `clear` if its destroy is permanent[^viewmodelstore-23].
 
 `ViewModelProviderImpl` is the internal implementation of `ViewModelProvider`. Its `getViewModel` looks for a key in the store. By default, `getDefaultKey(modelClass)` makes the key from the class of the `ViewModel`. If the store has an instance of the class for the key, `getViewModel` returns it. If not, it creates an instance with the factory and puts it into the store[^viewmodelproviderimpl-26]. Thus the new `Activity` object gets the old `ViewModel` object.
 
