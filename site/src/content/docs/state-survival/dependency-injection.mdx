@@ -183,7 +183,7 @@ This failure is the opposite of the flaw of the rebuild. The rebuild loses an ob
 
 ### The platform creates each activity through a factory
 
-Hilt uses field injection for an activity[^android-entry-point-types]. The platform also permits constructor injection. The platform creates manifest elements, for example activities, through `AppComponentFactory`[^appcomponentfactory-28]. An app can supply its own factory, for example for dependency injection. The `Activity` object that the factory returns is not a `Context` yet, so the factory must not use it with other Android APIs[^appcomponentfactory-83]. `Instrumentation.newActivity` calls the factory for each new `Activity` object[^instrumentation-1454]. Thus a container that the factory gives to one `Activity` object also ends with that object. Prompts 2 and 3 of "Try it" show these calls.
+Hilt uses field injection for an activity[^android-entry-point-types]. The platform also permits constructor injection. The platform creates manifest elements, for example activities, through `AppComponentFactory`[^appcomponentfactory-28]. An app can supply its own factory, for example for dependency injection. The `Activity` object that the factory returns is not a `Context` yet, so the factory must not use it with other Android APIs[^appcomponentfactory-83]. `Instrumentation.newActivity` calls the factory for each new `Activity` object[^instrumentation-1454]. Thus a container that the factory creates for one `Activity` object, and that only that object holds, ends with that object. Prompts 2 and 3 of "Try it" show these calls.
 
 <GoDeeper title="how the platform finds the factory">
 
