@@ -99,6 +99,22 @@ In Android 10, `InputDispatcher.cpp` gives the two values in nanoseconds. `DEFAU
 
 </GoDeeper>
 
+## Where it breaks
+
+The dispatcher starts its timer only when a touch must wait. Nothing times a touch that the window already has. The first breaking test sends one tap to a window that never finishes it. Then the test moves the clock to 60 s:
+
+<Snippet file="threads-and-anr/src/test/kotlin/NaiveInputDispatcherTest.kt" region="flaw" />
+
+The test passes, so the flaw occurs. For 60 s, the window does not finish the tap, and the dispatcher reports no ANR. The main thread of the app is blocked, but the dispatcher does nothing.
+
+The second breaking test shows a late ANR. The window never finishes the first tap. At t=10000, a second tap comes. The first tap is 500 ms old or older, so the second tap waits, and the timer starts only at that time:
+
+<Snippet file="threads-and-anr/src/test/kotlin/NaiveInputDispatcherTest.kt" region="late-anr" />
+
+The ANR comes at t=15000, 15 s after the first tap. The time of the ANR depends on the next touch of the user, not on the tap that the window did not finish.
+
+The dispatcher of Android 10 had the same flaw. For a touch, it started the timer only when it found the window not ready for more input[^inputdispatcher-10-1560][^inputdispatcher-10-1091]. "The real thing" shows how Android 11 and later fix the flaw.
+
 [^responsive]: Keep your app responsive: [https://developer.android.com/topic/performance/anrs/keep-your-app-responsive](https://developer.android.com/topic/performance/anrs/keep-your-app-responsive)
 [^responsive-triggers]: Keep your app responsive, "ANR triggers": [https://developer.android.com/topic/performance/anrs/keep-your-app-responsive#anr-triggers](https://developer.android.com/topic/performance/anrs/keep-your-app-responsive#anr-triggers)
 [^activitythread-2754]: ActivityThread.java, lines 2754–2761: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2754](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2754)
@@ -118,3 +134,4 @@ In Android 10, `InputDispatcher.cpp` gives the two values in nanoseconds. `DEFAU
 [^inputdispatcher-10-1126]: InputDispatcher.cpp at android-10.0.0_r1, lines 1126–1128: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1126](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1126)
 [^inputdispatcher-10-383]: InputDispatcher.cpp at android-10.0.0_r1, lines 383–384: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#383](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#383)
 [^inputdispatcher-10-1188]: InputDispatcher.cpp at android-10.0.0_r1, lines 1188–1196: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1188](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1188)
+[^inputdispatcher-10-1560]: InputDispatcher.cpp at android-10.0.0_r1, lines 1560–1570: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1560](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1560)
