@@ -184,7 +184,7 @@ On API level 33, the platform input registers a plain `OnBackInvokedCallback`, w
 
 ### Navigation gives each entry an id
 
-The back stack of `NavController` is an `ArrayDeque` of `NavBackStackEntry` objects[^navcontrollerimpl-90]. Each entry has an `id`, and by default the id is a random UUID. Each entry is a `LifecycleOwner`, a `ViewModelStoreOwner` and a `SavedStateRegistryOwner`[^navbackstackentry-65]. Thus each entry has its own lifecycle, its own `ViewModel` objects and its own saved state. These objects are valid while the entry is on the back stack. When the controller pops the entry, the library destroys the lifecycle and clears the `ViewModel` objects[^navbackstackentry-58].
+The back stack of `NavController` is an `ArrayDeque` of `NavBackStackEntry` objects[^navcontrollerimpl-90]. Each entry has an `id`, and by default the id is a random UUID. Each entry is a `LifecycleOwner`, a `ViewModelStoreOwner` and a `SavedStateRegistryOwner`[^navbackstackentry-65]. Thus each entry has its own lifecycle, its own `ViewModel` objects and its own saved state. These objects are valid while the entry is on the back stack. When the controller pops the entry, the library destroys the lifecycle. If the pop does not save the state, the library also clears the `ViewModel` objects[^navbackstackentry-58][^navcontrollerimpl-618].
 
 The entry gets its `ViewModelStore` from a provider. The key is the id of the entry, not the route[^navbackstackentry-172]. This is the fix for the flaw of the rebuild. Two entries of `detail` have two ids, so they get two stores.
 
