@@ -157,7 +157,7 @@ The same rule applies to the parent of the parent[^coroutinescope-326]. A lexica
 
 If several children fail, the parent keeps the first exception that is not a `CancellationException` as the final cause. `getFinalRootCause` makes this choice[^jobsupport-237]. The other failures become suppressed exceptions of the final cause[^coroutinescope-378].
 
-`SupervisorJob` is the opt-out. Its `childCancelled` returns false[^supervisor-109]. Thus a failed child does not cancel the supervisor or the other children of the supervisor. The failure of a `launch` child then goes to the `CoroutineExceptionHandler` of its context, and the failure of an `async` child goes to `await`[^supervisor-17].
+`SupervisorJob` is the opt-out. Its `childCancelled` returns false[^supervisor-109]. Thus a failed child does not cancel the supervisor or the other children of the supervisor. Then a `CoroutineExceptionHandler` in the context of a failed `launch` child can handle the failure[^supervisor-17]. Code can handle the failure of an `async` child with `await`[^supervisor-17].
 
 ### The exception of a failed coroutine
 
