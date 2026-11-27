@@ -280,7 +280,7 @@ adb logcat -d -s Coroutines
 
 Each log line starts with the date, the time, the PID and the thread ID. The block shows them as `…`. Prompt 3 explains the lines with `cont2`.
 
-- From Java, the suspend function `delay` is a plain method. It has an extra `Continuation` parameter, and its return type is `Object`[^spec-cps]. It suspended, so it returned the marker at once, and `onCreate` ended. The marker is a value of the enum `CoroutineSingletons`, so it prints its name[^intrinsics-57].
+- From Java, the suspend function `delay` is a plain method. It has an extra `Continuation` parameter, and its return type is `Object`[^spec-cps][^codegen-cps]. It suspended, so it returned the marker at once, and `onCreate` ended. The marker is a value of the enum `CoroutineSingletons`, so it prints its name[^intrinsics-57].
 - About 500 ms later, the main `Looper` runs one message. The [main thread chapter](/launch-path/main-thread/) explains the `>>>>> Dispatching to` and `<<<<< Finished to` lines. The `Runnable` of this message is the lambda of `HandlerContext.scheduleResumeAfterDelay`, which `handler.postDelayed` posted[^handlerdispatcher-139]. The class name of the lambda contains `HandlerContext`.
 - In that message, `cont` logs `resumeWith(kotlin.Unit)` on the thread `main`. Thus the resume after `delay` is one message of the main queue. `HandlerContext` posted it, because it is the `ContinuationInterceptor` of the context and implements `Delay`[^delay-149][^handlerdispatcher-110].
 
