@@ -30,3 +30,21 @@ device: false
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
+## The problem
+
+A suspend function returns one value. A flow emits many values in sequence[^flow-doc]. `collect` is a suspend function, so code collects a flow inside a coroutine[^flow-doc-collect].
+
+The [unidirectional data flow chapter](/state-survival/unidirectional-data-flow/) kept the UI state in a `StateFlow`, and the UI collected it. A `StateFlow` is a different kind of flow from the flow that the `flow` builder makes:
+
+- A flow from the `flow` builder is cold. Its producer code runs each time that code calls a terminal operator, for example `collect`, on the flow. If two collectors collect the flow, the data source fetches the data two times[^flow-doc-collect].
+- A `StateFlow` is hot. A `collect` call does not run producer code. A new collector first gets the last state, and then each later state[^stateflow-doc].
+
+A producer can write new states faster than a collector runs. Then the collector is behind. What does a state holder give to that collector: each old state in order, or only the newest state? This chapter builds a cold flow and a hot state holder in plain Kotlin. It shows how the state holder gives each old state to a collector that is behind. Then it shows how `StateFlow` of kotlinx.coroutines 1.11.0 gives the collector only the newest state.
+
+[^flow-doc]: Kotlin flows on Android: [https://developer.android.com/kotlin/flow](https://developer.android.com/kotlin/flow)
+[^flow-doc-collect]: Kotlin flows on Android, "Collecting from a flow": [https://developer.android.com/kotlin/flow#collect](https://developer.android.com/kotlin/flow#collect)
+[^stateflow-doc]: StateFlow and SharedFlow, "StateFlow": [https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow](https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow)
