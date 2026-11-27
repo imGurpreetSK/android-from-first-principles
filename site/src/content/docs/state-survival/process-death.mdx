@@ -290,10 +290,11 @@ adb shell pidof io.github.imgurpreetsk.afp.launchapp.processDeath
 
 `pidof` prints the PID of the process, so the process is alive. `am kill` skips each process with an oom adj below 500[^activitymanagerservice-4346][^processlist-3220]. Write down the PID.
 
-Press Home. Print the LRU line again, kill the process, and read the log of the activity:
+Press Home, and wait 2 seconds, so that the activity stops. Then print the LRU line again, kill the process, and read the log of the activity:
 
 ```sh
 adb shell input keyevent KEYCODE_HOME
+sleep 2
 adb shell dumpsys activity -p io.github.imgurpreetsk.afp.launchapp.processDeath lru
 adb shell am kill io.github.imgurpreetsk.afp.launchapp.processDeath
 adb shell pidof io.github.imgurpreetsk.afp.launchapp.processDeath
@@ -313,7 +314,7 @@ ACTIVITY MANAGER LRU PROCESSES (dumpsys activity lru)
 
 Each log line starts with the date, the time, the PID and the thread ID. The block shows them as `…`.
 
-- After Home, the label is `prev`. The app is the previous app, with the oom adj 700[^constants-92]. If the oom adj is above 700, the label also shows the difference[^processlist-1120]. After a maximum time, the process moves to the cached range, and the label is `cch`[^oomadjuster-661][^processlist-1143].
+- While the activity pauses or stops, `OomAdjuster` gives the process the oom adj 200[^oomadjuster-1847][^constants-139], and the label is `prcp`[^processlist-1143]. At that time, `am kill` skips the process[^activitymanagerservice-4346][^processlist-3220]. When the activity reports the stop, `ActivityRecord.activityStopped` calls `updatePreviousProcess`[^activityrecord-6549]. After Home, the label is `prev`. The app is the previous app, with the oom adj 700[^constants-92]. If the oom adj is above 700, the label also shows the difference[^processlist-1120]. After a maximum time, the process moves to the cached range, and the label is `cch`[^oomadjuster-661][^processlist-1143].
 - `pidof` prints nothing, so `am kill` killed the process. Its oom adj was 500 or higher[^activitymanagerservice-4346].
 - The log has `onStop` and then `onSaveInstanceState`, because the app targets API level 37[^activitythread-6366][^activitythread-851]. The save came at the Home press, before the kill. The log has no `onDestroy` line.
 
@@ -359,7 +360,7 @@ Then do prompt 2 and this prompt again, with Back in place of Home. By default, 
 
 1. Run `adb shell am force-stop io.github.imgurpreetsk.afp.launchapp.processDeath` and `adb logcat -c`.
 2. In the emulator, tap the icon "Process death" on the home screen.
-3. Run `adb shell input keyevent KEYCODE_BACK`.
+3. Run `adb shell input keyevent KEYCODE_BACK`, and wait 2 seconds.
 4. Run the `am kill`, `pidof` and `logcat` commands of prompt 2. Then run the first command of this prompt.
 
 The result is the same as with Home. The log has `onStop` and `onSaveInstanceState`, and the record has `mHaveState=true`. Back moved the root launcher activity and its task to the background[^android-12-back].
@@ -468,5 +469,8 @@ The log has no `onSaveInstanceState` line, because an activity that finishes sav
 [^disposablesaveablestateregistry-115]: DisposableSaveableStateRegistry.android.kt, lines 115–142: [https://android.googlesource.com/platform/frameworks/support/+/5e0747401bf56b243e3b5141ae080dc9bc61d29c/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.android.kt#115](https://android.googlesource.com/platform/frameworks/support/+/5e0747401bf56b243e3b5141ae080dc9bc61d29c/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.android.kt#115)
 [^activitymanagerservice-11430]: ActivityManagerService.java, lines 11430–11438: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11430](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11430)
 [^processlist-4608]: ProcessList.java, lines 4608–4644: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4608](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4608)
+[^oomadjuster-1847]: OomAdjuster.java, lines 1847–1873: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/psc/OomAdjuster.java#1847](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/psc/OomAdjuster.java#1847)
+[^constants-139]: Constants.java, line 139: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/psc/Constants.java#139](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/psc/Constants.java#139)
+[^activityrecord-6549]: ActivityRecord.java, lines 6549–6553: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#6549](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#6549)
 [^activityrecord-1217]: ActivityRecord.java, lines 1217–1219: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#1217](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#1217)
 [^processlist-2994]: ProcessList.java, lines 2994–3013: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2994](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2994)
