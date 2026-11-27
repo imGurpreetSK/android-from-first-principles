@@ -104,7 +104,7 @@ Thus `update` can run the function more than one time. The KDoc says that the fu
 
 `compareAndSet` gives the expected value and the new value to `updateState`[^stateflow-323]. `updateState` reads the current value, compares it with the expected value, and writes the new value. These three steps run inside `synchronized(this)`, so no other writer can change the value between the comparison and the write[^stateflow-326].
 
-The setter of `value` calls the same `updateState` with `null` as the expected value[^stateflow-319]. If the expected value is `null`, `updateState` does not compare[^stateflow-326]. Thus, in `_uiState.value = _uiState.value.copy(...)`, the setter writes under the lock, but the getter reads the value before the setter takes the lock.
+The setter of `value` calls the same `updateState` with `null` as the expected value[^stateflow-319]. If the expected value is `null`, `updateState` does not compare the current value with an expected value[^stateflow-326]. Thus, in `_uiState.value = _uiState.value.copy(...)`, the setter writes under the lock, but the getter reads the value before the setter takes the lock.
 
 </GoDeeper>
 
