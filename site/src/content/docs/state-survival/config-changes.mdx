@@ -43,3 +43,26 @@ device: true
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
+## The problem
+
+Section 1 followed the launch app from the launcher tap to its first frame. While an app runs, the configuration of the device can change. Examples are the display size, the screen orientation, the font size, the locale, the dark theme and the keyboard availability[^runtime-changes].
+
+By default, a configuration change recreates the activity. The system calls `onDestroy` and destroys the `Activity` object. Then it creates a new `Activity` object, calls `onCreate`, and gives the new object the new configuration. The recreation also clears the state in the fields of the old `Activity` object. Compose also recreates the UI[^runtime-activity-recreation]. In Compose, `remember` keeps state across recompositions, but not across configuration changes[^compose-state-in-composables].
+
+A `ViewModel` survives the recreation. The system can call `onCreate` several times for one activity, for example after a rotation. A `ViewModel` stays in memory from the first request until the activity finishes[^viewmodel-lifecycle].
+
+In this chapter, an activity is one screen of the app, with one token. An `Activity` object is one Java object for that screen. A recreation keeps the activity and its token, and replaces the object. Thus a `ViewModel` outlives the `Activity` object that asked for it, but not the activity. This chapter answers two questions:
+
+- Where does the `ViewModel` stay between the destroy of the old object and the creation of the new object?
+- How does the code know if a destroy is a recreation or a finish?
+
+The chapter builds a store for `ViewModel` objects, shows where it breaks, and then shows how the platform and AndroidX keep and clear the real store.
+
+[^runtime-changes]: Handle configuration changes: [https://developer.android.com/guide/topics/resources/runtime-changes](https://developer.android.com/guide/topics/resources/runtime-changes)
+[^runtime-activity-recreation]: Handle configuration changes, "Activity recreation": [https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation](https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation)
+[^compose-state-in-composables]: State and Jetpack Compose, "State in composables": [https://developer.android.com/develop/ui/compose/state#state-in-composables](https://developer.android.com/develop/ui/compose/state#state-in-composables)
+[^viewmodel-lifecycle]: ViewModel overview, "The lifecycle of a ViewModel": [https://developer.android.com/topic/libraries/architecture/viewmodel#lifecycle](https://developer.android.com/topic/libraries/architecture/viewmodel#lifecycle)
