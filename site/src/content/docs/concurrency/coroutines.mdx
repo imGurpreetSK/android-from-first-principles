@@ -203,6 +203,24 @@ The main dispatcher prints its name as `Dispatchers.Main`[^handlerdispatcher-163
 
 `withContext` gets the continuation of its caller, `uCont`. If the new context has a new dispatcher, `withContext` makes a `DispatchedCoroutine`. It starts the block on the new dispatcher with `startCoroutineCancellable`[^builders-472]. Then it returns `getResult()`: `COROUTINE_SUSPENDED`, or the value if the block already ended[^builders-591]. When the block ends, `afterResume` resumes the caller through `uCont.intercepted()`[^builders-585]. The interceptor of `uCont` is the dispatcher of the caller. Thus the caller goes back to its own dispatcher, for example `Dispatchers.Main`. This is how `withContext(Dispatchers.IO)` makes a suspend function main-safe[^android-main-safety].
 
+## Mental model
+
+A suspend function is a state machine. The compiler gives it a continuation parameter and the return type `Any?`. A continuation object keeps `label` and the spilled local variables. At a suspension point, the function gives a continuation to a callback and returns `COROUTINE_SUSPENDED`. Each caller returns too, and the thread goes back to its loop. Later, the callback calls `resume`. The continuation of the callback does not call the state machine directly. It calls the wrapper of the interceptor of the coroutine context. On `Dispatchers.Main`, the wrapper is a `DispatchedContinuation`. Its `resumeWith` posts the `DispatchedContinuation` to the `Handler` of the main `Looper`. Then the main `Looper` runs the message, and the state machine continues at `label` on the main thread. Without the wrapper, as in the rebuild, the state machine continues on the thread of the callback.
+
+```mermaid
+sequenceDiagram
+  participant M as Main thread
+  participant SM as State machine
+  participant IO as I/O thread
+  participant DC as DispatchedContinuation
+  M->>SM: resume(Unit) runs step 0
+  SM->>IO: the callback gets the intercepted continuation
+  SM-->>M: COROUTINE_SUSPENDED, label is 1
+  IO->>DC: resumeWith(user)
+  DC->>M: handler.post(this)
+  M->>SM: DispatchedTask.run calls resume(user), step 1 runs
+```
+
 [^android-background-thread]: Kotlin coroutines on Android, "Executing in a background thread": [https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread](https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread)
 [^android-main-safety]: Kotlin coroutines on Android, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety](https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety)
 [^adv-manage]: Improve app performance with Kotlin coroutines, "Manage long-running tasks": [https://developer.android.com/kotlin/coroutines/coroutines-adv#manage](https://developer.android.com/kotlin/coroutines/coroutines-adv#manage)
