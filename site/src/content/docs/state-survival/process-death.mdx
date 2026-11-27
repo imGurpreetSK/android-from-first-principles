@@ -44,6 +44,8 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
+import Snippet from '../../../components/Snippet.astro';
+
 ## The problem
 
 An app does not control the lifetime of its process. The system decides it from the components that run in the process, from their importance to the user and from the free memory. The system puts each process in an importance hierarchy: foreground, visible, service and cached. A cached process is not necessary now, so the system can kill it when it needs memory[^process-lifecycle]. A stopped activity is in a background process, and the chance that the system kills that process is higher than for a visible activity[^activity-lifecycle-state].
@@ -56,9 +58,48 @@ In AndroidX, components connect to saved state through a `SavedStateRegistry`. E
 
 This chapter builds such a registry, a fake `system_server` and an app process that a test can kill. A breaking test shows that the registry loses state after two process deaths. Then the chapter follows the real save path: from `onStop` in the app, to the record of the activity in `system_server`, and back into a new process.
 
+## Build it naive
+
+The rebuild is in the module `samples/process-death`. It has no `android.*` classes, no threads and no clock. A `Map` stands for a `Bundle`, and a `fun interface` stands for `SavedStateProvider`:
+
+<Snippet file="process-death/src/main/kotlin/NaiveSavedStateRegistry.kt" region="state" />
+
+On Android, the `SavedState` type of AndroidX is `android.os.Bundle`[^savedstate-android-26].
+
+`NaiveSavedStateRegistry` keeps one provider for each key. It rejects a second provider for the same key, as the real registry does[^savedstateregistryimpl-66]. `performRestore` keeps the state of the last save. `consumeRestoredStateForKey` returns the state of a key and removes the key, so a component gets its state only one time. The real registry also removes the key[^savedstateregistryimpl-48]. `performSave` calls each provider and returns the results by key:
+
+<Snippet file="process-death/src/main/kotlin/NaiveSavedStateRegistry.kt" region="registry" />
+
+`Counter` is a component with one number. It consumes the restored state of its key and takes its count from that state. Then it registers a provider that saves the count:
+
+<Snippet file="process-death/src/main/kotlin/NaiveSavedStateRegistry.kt" region="counter" />
+
+The first test registers two counters and saves the registry. The result has the state of each counter under its key:
+
+<Snippet file="process-death/src/test/kotlin/NaiveSavedStateRegistryTest.kt" region="save" />
+
+`FakeSystemServer` stands for `system_server`. It keeps one saved map for each activity record, outside the app process. Each stop replaces the map of the record. The real `ActivityRecord.activityStopped` also replaces the saved state of the record with the new `Bundle`[^activityrecord-6513][^activityrecord-1347]:
+
+<Snippet file="process-death/src/main/kotlin/FakeProcess.kt" region="server" />
+
+`FakeProcess` stands for an app process with one activity. Its constructor makes a registry and restores it from the server. `stopActivity` saves the registry into the server. `kill` drops the registry and calls nothing in the app. Thus the app must save its state when the activity stops, not when the process dies:
+
+<Snippet file="process-death/src/main/kotlin/FakeProcess.kt" region="process" />
+
+A test gives two counters the counts 1 and 2. It stops the activity and kills the process. Then a new process creates the two counters again:
+
+<Snippet file="process-death/src/test/kotlin/ProcessDeathTest.kt" region="restore" />
+
+The test passes. After one process death, each counter gets its count back. This test is not a breaking test.
+
 [^process-lifecycle]: Processes and app lifecycle: [https://developer.android.com/guide/components/activities/process-lifecycle](https://developer.android.com/guide/components/activities/process-lifecycle)
 [^activity-lifecycle-state]: The activity lifecycle, "Activity state and ejection from memory": [https://developer.android.com/guide/components/activities/activity-lifecycle#activity-state](https://developer.android.com/guide/components/activities/activity-lifecycle#activity-state)
 [^saving-states-system]: Save UI states, "System-initiated UI state dismissal": [https://developer.android.com/topic/libraries/architecture/saving-states#ui-dismissal-system](https://developer.android.com/topic/libraries/architecture/saving-states#ui-dismissal-system)
 [^saving-states-options]: Save UI states, "Options for preserving UI state": [https://developer.android.com/topic/libraries/architecture/saving-states#options](https://developer.android.com/topic/libraries/architecture/saving-states#options)
 [^saving-states-saved]: Save UI states, "Use saved state as backup to handle system-initiated process death": [https://developer.android.com/topic/libraries/architecture/saving-states#onsaveinstancestate](https://developer.android.com/topic/libraries/architecture/saving-states#onsaveinstancestate)
 [^saving-states-registry]: Save UI states, "Hook into saved state using SavedStateRegistry": [https://developer.android.com/topic/libraries/architecture/saving-states#savedstateregistry](https://developer.android.com/topic/libraries/architecture/saving-states#savedstateregistry)
+[^savedstate-android-26]: SavedState.android.kt, line 26: [https://android.googlesource.com/platform/frameworks/support/+/696d8ec0adf47d3d677cb0f42a5974f1f97fb411/savedstate/savedstate/src/androidMain/kotlin/androidx/savedstate/SavedState.android.kt#26](https://android.googlesource.com/platform/frameworks/support/+/696d8ec0adf47d3d677cb0f42a5974f1f97fb411/savedstate/savedstate/src/androidMain/kotlin/androidx/savedstate/SavedState.android.kt#26)
+[^savedstateregistryimpl-66]: SavedStateRegistryImpl.kt, lines 66–73: [https://android.googlesource.com/platform/frameworks/support/+/696d8ec0adf47d3d677cb0f42a5974f1f97fb411/savedstate/savedstate/src/commonMain/kotlin/androidx/savedstate/internal/SavedStateRegistryImpl.kt#66](https://android.googlesource.com/platform/frameworks/support/+/696d8ec0adf47d3d677cb0f42a5974f1f97fb411/savedstate/savedstate/src/commonMain/kotlin/androidx/savedstate/internal/SavedStateRegistryImpl.kt#66)
+[^savedstateregistryimpl-48]: SavedStateRegistryImpl.kt, lines 48–63: [https://android.googlesource.com/platform/frameworks/support/+/696d8ec0adf47d3d677cb0f42a5974f1f97fb411/savedstate/savedstate/src/commonMain/kotlin/androidx/savedstate/internal/SavedStateRegistryImpl.kt#48](https://android.googlesource.com/platform/frameworks/support/+/696d8ec0adf47d3d677cb0f42a5974f1f97fb411/savedstate/savedstate/src/commonMain/kotlin/androidx/savedstate/internal/SavedStateRegistryImpl.kt#48)
+[^activityrecord-6513]: ActivityRecord.java, lines 6513–6519: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#6513](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#6513)
+[^activityrecord-1347]: ActivityRecord.java, lines 1347–1350: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#1347](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#1347)
