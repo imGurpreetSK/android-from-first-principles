@@ -47,4 +47,16 @@ class NaiveInputDispatcherTest {
         assertEquals(listOf("tap 1" to 0L, "tap 2" to 1_000L, "tap 3" to 5_600L), window.received)
         assertEquals(emptyList<Long>(), dispatcher.anrs)
     }
+
+    // region flaw
+    @Test
+    fun naiveDispatcher_reportsNoAnr_whenWindowNeverFinishesTheOnlyEvent() {
+        val window = FakeWindow(clock) // No finish times: the main thread never finishes a touch.
+        val dispatcher = NaiveInputDispatcher(clock, window)
+        dispatcher.inject("tap")
+        clock.advanceTo(60_000)
+        assertEquals(listOf("tap" to 0L), window.received)
+        assertEquals(emptyList<Long>(), dispatcher.anrs)
+    }
+    // endregion
 }
