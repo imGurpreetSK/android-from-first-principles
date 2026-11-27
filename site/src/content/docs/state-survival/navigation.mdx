@@ -54,7 +54,7 @@ import GoDeeper from '../../../components/GoDeeper.astro';
 
 An app has more than one screen. The user goes from a list to a detail screen. Back returns the user to the list. Thus the app must keep the screens in the order in which the user opened them. This order is a back stack.
 
-The platform keeps one back stack. A task is a collection of activities in a stack, the back stack. The stack holds the activities in the order in which each activity opened[^tasks-intro]. When an activity starts another activity, the new activity goes on the top of the stack. On Back, the system pops the top activity and destroys it. The activity below it resumes[^tasks-life-cycle]. An app can start a second instance of an activity that is already on the stack. Back shows each instance with its own UI state[^tasks-multiple-instances].
+The platform keeps one back stack for each task. A task is a collection of activities in a stack, the back stack. The stack holds the activities in the order in which each activity opened[^tasks-intro]. When an activity starts another activity, the new activity goes on the top of the stack. On Back, the system pops the top activity and destroys it. The activity below it resumes[^tasks-life-cycle]. An app can start a second instance of an activity that is already on the stack. Back shows each instance with its own UI state[^tasks-multiple-instances].
 
 The Navigation library keeps a second back stack in the `NavController`: an `ArrayDeque` of `NavBackStackEntry` objects[^navcontrollerimpl-90]. Each back stack must answer two questions:
 
