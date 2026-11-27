@@ -47,6 +47,8 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
+import Snippet from '../../../components/Snippet.astro';
+
 ## The problem
 
 An app has more than one screen. The user goes from a list to a detail screen. Back returns the user to the list. Thus the app must keep the screens in the order in which the user opened them. This order is a back stack.
@@ -61,6 +63,20 @@ The Navigation library keeps a second back stack in the `NavController`: an `Arr
 Since Android 10, the user can turn on gesture navigation. Then the system reads a swipe in from the edge of the screen as Back. This applies to all apps, for each `targetSdk`[^android-10-gesture-nav].
 
 This chapter builds a back stack that keeps the state of each screen, and shows where it breaks. Then it shows how the platform, AndroidX and Navigation send Back to one callback and keep the state of each entry.
+
+## Build it naive
+
+The rebuild is in the module `samples/navigation`, in plain Kotlin. `NaiveBackStack` keeps the routes of the screens in an `ArrayDeque`. A route is the name of a destination, for example `list` or `detail`. `navigate` pushes a route. `back` pops the top route. `top` returns the top route.
+
+The stack also keeps the state of each screen, for example a scroll position. This state is a stand-in for a `ViewModel` or for saved UI state. A map holds the state, and the key of the map is the route. `topState` reads and writes the state of the top route. `back` deletes the state of the popped route, because the popped screen cannot come back:
+
+<Snippet file="navigation/src/main/kotlin/NaiveBackStack.kt" region="stack" />
+
+Three tests check the normal cases:
+
+- After `back`, `top` is the route below the popped route.
+- After `back`, the route below keeps its state.
+- If the app navigates to a route again after `back`, the new screen starts with no state.
 
 [^tasks-intro]: Tasks and the back stack: [https://developer.android.com/guide/components/activities/tasks-and-back-stack](https://developer.android.com/guide/components/activities/tasks-and-back-stack)
 [^tasks-life-cycle]: Tasks and the back stack, "Lifecycle of a task and its back stack": [https://developer.android.com/guide/components/activities/tasks-and-back-stack#life-cycle](https://developer.android.com/guide/components/activities/tasks-and-back-stack#life-cycle)
