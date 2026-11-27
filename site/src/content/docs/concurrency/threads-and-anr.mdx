@@ -202,9 +202,9 @@ A `ScheduledThreadPoolExecutor` can run a task again and again. After each run, 
 
 ### HandlerThread and the niceness of a thread
 
-`HandlerThread` is a `Thread` that has a `Looper`[^handlerthread-24]. Its `run()` prepares the `Looper`, sets the priority of the thread with `Process.setThreadPriority`, and runs the loop[^handlerthread-129]. The [main-thread chapter](/launch-path/main-thread/) explains the loop. The priority comes from the constructor. If the constructor gets no priority, the priority is `THREAD_PRIORITY_DEFAULT`[^handlerthread-92].
+`HandlerThread` is a `Thread` that has a `Looper`[^handlerthread-24]. Its `run()` prepares the `Looper`, sets the niceness of the thread with `Process.setThreadPriority`, and runs the loop[^handlerthread-129]. The [main-thread chapter](/launch-path/main-thread/) explains the loop. The niceness comes from the constructor. If the constructor gets no niceness, the niceness is `THREAD_PRIORITY_DEFAULT`[^handlerthread-92].
 
-`Process.setThreadPriority` takes a Linux niceness, not a Java priority[^process-1392]. `THREAD_PRIORITY_DEFAULT` is 0[^process-410]. `THREAD_PRIORITY_BACKGROUND` is 10. A comment says that a thread with this priority has less chance to slow down the user interface[^process-433].
+`Process.setThreadPriority` takes a Linux niceness, not a Java priority[^process-1392]. `THREAD_PRIORITY_DEFAULT` is 0[^process-410]. `THREAD_PRIORITY_BACKGROUND` is 10. A comment says that a thread with this niceness has less chance to slow down the user interface[^process-433].
 
 The system also changes the niceness of the main thread. When the process of an app becomes the top app, `OomAdjuster` boosts its main thread: the thread whose TID is the PID of the process. If the process does not use FIFO scheduling for the UI, `OomAdjuster` sets the niceness of that thread to `THREAD_PRIORITY_TOP_APP_BOOST`, -10[^oomadjuster-2386][^process-481]. Prompt 2 of "Try it" shows the niceness of each thread.
 
@@ -268,7 +268,7 @@ Start an emulator with the system image of the checked stamp. From the repo root
 samples/gradlew -p samples :launch-app:installThreadsAndAnrRelease
 ```
 
-The flavor has one activity, `AnrActivity`. In `onCreate`, the activity starts `Executors.newFixedThreadPool(2)` with two short tasks. It also starts a `HandlerThread` with the name `worker` and the priority `THREAD_PRIORITY_BACKGROUND`. Its content is one `TextView`. A click on the `TextView` makes the main thread sleep for 30 s.
+The flavor has one activity, `AnrActivity`. In `onCreate`, the activity starts `Executors.newFixedThreadPool(2)` with two short tasks. It also starts a `HandlerThread` with the name `worker` and the niceness `THREAD_PRIORITY_BACKGROUND`. Its content is one `TextView`. A click on the `TextView` makes the main thread sleep for 30 s.
 
 Read the multiplier of the system timeouts:
 
