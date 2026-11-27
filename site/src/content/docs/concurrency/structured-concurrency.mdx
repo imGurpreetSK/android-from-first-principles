@@ -231,7 +231,7 @@ To make sure that suspend cleanup code completes after a cancellation, for examp
 
 `LaunchedEffect` keeps a `LaunchedEffectImpl` in `remember(key1)`[^effects-563]. When the impl enters the composition, `onRemembered` launches the block. When the impl leaves the composition, `onForgotten` cancels the job[^effects-508]. The KDoc states that if the key changes, the old coroutine gets the cancellation, and a new coroutine starts[^effects-552].
 
-In `viewModelScope` and `lifecycleScope`, the `SupervisorJob` does not handle the exception of a failed `launch` coroutine, and the context has no `CoroutineExceptionHandler`. Thus the exception goes to the uncaught exception handler of the thread.
+In `viewModelScope` and `lifecycleScope`, the `SupervisorJob` does not handle the exception of a failed `launch` coroutine[^supervisor-109][^jobsupport-221]. The context that the library makes for each scope has no `CoroutineExceptionHandler`[^closeablecoroutinescope-51][^lifecycle-297]. Thus, if the `launch` call adds no handler, the exception goes to the handlers that `ServiceLoader` finds and to the uncaught exception handler of the current thread[^coroutineexceptionhandler-184].
 
 The Android guide gives this advice:
 
