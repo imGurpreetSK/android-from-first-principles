@@ -238,7 +238,7 @@ The Android guide gives this advice:
 - If an exception is likely in a coroutine of `viewModelScope` or `lifecycleScope`, catch it in the body of the coroutine. An unhandled exception can crash the app[^bp-exceptions].
 - If a coroutine does blocking work in a loop, call `ensureActive` before each step[^bp-cancellable].
 - In the data and business layers, if the work belongs only to the current screen, use `coroutineScope` or `supervisorScope`[^bp-data-layer].
-- Do not use `GlobalScope`. If work must live longer than the current screen, inject an external `CoroutineScope`[^bp-global-scope].
+- Avoid `GlobalScope`. If work must live longer than the current screen, inject an external `CoroutineScope`[^bp-global-scope].
 
 Since Android 15, if an app starts a network request outside a valid process lifecycle, the app gets an exception, for example an `UnknownHostException`. The page tells apps to cancel such requests with lifecycle-aware components when the app leaves a valid process lifecycle[^android-15-network].
 
