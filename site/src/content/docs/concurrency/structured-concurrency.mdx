@@ -183,7 +183,7 @@ The runtime path, `Thread.dispatchUncaughtException`, calls the pre-handler befo
 
 ### The parent waits for its children
 
-If the block of a coroutine ends while children still run, `tryMakeCompletingSlowPath` marks the job as completing. It registers a completion handler on a child that is not complete, and returns `COMPLETING_WAITING_CHILDREN`[^jobsupport-902][^jobsupport-954]. When that child completes, `continueCompleting` waits for the next child. When no child is left, it calls `finalizeFinishingState`[^jobsupport-1260][^jobsupport-965]. Only then is the job complete. While the job waits, it is still active for code outside the job[^job-67].
+If the block of a coroutine returns while children still run, `tryMakeCompletingSlowPath` moves the job to the Completing state. It registers a completion handler on a child that is not complete, and returns `COMPLETING_WAITING_CHILDREN`[^jobsupport-902][^jobsupport-954]. When that child completes, `continueCompleting` waits for the next child. When no child is left, it calls `finalizeFinishingState`[^jobsupport-1260][^jobsupport-965]. Only then is the job complete. While the job waits, it is still active for code outside the job[^job-67].
 
 `coroutineScope` uses the same rule. It returns only after its block and each coroutine in the scope complete[^coroutinescope-745].
 
