@@ -151,7 +151,7 @@ The window manager handles an unresponsive window in `AnrController.notifyWindow
 2. It writes `ANR in <process> (<activity>)`, `PID: <pid>` and `Reason: <reason>` to the log[^processerrorstaterecord-536][^processerrorstaterecord-656].
 3. For a silent ANR, it kills the process with the reason `bg anr`[^processerrorstaterecord-779]. For other ANRs, it can show the ANR dialog[^processerrorstaterecord-800].
 
-An ANR is silent if the user did not turn on the setting that shows background ANRs, and the process is not interesting for background traces. For example, a process that shows an activity is interesting[^processerrorstaterecord-863][^processerrorstaterecord-930].
+An ANR is silent if the user did not turn on the setting that shows background ANRs, and `isInterestingForBackgroundTraces` returns false. For example, this method returns true for a process that shows an activity[^processerrorstaterecord-863][^processerrorstaterecord-930].
 
 <GoDeeper title="the ANR trace">
 
