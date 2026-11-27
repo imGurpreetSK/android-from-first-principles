@@ -39,6 +39,14 @@ android {
             // The baseline of the chapter is Android 17 (API level 37).
             targetSdk = 37
         }
+        // The app of the process-death chapter. Its device prompts run installProcessDeathRelease.
+        create("processDeath") {
+            dimension = "chapter"
+            // The suffix lets the flavor install next to launchPath.
+            applicationIdSuffix = ".processDeath"
+            // The API level of the Android 17 baseline of the chapter.
+            targetSdk = 37
+        }
         // The app of the dependency-injection chapter. Its manifest replaces the AppComponentFactory of the app.
         create("dependencyInjection") {
             dimension = "chapter"
