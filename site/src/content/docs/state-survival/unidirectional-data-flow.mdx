@@ -70,11 +70,11 @@ The rebuild has the parts of UDF. One object owns the state, and other code gets
 
 `update` reads the state and writes the next state in two separate steps. If another writer changes the state between the two steps, `update` writes over that change. The value that `update` writes comes from the old state.
 
-The breaking test has two writers. Two `CountDownLatch` gates set the order of their steps, so each run gives the same result:
+The breaking test has two writers. Two latches (`CountDownLatch`) set the order of their steps, so each run gives the same result:
 
 <Snippet file="unidirectional-data-flow/src/test/kotlin/NaiveStoreTest.kt" region="lost-update" />
 
-1. Writer B runs on a second thread. Its transform gets the state 0. The transform opens the gate `bHasRead`, and then waits at the gate `aHasWritten`.
+1. Writer B runs on a second thread. Its transform gets the state 0. The transform opens the latch `bHasRead`, and then waits at the latch `aHasWritten`.
 2. The main thread is writer A. It waits at `bHasRead` until B has the state. Then it writes 0 + 1, so the state is 1. Then it opens `aHasWritten`, and waits until B ends.
 3. The transform of B continues and returns 0 + 1. B writes 1 over the 1 of writer A.
 
