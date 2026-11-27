@@ -189,6 +189,24 @@ Hilt uses field injection for an activity. The platform also permits constructor
 
 </GoDeeper>
 
+## Mental model
+
+A DI container creates the objects of a graph and gives each object its dependencies. An unscoped binding gives a new object at each request. A scoped binding gives one object for each container instance, so a scoped object lives as long as its container. A container in an `Activity` object ends at each configuration change. A container in the `Application` lives as long as the process, so a flow object in it survives into the next flow. Hilt generates one component for each Android class. It keeps the `ActivityRetainedComponent` in a `ViewModel` in the `ViewModelStore` of the activity. `ComponentActivity` clears that store only at a destroy that is not a configuration change. Each new `Activity` object gets a new `ActivityComponent`, as a child of the same retained component.
+
+```mermaid
+flowchart TB
+  app["Application: SingletonComponent, @Singleton"]
+  store["ViewModelStore of the activity"]
+  retained["ActivityRetainedComponent, @ActivityRetainedScoped"]
+  a1["Activity object 1: ActivityComponent 1, @ActivityScoped"]
+  a2["Activity object 2: ActivityComponent 2, @ActivityScoped"]
+  app --> retained
+  store -- "keeps in a ViewModel across a configuration change" --> retained
+  retained --> a1
+  retained --> a2
+  a1 -. "configuration change" .-> a2
+```
+
 [^di-what]: Dependency injection in Android, "What is dependency injection?": [https://developer.android.com/training/dependency-injection#what-is-di](https://developer.android.com/training/dependency-injection#what-is-di)
 [^appcomponentfactory-96]: AppComponentFactory.java, lines 96–100: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96)
 [^appcomponentfactory-83]: AppComponentFactory.java, lines 83–95: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83)
