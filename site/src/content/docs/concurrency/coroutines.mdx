@@ -124,7 +124,7 @@ The Android docs say that a suspend copies the current stack frame and saves it 
 
 <GoDeeper title="The JVM pass that makes the state machine">
 
-`CoroutineTransformerMethodVisitor` is the JVM pass that finds the suspension points and makes the state machine[^codegen-suspend-markers]. At the start of the method, it adds a `tableswitch` on the `label` field of the continuation[^ctmv-323]. It names each field for a spilled variable with the first letter of the type descriptor, `$` and an index, for example `L$0` for a reference and `I$0` for an `int`[^ctmv-1578][^codegen-spilled-naming]. Before a suspension point, it can write `null` into a reference field `L$<index>`[^ctmv-1045].
+`CoroutineTransformerMethodVisitor` is the JVM pass that finds the suspension points and makes the state machine[^codegen-suspend-markers]. At the start of the method, it adds a `tableswitch` on the `label` field of the continuation[^ctmv-323]. It names each field for a spilled variable with the first letter of the type descriptor, `$` and an index[^ctmv-1578][^codegen-spilled-naming]. For example, `L$0` is a field for a reference, and `I$0` is a field for an `int`[^codegen-spilled-naming]. Before a suspension point, the pass can write `null` into a reference field `L$<index>`[^ctmv-1045].
 
 </GoDeeper>
 
