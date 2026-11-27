@@ -187,7 +187,7 @@ A `CancellableContinuationImpl` dispatches in another way. Its `resumeWith` call
 
 On Android, `Dispatchers.Main` is a `HandlerContext`. `AndroidDispatcherFactory` makes it around an asynchronous `Handler` of the main `Looper`[^handlerdispatcher-48]. `HandlerContext.dispatch` calls `handler.post(block)`[^handlerdispatcher-133]. Thus each resume on `Dispatchers.Main` is one message in the queue of the main `Looper`. The [main thread chapter](/launch-path/main-thread/) explains the queue and the asynchronous messages.
 
-`HandlerContext.isDispatchNeeded` returns true, unless the dispatcher is `immediate` and the current `Looper` is the `Looper` of the `Handler`[^handlerdispatcher-129]. Thus `Dispatchers.Main` posts each resume, also a resume that comes from the main thread.
+`HandlerContext.isDispatchNeeded` returns true, unless the dispatcher is `immediate` and the current `Looper` is the `Looper` of the `Handler`[^handlerdispatcher-129]. Thus `Dispatchers.Main` posts each resume that goes through `isDispatchNeeded`, also a resume that comes from the main thread.
 
 `HandlerContext` also implements `Delay`[^handlerdispatcher-110]. `delay` asks the `Delay` of the context to schedule the resume[^delay-121]. If the `ContinuationInterceptor` of the context implements `Delay`, it is the `Delay` of the context[^delay-149]. `HandlerContext.scheduleResumeAfterDelay` posts the resume with `handler.postDelayed`[^handlerdispatcher-139].
 
