@@ -205,7 +205,7 @@ The Compose `NavHost` uses its own handler, a `NavHostEventHandler`. `NavHost` e
 
 At the start destination, the `NavHost` handler is disabled, so the next enabled handler gets Back. If no handler is enabled, AndroidX unregisters its platform callback[^onbackinvokedinput-76], and the default callback of the `Activity` gets Back.
 
-`BackHandler` adds its handler to the dispatcher of `LocalNavigationEventDispatcherOwner`, the same dispatcher as `NavHost`[^backhandler-108][^backhandler-146]. If more than one `BackHandler` is enabled, the `BackHandler` that is composed last gets Back[^backhandler-85]. The docs give the same model. The last enabled callback of the stack handles the next Back. The system handles Back only if all callbacks are disabled[^predictive-back-single-responsibility].
+`BackHandler` adds its handler to the dispatcher of `LocalNavigationEventDispatcherOwner`, the same dispatcher as `NavHost`[^backhandler-108][^backhandler-146]. If more than one `BackHandler` is enabled, the `BackHandler` that entered the composition last gets Back[^backhandler-85]. The docs give the same model. The last enabled callback of the stack handles the next Back. The system handles Back only if all callbacks are disabled[^predictive-back-single-responsibility].
 
 ### Navigation 3: the app owns the list
 
