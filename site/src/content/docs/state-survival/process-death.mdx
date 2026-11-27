@@ -92,6 +92,18 @@ A test gives two counters the counts 1 and 2. It stops the activity and kills th
 
 The test passes. After one process death, each counter gets its count back. This test is not a breaking test.
 
+## Where it breaks
+
+An app does not always create each component again after a process death. For example, an app can create a screen or a `ViewModel` only when the user opens it. Such a component does not consume its restored state. The breaking test has three processes:
+
+<Snippet file="process-death/src/test/kotlin/ProcessDeathTest.kt" region="breaking" />
+
+1. Process 1 creates the counters A and B with the counts 1 and 2. The activity stops, so the server gets the state of A and B. Then the test kills the process.
+2. Process 2 restores the registry and creates only A. The restored state of B stays in the registry, because no component consumes it. The activity stops again. `performSave` writes only the providers that the registry holds, so the server gets only the state of A. Then the test kills the process again.
+3. Process 3 creates B. The registry has no state for B, so `restored` is null.
+
+The test passes, so the flaw occurs. B lost its count after the second process death, but process 2 did not change B. The tests use no threads and no clock, so they give the same result on each run.
+
 [^process-lifecycle]: Processes and app lifecycle: [https://developer.android.com/guide/components/activities/process-lifecycle](https://developer.android.com/guide/components/activities/process-lifecycle)
 [^activity-lifecycle-state]: The activity lifecycle, "Activity state and ejection from memory": [https://developer.android.com/guide/components/activities/activity-lifecycle#activity-state](https://developer.android.com/guide/components/activities/activity-lifecycle#activity-state)
 [^saving-states-system]: Save UI states, "System-initiated UI state dismissal": [https://developer.android.com/topic/libraries/architecture/saving-states#ui-dismissal-system](https://developer.android.com/topic/libraries/architecture/saving-states#ui-dismissal-system)
