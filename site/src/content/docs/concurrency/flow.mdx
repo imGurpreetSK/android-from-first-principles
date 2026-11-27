@@ -73,7 +73,7 @@ Each write to `value` posts one delivery task for each collector. Each task hold
 
 <Snippet file="flow/src/main/kotlin/NaiveStateFlow.kt" region="state" />
 
-Three more tests check the parts. `FakeQueue` runs its tasks only in `runAll`, in post order. A new collector gets the current value. A write reaches each of two collectors only when the queue runs.
+Three more tests check `FakeQueue` and `NaiveStateFlow`. `FakeQueue` runs its tasks only in `runAll`, in post order. A new collector gets the current value. A write reaches each of two collectors only when the queue runs.
 
 ## Where it breaks
 
@@ -97,7 +97,7 @@ The `Flow` type does not tell if a flow is cold or hot. Usually, a flow is cold.
 
 ### `flow { }` keeps only its block
 
-`flow { }` makes a cold flow. Its block runs each time that code applies a terminal operator to the flow[^builders-15]. `flow()` returns a `SafeFlow`, and the `SafeFlow` keeps only the block. `SafeFlow.collectSafely` runs the block on the collector[^builders-52]. `naiveFlow` of the rebuild has the same design. Thus each collector starts a new run of the producer. To share one run between collectors, use `shareIn`[^flow-doc-collect]. The part "`stateIn` and `shareIn` share one run" below shows how.
+`flow { }` makes a cold flow. Its block runs each time that code applies a terminal operator to the flow[^builders-15]. `flow()` returns a `SafeFlow`, and the `SafeFlow` keeps only the block. `SafeFlow.collectSafely` runs the block on the collector[^builders-52]. `naiveFlow` of the rebuild has the same design. Thus each collector starts a new run of the producer. To share one run between collectors, use `shareIn`[^flow-doc-collect]. To see how, read "`stateIn` and `shareIn` share one run" below.
 
 By default, the producer of the `flow` builder runs in the `CoroutineContext` of the collector, and it cannot emit values from a different `CoroutineContext`. To change the context, use `flowOn`. `flowOn` changes the context of the upstream flow: the producer and the operators before `flowOn`. The downstream flow, with the operators after `flowOn` and the collector, keeps the context of the collection[^flow-doc-context]. The context of `flowOn` does not leak into the downstream flow[^context-192]. `callbackFlow` can emit values from a different `CoroutineContext` with `send`, or from outside a coroutine with `trySend`[^flow-doc-callback].
 
