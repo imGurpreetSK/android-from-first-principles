@@ -39,4 +39,20 @@ class NaiveStateFlowTest {
         assertEquals(listOf(0, 5), first)
         assertEquals(listOf(0, 5), second)
     }
+
+    // region flaw
+    @Test
+    fun naiveStateFlow_rendersStaleValues_whenCollectorIsBehind() {
+        val state = NaiveStateFlow(0, queue)
+        val rendered = mutableListOf<Int>()
+        state.collect { rendered += it }
+        // The queue does not run between the writes, so the collector is behind by four writes.
+        state.value = 1
+        state.value = 2
+        state.value = 3
+        state.value = 3
+        queue.runAll()
+        assertEquals(listOf(0, 1, 2, 3, 3), rendered)
+    }
+    // endregion
 }
