@@ -140,7 +140,7 @@ The app does not decide if a change recreates an activity. `system_server` decid
 
 If the activity handles each change, `system_server` only sends the new configuration to the app, with `scheduleConfigurationChanged`[^activityrecord-8701]. The app calls `onConfigurationChanged` on the same `Activity` object[^activitythread-7138]. The object stays, so its fields stay. Only the `Configuration` changes, and Compose recomposes the UI with the new values[^runtime-restrict-activity].
 
-`relaunchActivityLocked` writes an event to the event log. If the activity is resumed, or must be resumed, the event is `wm_relaunch_resume_activity`. Otherwise, the event is `wm_relaunch_activity`. The last field of the event is the mask of changes, in hexadecimal[^activityrecord-8948]. Then `relaunchActivityLocked` sends an `ActivityRelaunchItem` with the token of the activity to the app. With it, it sends a resume item or a pause item[^activityrecord-8969]. Prompt 2 of "Try it" shows the event.
+`relaunchActivityLocked` writes an event to the event log. If the activity is resumed, or if `system_server` must resume it, the event is `wm_relaunch_resume_activity`. Otherwise, the event is `wm_relaunch_activity`. The last field of the event is the mask of changes, in hexadecimal[^activityrecord-8948]. Then `relaunchActivityLocked` sends an `ActivityRelaunchItem` with the token of the activity to the app. With it, it sends a resume item or a pause item[^activityrecord-8969]. Prompt 2 of "Try it" shows the event.
 
 <GoDeeper title="the filters of system_server">
 
