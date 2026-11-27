@@ -101,17 +101,17 @@ In Android 10, `InputDispatcher.cpp` gives the two values in nanoseconds. `DEFAU
 
 ## Where it breaks
 
-The dispatcher starts its timer only when a touch must wait. Nothing times a touch that the window already has. The first breaking test sends one tap to a window that never finishes it. Then the test moves the clock to 60 s:
+The dispatcher starts its timer only when a touch must wait. Nothing times a touch that the window already has. The first breaking test sends one touch to a window that never finishes it. Then the test moves the clock to 60 s:
 
 <Snippet file="threads-and-anr/src/test/kotlin/NaiveInputDispatcherTest.kt" region="flaw" />
 
-The test passes, so the flaw occurs. For 60 s, the window does not finish the tap, and the dispatcher reports no ANR. The main thread of the app is blocked, but the dispatcher does nothing.
+The test passes, so the flaw occurs. For 60 s, the window does not finish the touch, and the dispatcher reports no ANR. The main thread of the app is blocked, but the dispatcher does nothing.
 
-The second breaking test shows a late ANR. The window never finishes the first tap. At t=10000, a second tap comes. The first tap is 500 ms old or older, so the second tap waits, and the timer starts only at that time:
+The second breaking test shows a late ANR. The window never finishes the first touch. At t=10000, a second touch comes. The first touch is 500 ms old or older, so the second touch waits, and the timer starts only at that time:
 
 <Snippet file="threads-and-anr/src/test/kotlin/NaiveInputDispatcherTest.kt" region="late-anr" />
 
-The ANR comes at t=15000, 15 s after the first tap. The time of the ANR depends on the next touch of the user, not on the tap that the window did not finish.
+The ANR comes at t=15000, 15 s after the first touch. The time of the ANR depends on the next touch of the user, not on the touch that the window did not finish.
 
 The dispatcher of Android 10 had the same flaw. For a touch, it started the timer only when it found the window not ready for more input[^inputdispatcher-10-1560][^inputdispatcher-10-1091]. "The real thing" shows how Android 11 and later fix the flaw.
 
@@ -246,7 +246,7 @@ From the repo root, run the tests of the rebuild:
 samples/gradlew -p samples :threads-and-anr:test
 ```
 
-Both breaking tests fail, because the flaw is gone. The window does not finish the first tap, so its deadline passes at t=5000. The first breaking test now gets the ANRs `[5000]`, and the second gets `[5000, 15000]`. The four other tests pass, because no deadline passes in them. The Gradle output includes these lines:
+Both breaking tests fail, because the flaw is gone. The window does not finish the first touch, so its deadline passes at t=5000. The first breaking test now gets the ANRs `[5000]`, and the second gets `[5000, 15000]`. The four other tests pass, because no deadline passes in them. The Gradle output includes these lines:
 
 ```
 NaiveInputDispatcherTest > naiveDispatcher_reportsAnrAt15000_whenSecondTapComesAt10000() FAILED
