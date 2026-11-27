@@ -31,5 +31,19 @@ android {
             // The captured Section 1 output depends on targetSdk. Do not change it.
             targetSdk = 37
         }
+        // The app of the config-changes chapter. Its device prompts run this flavor.
+        create("configChanges") {
+            dimension = "chapter"
+            // A separate application ID, so that this app installs next to launchPath.
+            applicationIdSuffix = ".configChanges"
+            // The baseline of the chapter is Android 17 (API level 37).
+            targetSdk = 37
+        }
     }
+}
+
+dependencies {
+    // The versions of the checked stamp of the config-changes chapter.
+    "configChangesImplementation"("androidx.activity:activity:1.13.0")
+    "configChangesImplementation"("androidx.lifecycle:lifecycle-viewmodel:2.11.0")
 }
