@@ -191,6 +191,20 @@ In an example, the state production guide converts a combined flow to UI state w
 
 The architecture recommendations say: make `uiState` a `StateFlow`. If the data comes as a stream from other layers, create `uiState` with `stateIn` and the `WhileSubscribed(5000)` policy[^recommendations-viewmodel]. With this policy, the upstream flow runs while the UI collects `uiState`. It stops 5 seconds after the last collector stops, unless a new collector appears first[^sharingstarted-84][^sharingstarted-172].
 
+## Mental model
+
+A `Flow` is one function, `collect`. A cold flow, for example a `flow { }` flow, keeps only its producer block and runs the block again for each collector. A hot flow exists without collectors. A `StateFlow` is a hot flow with one value, and a new collector gets that value first. A write to a `StateFlow` does not queue the value for each collector. If the new value is equal to the current value, the write does nothing. Otherwise, the write marks the slot of each collector, or resumes a suspended collector. When the collector runs, it reads the newest value. It emits the value only if the value differs from the last value that it emitted. Thus a slow collector skips old values, and it does not get an equal value again. `stateIn` turns a cold flow into a `StateFlow`: one coroutine collects the upstream flow, and `WhileSubscribed` starts and stops that collection from the number of subscribers.
+
+```mermaid
+flowchart TD
+  cold["Cold flow: the block runs again for each collector"] -->|"stateIn: one coroutine collects it while WhileSubscribed emits START"| write["StateFlow setter: value = x"]
+  write -->|"x is equal to the current value"| none["No notification"]
+  write -->|"x is new"| slots["Write _state, then makePending on each slot: PENDING, or resume a suspended collector"]
+  slots --> loop["Collect loop of each collector reads the newest _state"]
+  loop -->|"differs from the last emitted value"| emit["The collector gets the value"]
+  loop -->|"equal to the last emitted value"| skip["No emit"]
+```
+
 [^flow-doc]: Kotlin flows on Android: [https://developer.android.com/kotlin/flow](https://developer.android.com/kotlin/flow)
 [^flow-doc-collect]: Kotlin flows on Android, "Collecting from a flow": [https://developer.android.com/kotlin/flow#collect](https://developer.android.com/kotlin/flow#collect)
 [^stateflow-doc]: StateFlow and SharedFlow, "StateFlow": [https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow](https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow)
