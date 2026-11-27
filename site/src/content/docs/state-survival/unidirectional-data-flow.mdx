@@ -88,7 +88,7 @@ The private state and the read-only property did not prevent the loss. They cont
 
 A `ViewModel` can keep its UI state in a `MutableStateFlow` of kotlinx.coroutines 1.11.0. The setter of `value` gives no expected value to the write, so the write does not check if the state changed after the read[^stateflow-319][^stateflow-326]. Thus `_uiState.value = _uiState.value.copy(...)` has the flaw of the rebuild. The getter reads the state. The setter writes the next state later, also if another writer changed the state between the two calls.
 
-A `ViewModel` can write its UI state from a background thread. The state production guide says that `MutableStateFlow` has methods for safe atomic updates[^state-production-one-shot]. If you update the UI state in a background context with `MutableStateFlow`, use the `update` method[^state-production-background].
+The state production guide says that it is better to launch the coroutines that produce UI state on the main dispatcher[^state-production-background]. But a `ViewModel` can also write its UI state from a background thread. The state production guide says that `MutableStateFlow` has methods for safe atomic updates[^state-production-one-shot]. If you update the UI state in a background context with `MutableStateFlow`, use the `update` method[^state-production-background].
 
 ### `update` runs the function again after a conflict
 
