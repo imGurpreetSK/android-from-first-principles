@@ -257,6 +257,56 @@ flowchart TD
   c -.->|"A completes only after C completes"| a
 ```
 
+## Try it
+
+### 1. Connect the tree
+
+Change `NaiveJob` and `NaiveScope.launch` in `samples/structured-concurrency/src/main/kotlin/NaiveJob.kt`, so that the tree follows the rules of `JobSupport`:
+
+1. Give `NaiveJob` a link to its parent. In the completion continuation of `launch`, if the block failed with an exception that is not a `CancellationException`, cancel the parent job. The cancellation of the parent then cancels the other children. Do not cancel the parent for a `CancellationException`, because a normal cancellation does not cancel the parent[^job-100]. Use `kotlin.coroutines.cancellation.CancellationException`.
+2. Mark a job complete only after its block ends and each child completes. When a child completes, make its parent check again.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :structured-concurrency:test
+```
+
+The two breaking tests of the tree fail, because the flaws are gone. The other tests pass. The Gradle output includes these lines:
+
+```
+NaiveJobTest > naiveScope_completesParent_whileChildRuns() FAILED
+    org.opentest4j.AssertionFailedError at NaiveJobTest.kt:98
+
+NaiveJobTest > naiveScope_keepsSiblingRunning_whenChildFails() FAILED
+    org.opentest4j.AssertionFailedError at NaiveJobTest.kt:86
+
+11 tests completed, 2 failed
+```
+
+Compare your fix with the real code. `childCancelled` cancels the parent[^jobsupport-680], and `tryMakeCompletingSlowPath` waits for each child[^jobsupport-902].
+
+### 2. Make the delay cancellable
+
+Give `NaiveJob` a list of cancellation callbacks, and make `cancel` call each callback. In `naiveDelay`, register a callback on the job. The callback resumes the coroutine with a `CancellationException`. Make sure that the coroutine resumes only one time: after the callback resumes it, the task of the loop must not resume it again. Run the tests again:
+
+```sh
+samples/gradlew -p samples :structured-concurrency:test
+```
+
+If you start from the original rebuild, the Gradle output includes these lines:
+
+```
+NaiveJobTest > naiveDelay_resumesBody_whenJobIsCancelledWhileSuspended() FAILED
+    org.opentest4j.AssertionFailedError at NaiveJobTest.kt:115
+
+11 tests completed, 1 failed
+```
+
+If you also made the change of prompt 1, the three breaking tests fail, and the other eight tests pass. Then the rule of prompt 1 for `CancellationException` is necessary: a cancelled `naiveDelay` throws a `CancellationException`, and this exception must not cancel the parent.
+
+Compare your fix with the real code. `ChildContinuation` links the job to the continuation[^ccimpl-691], and `resumeImpl` ignores a resume after the cancellation[^ccimpl-508].
+
 [^coroutinescope-581]: CoroutineScope.kt, lines 581–584: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584)
 [^coroutinescope-231]: CoroutineScope.kt, lines 231–241: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241)
 [^coroutinescope-565]: CoroutineScope.kt, lines 565–570: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570)
