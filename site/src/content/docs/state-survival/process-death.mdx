@@ -153,7 +153,7 @@ For `LMK_PROCPRIO`, `lmkd` writes the oom adj to `/proc/<pid>/oom_score_adj`[^lm
 
 </GoDeeper>
 
-`OomAdjuster` can also kill processes when memory is not low. If the number of cached processes is more than a limit, it kills a cached process with the reason "too many cached"[^oomadjuster-1430]. If the number of empty processes is more than a limit, it kills an empty process with the reason "too many empty". If the number of empty processes is more than a trim limit, it kills an empty process whose last activity is older than a time limit, with the reason "empty for too long". For each of these kills, `ApplicationExitInfo` gives the reason `REASON_OTHER`[^oomadjuster-1440].
+`OomAdjuster` can also kill processes when memory is not low. If the number of cached processes is more than a limit, it kills a cached process with the reason "too many cached"[^oomadjuster-1430]. If the number of empty processes is more than a limit, it kills an empty process with the reason "too many empty". If the number of empty processes is more than a trim limit, it kills a process that is empty for more than a time limit. The reason is "empty for too long". For each of these kills, `ApplicationExitInfo` gives the reason `REASON_OTHER`[^oomadjuster-1440].
 
 Since Android 17, the system sets memory limits for apps from the total RAM of the device. If a limit affects an app process, the process exits. `ApplicationExitInfo` gives the reason `REASON_OTHER`, and its description contains `MemoryLimiter:AnonSwap`[^android-17-memory]. Thus a process has one more cause of death.
 
