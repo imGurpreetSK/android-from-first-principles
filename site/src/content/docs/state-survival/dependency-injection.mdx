@@ -252,11 +252,16 @@ The manifest of the flavor names `DiComponentFactory` in `android:appComponentFa
 
 <Snippet file="launch-app/src/dependencyInjection/java/io/github/imgurpreetsk/afp/launchapp/DiComponentFactory.java" region="factory" />
 
-Clear the log, start `GreetingActivity`, and print the lines with the tag `DI`:
+Clear the log, and start `GreetingActivity`:
 
 ```sh
 adb logcat -c
 adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp.dependencyInjection/io.github.imgurpreetsk.afp.launchapp.GreetingActivity
+```
+
+Print the lines with the tag `DI`:
+
+```sh
 adb logcat -d -s DI
 ```
 
@@ -271,15 +276,20 @@ The first line comes from the factory. The second line comes from the constructo
 
 ### 3. Change the configuration
 
-Keep `GreetingActivity` on the screen. Clear the log, turn on night mode, and print the lines with the tag `DI` again:
+Keep `GreetingActivity` on the screen. Clear the log, and turn on night mode:
 
 ```sh
 adb logcat -c
 adb shell cmd uimode night yes
+```
+
+Print the lines with the tag `DI` again:
+
+```sh
 adb logcat -d -s DI
 ```
 
-If the output is empty, run the last command again.
+If the output is empty, run this command again.
 
 {/* Edit step: capture this output on the emulator of the checked stamp. */}
 
