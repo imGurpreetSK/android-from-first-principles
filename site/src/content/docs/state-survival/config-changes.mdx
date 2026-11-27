@@ -150,7 +150,7 @@ After each launch, the app reads the configurations of its resources with `getRe
 - It removes `CONFIG_SMALLEST_SCREEN_SIZE` if the new smallest width crosses no threshold.
 - It removes `CONFIG_SCREEN_LAYOUT` only if the fields of the screen layout that are not sizes did not change, and the layout crosses no threshold[^sizeconfigurationbuckets-104]. A smaller layout size always crosses a threshold[^sizeconfigurationbuckets-154].
 
-`filterDiff` does not remove `CONFIG_ORIENTATION`. Thus a rotation recreates an activity that does not handle `orientation`, also if the new size crosses no threshold.
+`filterDiff` does not remove `CONFIG_ORIENTATION`[^sizeconfigurationbuckets-104]. Thus a rotation recreates an activity that does not handle `orientation`, also if the new size crosses no threshold.
 
 `shouldRelaunchLocked` also adds bits to the skip mask. For example, in picture-in-picture mode, it adds `CONFIG_DENSITY`, so a density change does not recreate the activity[^activityrecord-8769].
 
