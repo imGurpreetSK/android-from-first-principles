@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- The flavor has one launcher icon, so this element removes the activity of src/main from the merged manifest. -->
+        <activity
+            android:name=".MainActivity"
+            tools:node="remove" />
+        <!-- By default, Back moves the task of this activity to the background only if the home process started it with its MAIN/LAUNCHER intent. -->
+        <activity
+            android:name=".ProcessDeathActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
