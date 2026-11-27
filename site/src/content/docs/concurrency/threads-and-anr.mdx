@@ -119,7 +119,7 @@ The dispatcher of Android 10 had the same flaw. For a touch, it started the time
 
 ### The dispatcher sets a deadline for each event
 
-The real dispatcher times each event that it sends, not only an event that waits. When the dispatcher sends an event to a window, `startDispatchCycleLocked` sets two times on the event: the delivery time and a deadline. The deadline is the delivery time plus the dispatch timeout[^inputdispatcher-3893]. Then the event goes into the wait queue of the connection to the window, and the dispatcher adds the deadline to `mAnrTracker`[^inputdispatcher-4025]. When the app finishes the event, the dispatcher removes the event from the wait queue and erases its deadline from the tracker[^inputdispatcher-6737].
+The real dispatcher times each event that it sends, not only an event that waits. When the dispatcher sends an event to a window, `startDispatchCycleLocked` sets two times on the event: the delivery time and a deadline. The deadline is the delivery time plus the dispatch timeout[^inputdispatcher-3893]. Then the event goes into the wait queue of the connection to the window. If the connection is responsive, the dispatcher adds the deadline to `mAnrTracker`[^inputdispatcher-4025]. When the app finishes the event, the dispatcher removes the event from the wait queue and erases its deadline from the tracker[^inputdispatcher-6737].
 
 `AnrTracker` keeps the deadlines of all connections in one sorted set. Thus the dispatcher finds the next deadline fast[^anrtracker-25][^anrtracker-44].
 
