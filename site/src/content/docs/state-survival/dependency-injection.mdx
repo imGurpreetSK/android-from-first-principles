@@ -65,9 +65,39 @@ A container must decide two things for each object:
 
 An object that a container keeps lives as long as the container instance. On Android, an `Activity` object can live for a shorter time than the screen that the user sees. Hilt creates its `ActivityRetainedComponent` at the first `Activity#onCreate()` and destroys it at the last `Activity#onDestroy()`, because the component lives across configuration changes[^hilt-component-lifetimes]. Thus one screen can get more than one `onCreate()` and `onDestroy()`. A configuration change destroys the `Activity` object and creates a new one. The [Config changes & ViewModel chapter](/state-survival/config-changes/) shows why. If a container belongs to one `Activity` object, its objects end with that `Activity` object. This chapter builds such a container and shows where it breaks. Then it shows how Hilt keeps a container across a configuration change.
 
+## Build it naive
+
+The rebuild is a hand-written container in plain Kotlin, in the module `samples/dependency-injection`. It follows the login example of the manual DI guide. In that example, `LoginActivity` needs a `LoginViewModel`, and `LoginViewModel` needs a `UserRepository`[^manual-basics]. `LoginUserData` holds the input of one login flow, for example the username and the password[^manual-flows]. The rebuild keeps only these three classes, and `LoginUserData` keeps only the username:
+
+<Snippet file="dependency-injection/src/main/kotlin/Containers.kt" region="graph" />
+
+`AppContainer` is the container of the whole app. In the manual DI guide, the `Application` class holds the `AppContainer`, so that all activities can use it[^manual-container]. A binding gives a container the information that it needs to supply an object of a type[^hilt-define-bindings]. `AppContainer` has two kinds of bindings:
+
+- A scoped binding: `userRepository` uses `lazy`. The first call creates the `UserRepository`, and `lazy` keeps it. Each later call gets the same object. The first test below checks this.
+- An unscoped binding: `loginViewModel()` creates a new `LoginViewModel` at each call. It gives each `LoginViewModel` the scoped `UserRepository`. The manual DI guide uses a factory for this[^manual-container].
+
+<Snippet file="dependency-injection/src/main/kotlin/Containers.kt" region="app-container" />
+
+Some objects belong to one flow of the app, not to the whole app. In the manual DI guide, a `LoginContainer` holds the `LoginUserData` of one login flow. It gets the `UserRepository` from the `AppContainer`[^manual-views-flows]. The rebuild has the same child container, `ScreenContainer`. Each `ScreenContainer` keeps one `LoginUserData`. It gets the objects of the whole app from its parent:
+
+<Snippet file="dependency-injection/src/main/kotlin/Containers.kt" region="screen-container" />
+
+In the Views version of the guide, `LoginActivity` creates the `LoginContainer` in `onCreate()` and removes it in `onDestroy()`[^manual-views-flows]. A rebuild never imports `android.*`, so `FakeActivity` stands in for the `Activity`. Its `onCreate()` creates the `ScreenContainer` and takes the objects from it. `recreate()` stands in for a configuration change: it creates a new `FakeActivity` with the same `AppContainer` and calls `onCreate()` on it:
+
+<Snippet file="dependency-injection/src/main/kotlin/Containers.kt" region="activity" />
+
+Three tests check the containers. The `AppContainer` gives each caller the same `UserRepository`. It creates a new `LoginViewModel` at each call, and each `LoginViewModel` gets the same `UserRepository`. A `FakeActivity` gets the `UserRepository` of the `AppContainer` through its `ScreenContainer`:
+
+<Snippet file="dependency-injection/src/test/kotlin/ContainersTest.kt" region="containers" />
+
 [^di-what]: Dependency injection in Android, "What is dependency injection?": [https://developer.android.com/training/dependency-injection#what-is-di](https://developer.android.com/training/dependency-injection#what-is-di)
 [^appcomponentfactory-96]: AppComponentFactory.java, lines 96–100: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96)
 [^appcomponentfactory-83]: AppComponentFactory.java, lines 83–95: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83)
 [^di-automated]: Dependency injection in Android, "Automated dependency injection": [https://developer.android.com/training/dependency-injection#automated-di](https://developer.android.com/training/dependency-injection#automated-di)
 [^di-alternatives]: Dependency injection in Android, "Alternatives to dependency injection": [https://developer.android.com/training/dependency-injection#di-alternatives](https://developer.android.com/training/dependency-injection#di-alternatives)
 [^hilt-component-lifetimes]: Dependency injection with Hilt, "Component lifetimes": [https://developer.android.com/training/dependency-injection/hilt-android#component-lifetimes](https://developer.android.com/training/dependency-injection/hilt-android#component-lifetimes)
+[^manual-basics]: Manual dependency injection, "Basics of manual dependency injection": [https://developer.android.com/training/dependency-injection/manual#basics-manual-di](https://developer.android.com/training/dependency-injection/manual#basics-manual-di)
+[^manual-flows]: Manual dependency injection, "Managing dependencies in application flows": [https://developer.android.com/training/dependency-injection/manual#dependencies-flows](https://developer.android.com/training/dependency-injection/manual#dependencies-flows)
+[^manual-container]: Manual dependency injection, "Managing dependencies with a container": [https://developer.android.com/training/dependency-injection/manual#dependencies-container](https://developer.android.com/training/dependency-injection/manual#dependencies-container)
+[^hilt-define-bindings]: Dependency injection with Hilt, "Define Hilt bindings": [https://developer.android.com/training/dependency-injection/hilt-android#define-bindings](https://developer.android.com/training/dependency-injection/hilt-android#define-bindings)
+[^manual-views-flows]: Manual dependency injection (Views), "Managing dependencies in application flows": [https://developer.android.com/topic/architecture/views/dependency-injection/manual-views#managing-in-app-flows](https://developer.android.com/topic/architecture/views/dependency-injection/manual-views#managing-in-app-flows)
