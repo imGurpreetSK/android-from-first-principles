@@ -364,7 +364,7 @@ Then do prompt 2 and this prompt again, with Back in place of Home. By default, 
 
 The result is the same as with Home. The log has `onStop` and `onSaveInstanceState`, and the record has `mHaveState=true`. Back moved the root launcher activity and its task to the background[^android-12-back].
 
-Do the four steps again, but in step 2, run the `am start` command of prompt 2. The shell started the activity, not the home screen, so Back finishes the activity[^activityclientcontroller-1960]. The log has these lines:
+Do the four steps again, but in step 2, run the `am start` command of prompt 2. The shell started the activity, not the home process, so Back finishes the activity[^activityclientcontroller-2021][^activityclientcontroller-1960]. The log has these lines:
 
 {/* Edit step: capture this output on the emulator of the checked stamp. */}
 
