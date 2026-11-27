@@ -242,6 +242,21 @@ The Android guide gives this advice:
 
 Since Android 15, if an app starts a network request outside a valid process lifecycle, the app gets an exception, for example an `UnknownHostException`. The page tells apps to cancel such requests with lifecycle-aware components when the app leaves a valid process lifecycle[^android-15-network].
 
+## Mental model
+
+Each coroutine is a `Job` in a tree. `launch` attaches the new job to the job of its scope with a `ChildHandleNode`. A cancellation goes down the tree: each job cancels its children, and each suspended cancellable continuation resumes with a `CancellationException`. A failure goes up the tree: a child that fails with an exception that is not a `CancellationException` cancels its parent, and the parent cancels its other children. A `SupervisorJob` stops a failure, so the exception of a failed `launch` child goes to the exception handlers. A job completes only after each child completes. Cancellation is cooperative: code reacts only when it suspends in a cancellable function or when it checks for cancellation. On Android, `viewModelScope`, `lifecycleScope` and `LaunchedEffect` cancel their coroutines when their owner ends. `repeatOnLifecycle` cancels its block when the `Lifecycle` falls below a state.
+
+```mermaid
+flowchart TD
+  owner["Owner ends: ViewModel cleared, Lifecycle DESTROYED or LaunchedEffect left the composition"] -->|"cancel"| scope["Job of the scope"]
+  scope -->|"cancellation goes down"| a["Job of coroutine A"]
+  scope -->|"cancellation goes down"| b["Job of coroutine B"]
+  a -->|"cancellation goes down"| c["Job of coroutine C"]
+  b -->|"cancellation goes down"| delay["Suspended delay of B: resumes with CancellationException"]
+  a -.->|"failure goes up, unless the scope has a SupervisorJob"| scope
+  c -.->|"A completes only after C completes"| a
+```
+
 [^coroutinescope-581]: CoroutineScope.kt, lines 581–584: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584)
 [^coroutinescope-231]: CoroutineScope.kt, lines 231–241: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241)
 [^coroutinescope-565]: CoroutineScope.kt, lines 565–570: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570)
