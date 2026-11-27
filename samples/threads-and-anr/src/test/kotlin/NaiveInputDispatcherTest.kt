@@ -59,4 +59,18 @@ class NaiveInputDispatcherTest {
         assertEquals(emptyList<Long>(), dispatcher.anrs)
     }
     // endregion
+
+    // region late-anr
+    @Test
+    fun naiveDispatcher_reportsAnrAt15000_whenSecondTapComesAt10000() {
+        val window = FakeWindow(clock)
+        val dispatcher = NaiveInputDispatcher(clock, window)
+        dispatcher.inject("tap 1")
+        clock.advanceTo(10_000)
+        dispatcher.inject("tap 2")
+        clock.advanceTo(60_000)
+        // tap 1 is unfinished from 0, but the timer starts only at 10_000, when tap 2 must wait.
+        assertEquals(listOf(15_000L), dispatcher.anrs)
+    }
+    // endregion
 }
