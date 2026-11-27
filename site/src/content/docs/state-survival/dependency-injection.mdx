@@ -185,7 +185,7 @@ Hilt uses field injection for an activity[^android-entry-point-types]. The platf
 
 <GoDeeper title="how the platform finds the factory">
 
-`Instrumentation.newActivity` creates the `Activity` with `getFactory(pkg).instantiateActivity(...)`. `pkg` is the package of the component of the intent[^instrumentation-1454]. `getFactory` returns the `AppComponentFactory` of the `LoadedApk` of that package. If the intent names no package, `getFactory` returns the default factory[^instrumentation-1463]. When the platform loads the code of the app, `LoadedApk` loads the class that `appComponentFactory` of the `ApplicationInfo` names. It creates the factory with the constructor with no arguments. If the app names no class, or if the class does not load, `LoadedApk` uses the default factory[^loadedapk-296][^loadedapk-1187].
+`Instrumentation.newActivity` creates the `Activity` with `getFactory(pkg).instantiateActivity(...)`. `pkg` is the package of the component of the intent[^instrumentation-1454]. `getFactory` returns the `AppComponentFactory` of the `LoadedApk` of that package. If the intent is null or `intent.getComponent()` is null, `getFactory` gets no package and returns the default factory[^instrumentation-1454][^instrumentation-1463]. When the platform loads the code of the app, `LoadedApk` loads the class that `appComponentFactory` of the `ApplicationInfo` names. It creates the factory with the constructor with no arguments. If the app names no class, or if the class does not load, `LoadedApk` uses the default factory[^loadedapk-296][^loadedapk-1187].
 
 </GoDeeper>
 
