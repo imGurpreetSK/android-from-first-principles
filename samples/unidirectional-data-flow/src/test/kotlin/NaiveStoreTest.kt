@@ -1,3 +1,5 @@
+import java.util.concurrent.CountDownLatch
+import kotlin.concurrent.thread
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -33,6 +35,28 @@ class NaiveStoreTest {
         holder.onIncrement()
         holder.onIncrement()
         assertEquals(listOf("Count: 0", "Count: 1", "Count: 2"), screen)
+    }
+    // endregion
+
+    // region lost-update
+    @Test
+    fun naiveStore_losesUpdate_whenTwoWritersInterleave() {
+        val store = NaiveStore(0)
+        val bHasRead = CountDownLatch(1)
+        val aHasWritten = CountDownLatch(1)
+        // The latches set the order of the two writers, so each run gives the same result.
+        val writerB = thread {
+            store.update { s ->
+                bHasRead.countDown()
+                aHasWritten.await()
+                s + 1
+            }
+        }
+        bHasRead.await() // Writer B has read 0.
+        store.update { it + 1 } // Writer A writes 0 + 1.
+        aHasWritten.countDown()
+        writerB.join() // Writer B writes 0 + 1 over the 1 of writer A.
+        assertEquals(1, store.state)
     }
     // endregion
 }
