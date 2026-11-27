@@ -119,10 +119,10 @@ Since Android 15, if an app targets Android 15 or higher, the system returns to 
 
 <GoDeeper title="launch modes in ActivityStarter">
 
-`ActivityStarter.complyActivityFlags` applies the launch flags and the launch mode to the target task:
+`ActivityStarter` applies the launch flags and the launch mode to the target task:
 
-- With `FLAG_ACTIVITY_CLEAR_TOP`, `singleTask` or `singleInstance`, it removes the activities above the target with `performClearTop`. If the target stays, the target gets the new intent[^activitystarter-2678]. The docs give the same behavior. For `singleTask`, the system destroys the other activities on top of the instance[^tasks-manifest-for-tasks]. For `FLAG_ACTIVITY_CLEAR_TOP`, the system destroys the other activities on top of the target, and sends the intent to `onNewIntent()` of the target[^tasks-intent-flags].
-- With `singleTop` or `FLAG_ACTIVITY_SINGLE_TOP`, if the top activity is the same activity, the system sends the new intent to the top instance. It starts no new instance[^activitystarter-2607].
+- In `complyActivityFlags`, with `FLAG_ACTIVITY_CLEAR_TOP`, `singleTask` or `singleInstance`, `ActivityStarter` removes the activities above the target with `performClearTop`. If the target stays, the target gets the new intent[^activitystarter-2678]. The docs give the same behavior. For `singleTask`, the system destroys the other activities on top of the instance[^tasks-manifest-for-tasks]. For `FLAG_ACTIVITY_CLEAR_TOP`, the system destroys the other activities on top of the target, and sends the intent to `onNewIntent()` of the target[^tasks-intent-flags].
+- With `singleTop` or `FLAG_ACTIVITY_SINGLE_TOP`, `deliverToCurrentTopIfNeeded` checks the top activity. If it is the same activity, the system sends the new intent to the top instance. It starts no new instance[^activitystarter-2607].
 - If a start targets the root activity of the task with a different intent, the start adds a new instance on top of the same task[^activitystarter-2757]. Prompt 2 of "Try it" uses this case.
 
 </GoDeeper>
