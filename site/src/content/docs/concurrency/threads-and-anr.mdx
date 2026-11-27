@@ -105,7 +105,7 @@ The dispatcher starts its timer only when a touch must wait. Nothing times a tou
 
 <Snippet file="threads-and-anr/src/test/kotlin/NaiveInputDispatcherTest.kt" region="flaw" />
 
-The test passes, so the flaw occurs. For 60 s, the window does not finish the touch, and the dispatcher reports no ANR. The main thread of the app is blocked, but the dispatcher does nothing.
+The test passes, so the flaw occurs. For 60 s, the window does not finish the touch, and the dispatcher reports no ANR. A long task blocks the main thread of the app, but the dispatcher does nothing.
 
 The second breaking test shows a late ANR. The window never finishes the first touch. At t=10000, a second touch comes. The first touch is 500 ms old or older, so the second touch waits, and the timer starts only at that time:
 
