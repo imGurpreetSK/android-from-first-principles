@@ -140,7 +140,7 @@ The rebuild needs a part between the callback and the state machine. In Kotlin, 
 
 The function `intercepted()` does the wrap:
 
-- The compiled state machine of a named suspend function or of a suspend lambda extends `ContinuationImpl`[^continuationimpl-98][^continuationimpl-156]. On a `ContinuationImpl`, `intercepted()` asks the interceptor of the context one time and keeps the result in a field[^continuationimpl-108].
+- The continuation class of a named suspend function extends `ContinuationImpl`[^continuationimpl-98]. The class of a suspend lambda extends `SuspendLambda`, a subclass of `ContinuationImpl`[^continuationimpl-156]. On a `ContinuationImpl`, `intercepted()` asks the interceptor of the context one time and keeps the result in a field[^continuationimpl-108].
 - On each other continuation, `intercepted()` returns the continuation unchanged[^intrinsicsjvm-171].
 
 The codegen doc shows an interceptor that resumes each continuation on a new thread. If the example does not call `intercepted()`, the coroutine stays on the thread that resumes it[^codegen-interception]. This is the flaw of the rebuild.
