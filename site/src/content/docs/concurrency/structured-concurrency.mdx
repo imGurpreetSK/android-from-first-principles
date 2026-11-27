@@ -147,7 +147,7 @@ If the block of a coroutine throws a `CancellationException`, the coroutine ends
 
 The failed job calls `cancelParent`, which calls `childCancelled` on the parent through the `ChildHandleNode`[^jobsupport-336][^jobsupport-1575]. In the parent, `childCancelled` returns at once for a `CancellationException`. For each other exception, it cancels the parent with that exception[^jobsupport-680]. Then the parent cancels its other children, as the previous section shows. The rebuild does not have this step.
 
-A failure of a child cancels the parent only if all these conditions are true[^coroutinescope-326]:
+A failure of a child cancels the parent if all these conditions are true[^coroutinescope-326]:
 
 1. The exception is not a `CancellationException`.
 2. The child is not a lexically scoped coroutine, for example the coroutine of `coroutineScope` or `withContext`.
