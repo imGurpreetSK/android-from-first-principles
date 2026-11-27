@@ -126,7 +126,7 @@ Each component has a scope annotation and a lifetime[^dagger-component-lifetimes
 | `ViewComponent` | `@ViewScoped` | `View#super()` | Destruction of the `View` |
 | `ServiceComponent` | `@ServiceScoped` | `Service#onCreate()` | `Service#onDestroy()` |
 
-Each new instance of an Android class gets a new instance of its component, and thus new instances of all its scoped bindings. The Hilt docs give this warning for fragments[^dagger-scoped-bindings]. Thus `ActivityComponent` has the lifetime of the `ScreenContainer` of the rebuild: one `Activity` object.
+The Hilt docs give a warning for fragments: each fragment instance gets a new instance of the fragment component, and thus new instances of all its scoped bindings[^dagger-scoped-bindings]. `ActivityComponent` has the same rule for activities: each `Activity` object gets a new `ActivityComponent`[^activitycomponentmanager-60][^activitycomponentmanager-95]. Thus `ActivityComponent` has the lifetime of the `ScreenContainer` of the rebuild: one `Activity` object.
 
 `ActivityRetainedComponent` has the lifetime that the rebuild needs. It lives across configuration changes. Hilt creates it at the first `Activity#onCreate()` and destroys it at the last `Activity#onDestroy()`[^hilt-component-lifetimes]. Thus, in a Hilt app, give `LoginUserData` the scope `@ActivityRetainedScoped`.
 
