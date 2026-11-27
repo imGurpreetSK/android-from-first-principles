@@ -78,6 +78,21 @@ Three tests check the normal cases:
 - After `back`, the route below keeps its state.
 - If the app navigates to a route again after `back`, the new screen starts with no state.
 
+## Where it breaks
+
+The key of the state map is the route, not the entry. But one route can be on the stack two times. For example, a detail screen has a "related item" link, and the link opens a second detail screen. Then the two entries share one state. The breaking test shows the result:
+
+<Snippet file="navigation/src/test/kotlin/NaiveBackStackTest.kt" region="flaw" />
+
+1. The first `detail` sets its state to 40.
+2. The second `detail` sets the state to 0. This writes over the state of the first `detail`.
+3. `back` pops the second `detail`, and deletes the state of the route `detail`.
+4. The first `detail` is on top again, with no state.
+
+The test passes, so the flaw occurs. The user goes Back to the first detail screen, and the scroll position 40 is gone.
+
+The platform does not have this flaw for activities. If an app starts a second instance of an activity, Back shows each instance with its own UI state[^tasks-multiple-instances]. A correct back stack gives an identity to each entry, not only to each destination.
+
 [^tasks-intro]: Tasks and the back stack: [https://developer.android.com/guide/components/activities/tasks-and-back-stack](https://developer.android.com/guide/components/activities/tasks-and-back-stack)
 [^tasks-life-cycle]: Tasks and the back stack, "Lifecycle of a task and its back stack": [https://developer.android.com/guide/components/activities/tasks-and-back-stack#life-cycle](https://developer.android.com/guide/components/activities/tasks-and-back-stack#life-cycle)
 [^tasks-multiple-instances]: Tasks and the back stack, "Multiple activity instances": [https://developer.android.com/guide/components/activities/tasks-and-back-stack#multiple-instances](https://developer.android.com/guide/components/activities/tasks-and-back-stack#multiple-instances)
