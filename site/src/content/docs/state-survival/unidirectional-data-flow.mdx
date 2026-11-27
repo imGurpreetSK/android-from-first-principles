@@ -46,13 +46,13 @@ The UI must not change the UI state directly, unless the UI is the only source o
 
 The Compose guide also says that immutable values prevent concurrency problems, because no other thread can change the state that a composable gets[^compose-events]. But the state holder still writes its own state. If two writers update the state at the same time, the write itself can lose an update. Immutable values do not prevent this loss.
 
-This chapter builds a small state holder with UDF. It shows how the write of the holder loses an update. Then it shows how `MutableStateFlow.update` of kotlinx.coroutines prevents the loss.
+This chapter builds a small state holder with UDF. The state holder keeps its state in a store. The chapter shows how the write of the store loses an update. Then it shows how `MutableStateFlow.update` of kotlinx.coroutines prevents the loss.
 
 ## Build it naive
 
 The rebuild is in the module `samples/unidirectional-data-flow`, in plain Kotlin. It has no Android types and no kotlinx.coroutines.
 
-`NaiveStore` is the state holder. It keeps the state in the private property `current`. Other code reads the state through the read-only property `state`. Only `update` writes the state. `update` gives the current state to a transform function, and writes the result. Then it gives the new state to each observer. `observe` adds an observer and gives it the current state at once, because the state always exists:
+`NaiveStore` is the store of the state. It keeps the state in the private property `current`. Other code reads the state through the read-only property `state`. Only `update` writes the state. `update` gives the current state to a transform function, and writes the result. Then it gives the new state to each observer. `observe` adds an observer and gives it the current state at once, because the state always exists:
 
 <Snippet file="unidirectional-data-flow/src/main/kotlin/NaiveStore.kt" region="store" />
 
