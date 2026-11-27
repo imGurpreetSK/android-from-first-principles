@@ -39,3 +39,35 @@ device: true
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
+## The problem
+
+A class often needs objects of other classes. These objects are the dependencies of the class. A class can get a dependency in three ways: it creates the dependency, it gets the dependency from somewhere else, or it gets the dependency as a parameter. The third way is dependency injection (DI). With DI, a test can give the class a test double in place of the real dependency[^di-what].
+
+On Android, DI has two main forms[^di-what]:
+
+- Constructor injection: the class gets its dependencies as constructor parameters.
+- Field injection: the class gets its dependencies as fields, after the system or the app creates the class.
+
+The DI guide says that the system creates activities, so constructor injection is not possible for an activity[^di-what]. This is true for the default factory of the platform. The system creates each `Activity` object through an `AppComponentFactory`. The default `instantiateActivity` loads the class and calls its constructor with no arguments[^appcomponentfactory-96]. An app can replace the factory, for example for dependency injection[^appcomponentfactory-83]. The [Components & lifecycle chapter](/launch-path/components-lifecycle/) shows where the cold start calls the factory. Prompt 2 of "Try it" replaces the factory.
+
+If you do DI by hand, you create each object and give it its dependencies. In a large app, this needs much boilerplate code. Sometimes you cannot create a dependency before you pass it, for example if an object belongs to one flow of the app. Then you must write a container: a class that creates the dependencies and manages their lifetimes in memory[^di-automated]. DI libraries do this work for you. Some libraries connect the dependencies with reflection at run time. Other libraries generate the code at compile time. Dagger generates the code at compile time[^di-automated].
+
+A service locator is an alternative to DI. Each class asks one global service locator for its dependencies. Thus all tests use the same global service locator. With a service locator, it is also more difficult to give an object a lifetime that is shorter than the lifetime of the app[^di-alternatives].
+
+A container must decide two things for each object:
+
+- Does each caller get the same object, or a new object?
+- How long does the object live?
+
+An object that a container keeps lives as long as the container instance. On Android, an `Activity` object can live for a shorter time than the screen that the user sees. Hilt creates its `ActivityRetainedComponent` at the first `Activity#onCreate()` and destroys it at the last `Activity#onDestroy()`, because the component lives across configuration changes[^hilt-component-lifetimes]. Thus one screen can get more than one `onCreate()` and `onDestroy()`. A configuration change destroys the `Activity` object and creates a new one. The [Config changes & ViewModel chapter](/state-survival/config-changes/) shows why. If a container belongs to one `Activity` object, its objects end with that `Activity` object. This chapter builds such a container and shows where it breaks. Then it shows how Hilt keeps a container across a configuration change.
+
+[^di-what]: Dependency injection in Android, "What is dependency injection?": [https://developer.android.com/training/dependency-injection#what-is-di](https://developer.android.com/training/dependency-injection#what-is-di)
+[^appcomponentfactory-96]: AppComponentFactory.java, lines 96–100: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96)
+[^appcomponentfactory-83]: AppComponentFactory.java, lines 83–95: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83)
+[^di-automated]: Dependency injection in Android, "Automated dependency injection": [https://developer.android.com/training/dependency-injection#automated-di](https://developer.android.com/training/dependency-injection#automated-di)
+[^di-alternatives]: Dependency injection in Android, "Alternatives to dependency injection": [https://developer.android.com/training/dependency-injection#di-alternatives](https://developer.android.com/training/dependency-injection#di-alternatives)
+[^hilt-component-lifetimes]: Dependency injection with Hilt, "Component lifetimes": [https://developer.android.com/training/dependency-injection/hilt-android#component-lifetimes](https://developer.android.com/training/dependency-injection/hilt-android#component-lifetimes)
