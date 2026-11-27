@@ -110,7 +110,7 @@ Thus the flow container needs a lifetime between the two lifetimes of the rebuil
 
 ### Hilt generates one component for each Android class
 
-Hilt is a DI library on top of Dagger. Hilt gives a container to each Android class of the project and manages the lifecycle of each container[^di-hilt]. Hilt calls these containers components. For each Android class that Hilt can inject, Hilt has a component, and the component injects its bindings into that class[^hilt-generated-components].
+Hilt is a DI library on top of Dagger. Hilt gives a container to each Android class of the project and manages the lifetime of each container[^di-hilt]. Hilt calls these containers components. For each Android class that Hilt can inject, Hilt has a component, and the component injects its bindings into that class[^hilt-generated-components].
 
 By default, a binding is unscoped: each request gets a new object. A scoped binding belongs to one component. Hilt creates a scoped binding only one time for each instance of that component, and all requests share that object[^hilt-component-scopes]. The rebuild has the same two kinds of bindings: `loginViewModel()` is unscoped, and the `lazy` property is scoped.
 
