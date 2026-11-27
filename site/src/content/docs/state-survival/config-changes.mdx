@@ -76,7 +76,7 @@ The real `ActivityThread` keeps one record for each activity in the map `mActivi
 
 <Snippet file="config-changes/src/main/kotlin/FakeActivityThread.kt" region="thread" />
 
-A test checks the relaunch. After `relaunch`, the old object is destroyed. The new object is a different object, with the same token and the new configuration.
+A test checks `relaunch`. After `relaunch`, `isDestroyed` of the old object is true. The new object is a different object, with the same token and the new configuration.
 
 ### A ViewModel in a field
 
@@ -92,7 +92,7 @@ The tests use two configurations, `day` and `night`. The store of the next step 
 
 <Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="setup" />
 
-The test relaunches a `FieldActivity` with the `night` configuration. The new object has a new `ViewModel`, and the counter is 1 again:
+The test calls `relaunch` with the token of a `FieldActivity` and the `night` configuration. The new object has a new `ViewModel`, and the counter is 1 again:
 
 <Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="problem" />
 
@@ -108,13 +108,13 @@ The naive fix keeps the `ViewModel` outside the `Activity` object. `NaiveViewMod
 
 <Snippet file="config-changes/src/main/kotlin/NaiveViewModelStore.kt" region="store-activity" />
 
-Now the new object finds the `ViewModel` of the old object. After one relaunch, the counter is 2:
+Now the new object finds the `ViewModel` of the old object. After one `relaunch`, the counter is 2:
 
 <Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="relaunch" />
 
 ## Where it breaks
 
-No code removes an entry from the store. The store cannot tell a relaunch from a finish, because it gets only the `Activity` object, and its key is only the class name. Two breaking tests show the flaw.
+No code removes an entry from the store. The store cannot tell a recreation from a finish, because it gets only the `Activity` object, and its key is only the class name. Two breaking tests show the flaw.
 
 The first test launches a `StoreActivity` and finishes it. After the finish, the store still holds the `ViewModel`, and nothing called `onCleared`:
 
@@ -216,7 +216,7 @@ Since Android 12, Back on a launcher activity at the root of its task moves the 
 
 ## Mental model
 
-A configuration change is the diff of two `Configuration` objects. `system_server` compares the diff with the `configChanges` of the activity. If the activity handles each change, the same `Activity` object gets `onConfigurationChanged`. If not, `system_server` tells the app to relaunch the activity on its token. On the main thread, `ActivityThread` sets `isChangingConfigurations` on the old object, keeps the non-configuration instances of the old object in the record of the token, destroys the old object, and creates a new object on the same record. No other message runs between these steps. `ComponentActivity` puts its `ViewModelStore` into these instances, and the new object takes the store back. `ViewModelProvider` finds the same `ViewModel` in the store. On a destroy that is not a recreation, `ComponentActivity` clears the store. Each `ViewModel` then cancels its `viewModelScope` and calls `onCleared`. The hand-over is only in the memory of the app process.
+A configuration change is the diff of two `Configuration` objects. `system_server` compares the diff with the `configChanges` of the activity. If the activity handles each change, the same `Activity` object gets `onConfigurationChanged`. If not, `system_server` tells the app to recreate the activity on its token. On the main thread, `ActivityThread` sets `isChangingConfigurations` on the old object, keeps the non-configuration instances of the old object in the record of the token, destroys the old object, and creates a new object on the same record. No other message runs between these steps. `ComponentActivity` puts its `ViewModelStore` into these instances, and the new object takes the store back. `ViewModelProvider` finds the same `ViewModel` in the store. On a destroy that is not a recreation, `ComponentActivity` clears the store. Each `ViewModel` then cancels its `viewModelScope` and calls `onCleared`. The hand-over is only in the memory of the app process.
 
 ```mermaid
 flowchart TD
@@ -235,7 +235,7 @@ flowchart TD
 
 ### 1. Give each activity its own entry
 
-Change the rebuild, so that the store can tell two activities apart, and can tell a relaunch from a finish:
+Change the rebuild, so that the store can tell two activities apart, and can tell a recreation from a finish:
 
 1. In `NaiveViewModelStore.getOrCreate`, use `activity.token` as the key.
 2. In `FakeActivityThread.finish`, after the thread removes the token, remove the entry of the token from `NaiveViewModelStore.viewModels`. Call `onCleared` on the `ViewModel` of the removed entry.
@@ -246,7 +246,7 @@ From the repo root, run the tests of the rebuild:
 samples/gradlew -p samples :config-changes:test
 ```
 
-The two breaking tests fail, because the flaws are gone. The other three tests pass, so a relaunch still keeps the `ViewModel`. The Gradle output includes these lines:
+The two breaking tests fail, because the flaws are gone. The other three tests pass, so a recreation still keeps the `ViewModel`. The Gradle output includes these lines:
 
 ```
 NaiveViewModelStoreTest > naiveStore_keepsViewModel_afterActivityFinishes() FAILED
@@ -258,7 +258,7 @@ NaiveViewModelStoreTest > naiveStore_sharesViewModel_betweenTwoActivityInstances
 5 tests completed, 2 failed
 ```
 
-Compare your fix with the real code. The real `ActivityThread` does not clear a store. It marks a relaunch: `handleRelaunchActivity` sets `mChangingConfigurations` to true[^activitythread-6862]. On `ON_DESTROY`, `ComponentActivity` reads the mark, and clears its own store only if the mark is not set[^componentactivity-278]. Each store belongs to one activity, and the record of the token keeps it across the relaunch[^activitythread-6607][^activitythread-4528].
+Compare your fix with the real code. The real `ActivityThread` does not clear a store. It marks a recreation: `handleRelaunchActivity` sets `mChangingConfigurations` to true[^activitythread-6862]. On `ON_DESTROY`, `ComponentActivity` reads the mark, and clears its own store only if the mark is not set[^componentactivity-278]. Each store belongs to one activity, and the record of the token keeps it across the recreation[^activitythread-6607][^activitythread-4528].
 
 ### 2. Watch a recreation keep the ViewModel
 
