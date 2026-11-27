@@ -41,3 +41,33 @@ device: false
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
+## The problem
+
+Apps often start a coroutine for one screen, for example to load the data of the screen. If the user leaves the screen, the data has no use. An update of the UI after this time can even crash the app[^coroutinescope-581]. Thus the work must stop.
+
+One operation can also run several coroutines. The `CoroutineScope` KDoc gives an example: a function downloads two files in parallel and compares them. If one download fails, the library cancels the other download, and the whole operation fails. If code cancels the caller, the library also cancels each coroutine of the operation[^coroutinescope-231].
+
+`GlobalScope` shows the problem without structure. It has no `Job`. Thus no code can cancel all the coroutines in it at one time, and no code can wait until all of them end[^coroutinescope-565].
+
+kotlinx.coroutines uses structured concurrency, an approach that tries to make the lifecycle of each concurrent operation clear[^coroutinescope-193]. In kotlinx.coroutines, a `Job` represents the lifecycle of a coroutine or of a scope. The `Job` of each coroutine in a `CoroutineScope` is a child of the `Job` of that scope[^coroutinescope-245]. Thus the jobs make a tree, with three rules:
+
+- A cancellation of a parent cancels each child, and each child of a child[^job-18].
+- If a child fails with an exception that is not a `CancellationException`, the failure cancels the parent and each other child of the parent[^job-18].
+- A parent waits in the Completing state until each child completes[^job-67].
+
+Cancellation also needs help from the code in the coroutine. Cancellation is cooperative: a coroutine reacts to a cancellation only when it suspends or when it checks for cancellation[^cancellation-cooperative].
+
+This chapter builds a job tree, shows where it breaks, and then shows how kotlinx.coroutines and androidx.lifecycle make the real tree.
+
+[^coroutinescope-581]: CoroutineScope.kt, lines 581–584: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584)
+[^coroutinescope-231]: CoroutineScope.kt, lines 231–241: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241)
+[^coroutinescope-565]: CoroutineScope.kt, lines 565–570: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570)
+[^coroutinescope-193]: CoroutineScope.kt, lines 193–194: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L193-L194](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L193-L194)
+[^coroutinescope-245]: CoroutineScope.kt, lines 245–249: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L245-L249](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L245-L249)
+[^job-18]: Job.kt, lines 18–22: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Job.kt#L18-L22](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Job.kt#L18-L22)
+[^job-67]: Job.kt, lines 67–73: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Job.kt#L67-L73](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Job.kt#L67-L73)
+[^cancellation-cooperative]: Cancellation and timeouts, "Make coroutines react to cancellation": [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/docs/topics/cancellation-and-timeouts.md#make-coroutines-react-to-cancellation-idcancellation-is-cooperative](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/docs/topics/cancellation-and-timeouts.md#make-coroutines-react-to-cancellation-idcancellation-is-cooperative)
