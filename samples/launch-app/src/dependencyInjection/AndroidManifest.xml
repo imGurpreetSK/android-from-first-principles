@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- The system creates each Activity of this flavor through DiComponentFactory. -->
+    <application android:appComponentFactory="io.github.imgurpreetsk.afp.launchapp.DiComponentFactory">
+        <!-- GreetingActivity has no constructor without arguments. Lint does not know that DiComponentFactory creates it. -->
+        <activity
+            android:name=".GreetingActivity"
+            android:exported="true"
+            tools:ignore="Instantiatable" />
+    </application>
+
+</manifest>
