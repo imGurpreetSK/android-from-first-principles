@@ -78,7 +78,7 @@ The rebuild is a hand-written container in plain Kotlin, in the module `samples/
 
 <Snippet file="dependency-injection/src/main/kotlin/Containers.kt" region="app-container" />
 
-Some objects belong to one flow of the app, not to the whole app. In the manual DI guide, a `LoginContainer` holds the `LoginUserData` of one login flow. It gets the `UserRepository` from the `AppContainer`[^manual-views-flows]. The rebuild has the same child container, `ScreenContainer`. Each `ScreenContainer` keeps one `LoginUserData`. It gets the objects of the whole app from its parent:
+Some objects belong to one flow of the app, not to the whole app. In the manual DI guide, a `LoginContainer` holds the `LoginUserData` of one login flow. It gets the `UserRepository` from the `AppContainer`[^manual-flows]. The rebuild has the same child container, `ScreenContainer`. Each `ScreenContainer` keeps one `LoginUserData`. It gets the objects of the whole app from its parent:
 
 <Snippet file="dependency-injection/src/main/kotlin/Containers.kt" region="screen-container" />
 
