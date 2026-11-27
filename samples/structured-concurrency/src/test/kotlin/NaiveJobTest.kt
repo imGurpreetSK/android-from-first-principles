@@ -99,4 +99,20 @@ class NaiveJobTest {
         assertFalse(parent.children.single().isCompleted)
     }
     // endregion
+
+    // region cancelled-delay
+    @Test
+    fun naiveDelay_resumesBody_whenJobIsCancelledWhileSuspended() {
+        var ranAt: Long? = null
+        val job = scope.launch {
+            naiveDelay(10)
+            ranAt = loop.now
+        }
+        loop.advanceTo(1)
+        job.cancel()
+        loop.advanceTo(10)
+        assertTrue(job.isCancelled)
+        assertEquals(10L, ranAt)
+    }
+    // endregion
 }
