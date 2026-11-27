@@ -284,7 +284,7 @@ adb shell am start -S -W -n io.github.imgurpreetsk.afp.launchapp.configChanges/i
 adb logcat -b main -b events -c
 ```
 
-`cmd uimode night` calls `setNightMode`[^uimodemanagerservice-2544]. `setNightMode` changes the configuration only if the night mode changes[^uimodemanagerservice-1015]. Thus the first `cmd uimode night` makes sure that the next one is a change. The [Zygote chapter](/launch-path/zygote/) explains `am start -W`.
+`cmd uimode night` calls `setNightMode`[^uimodemanagerservice-2544]. `setNightMode` changes the configuration only if the night mode changes[^uimodemanagerservice-1015]. Thus the first `cmd uimode night` makes sure that the next one is a change. The [first frame chapter](/launch-path/first-frame/) explains `am start -S -W`.
 
 Turn on the dark theme:
 
