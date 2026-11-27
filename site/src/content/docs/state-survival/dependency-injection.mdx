@@ -207,6 +207,93 @@ flowchart TB
   a1 -. "configuration change" .-> a2
 ```
 
+## Try it
+
+### 1. Move LoginUserData into AppContainer
+
+Change the rebuild, so that `LoginUserData` survives `recreate()`. Add a scoped `loginData` property with `lazy` to `AppContainer`, as `userRepository` has. In `FakeActivity.onCreate()`, take `loginData` from the `AppContainer`, not from the `ScreenContainer`. Then add a test for the next login flow at the end of `ContainersTest`:
+
+1. Create a `FakeActivity` with the `AppContainer` of the test. Call `onCreate()`, and set the username to `"alice"`.
+2. Create a second `FakeActivity` with the same `AppContainer`, and call `onCreate()`. This `FakeActivity` starts the next login flow.
+3. Assert that the username of the second `FakeActivity` is `"alice"`.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :dependency-injection:test
+```
+
+The breaking test fails, because the `LoginUserData` survives `recreate()`. The new test passes, so the next login flow gets the username of the old flow. The Gradle output includes these lines:
+
+```
+ContainersTest > screenContainer_losesLoginData_whenActivityIsRecreated() FAILED
+    org.opentest4j.AssertionFailedError at ContainersTest.kt:40
+
+5 tests completed, 1 failed
+```
+
+The manual DI guide wants a new `LoginUserData` for each new flow[^manual-flows]. An `@ActivityRetainedScoped` binding gives both lifetimes: it survives a configuration change, and it ends at the last `Activity#onDestroy()`[^hilt-component-lifetimes].
+
+### 2. Inject an activity through its constructor
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the `dependencyInjection` flavor of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installDependencyInjectionRelease
+```
+
+The flavor adds a platform `Activity`, `GreetingActivity`. Its only constructor takes a `Greeter` and logs both objects with the tag `DI`:
+
+<Snippet file="launch-app/src/dependencyInjection/java/io/github/imgurpreetsk/afp/launchapp/GreetingActivity.java" region="constructor" />
+
+The manifest of the flavor names `DiComponentFactory` in `android:appComponentFactory`. The factory logs the name of each `Activity` class that it creates. It creates `GreetingActivity` with a new `Greeter`. It gives each other class to the default factory:
+
+<Snippet file="launch-app/src/dependencyInjection/java/io/github/imgurpreetsk/afp/launchapp/DiComponentFactory.java" region="factory" />
+
+Clear the log, start `GreetingActivity`, and print the lines with the tag `DI`:
+
+```sh
+adb logcat -c
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp.dependencyInjection/io.github.imgurpreetsk.afp.launchapp.GreetingActivity
+adb logcat -d -s DI
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… instantiateActivity io.github.imgurpreetsk.afp.launchapp.GreetingActivity
+… new GreetingActivity@… with io.github.imgurpreetsk.afp.launchapp.Greeter@…
+```
+
+The first line comes from the factory. The second line comes from the constructor, with the `Greeter` of the factory. `Instrumentation.newActivity` asks the factory of the package of the intent for the `Activity`[^instrumentation-1454], and `LoadedApk` loaded the factory that the manifest names[^loadedapk-296]. Thus constructor injection into an activity works, if the app supplies the factory.
+
+### 3. Change the configuration
+
+Keep `GreetingActivity` on the screen. Clear the log, turn on night mode, and print the lines with the tag `DI` again:
+
+```sh
+adb logcat -c
+adb shell cmd uimode night yes
+adb logcat -d -s DI
+```
+
+If the output is empty, run the last command again.
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… instantiateActivity io.github.imgurpreetsk.afp.launchapp.GreetingActivity
+… new GreetingActivity@… with io.github.imgurpreetsk.afp.launchapp.Greeter@…
+```
+
+The factory runs again. The constructor line shows a new `GreetingActivity` object with a new `Greeter`: the value after `GreetingActivity@` is different from the value in prompt 2. Thus the system creates a new `Activity` object through the factory after the configuration change[^instrumentation-1454]. Each container that only the old `Activity` object holds ends with that object, as in the breaking test. The [Config changes & ViewModel chapter](/state-survival/config-changes/) shows the recreation itself.
+
+Turn off night mode:
+
+```sh
+adb shell cmd uimode night no
+```
+
 [^di-what]: Dependency injection in Android, "What is dependency injection?": [https://developer.android.com/training/dependency-injection#what-is-di](https://developer.android.com/training/dependency-injection#what-is-di)
 [^appcomponentfactory-96]: AppComponentFactory.java, lines 96–100: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#96)
 [^appcomponentfactory-83]: AppComponentFactory.java, lines 83–95: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/AppComponentFactory.java#83)
