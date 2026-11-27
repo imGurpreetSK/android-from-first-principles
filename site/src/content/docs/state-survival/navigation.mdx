@@ -141,7 +141,7 @@ Each activity also registers a callback. If the callback model is on, `Activity.
 
 If the activity sets `android:enableOnBackInvokedCallback`, the value of the activity decides if the callback model is on. If not, the value of the application decides[^windowonbackinvokeddispatcher-791]. If the manifest does not set the attribute, the parser sets it to true for apps that target API level 36 or higher[^parsingpackageutils-2461]. The launch app targets API level 37, so its `MainActivity` registers the default callback. Prompt 2 of "Try it" shows this callback.
 
-In the app process, `ViewRootImpl` catches the Back key before the view tree and the IME get it. Then it calls the top callback[^viewrootimpl-8232]. Key down starts the back event. Key up calls `onBackInvoked`. If the key up is canceled, the callback gets `onBackCancelled`[^viewrootimpl-8271].
+If the callback model is on, `ViewRootImpl` in the app process catches the Back key before the view tree and the IME get it. Then it calls the top callback[^viewrootimpl-8232]. Key down starts the back event. Key up calls `onBackInvoked`. If the key up is canceled, the callback gets `onBackCancelled`[^viewrootimpl-8271].
 
 `Activity.onBackPressed` is deprecated. `OnBackInvokedCallback` and the AndroidX `OnBackPressedCallback` replace it[^activity-4358].
 
