@@ -65,4 +65,38 @@ class NaiveJobTest {
         assertTrue(child.isCancelled)
         assertTrue(grandchild.isCancelled)
     }
+
+    // region child-failure
+    @Test
+    fun naiveScope_keepsSiblingRunning_whenChildFails() {
+        val failure = IllegalStateException("A fails")
+        var counter = 0
+        val a = scope.launch {
+            naiveDelay(1)
+            throw failure
+        }
+        scope.launch {
+            naiveDelay(2)
+            if (!job.isCancelled) counter++
+            naiveDelay(1)
+            if (!job.isCancelled) counter++
+        }
+        loop.advanceTo(3)
+        assertSame(failure, a.failure)
+        assertEquals(2, counter)
+        assertFalse(root.isCancelled)
+    }
+    // endregion
+
+    // region parent-completion
+    @Test
+    fun naiveScope_completesParent_whileChildRuns() {
+        val parent = scope.launch {
+            launch { naiveDelay(5) }
+        }
+        loop.advanceTo(1)
+        assertTrue(parent.isCompleted)
+        assertFalse(parent.children.single().isCompleted)
+    }
+    // endregion
 }
