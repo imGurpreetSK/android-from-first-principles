@@ -62,7 +62,58 @@ In this chapter, an activity is one screen of the app, with one token. An `Activ
 
 The chapter builds a store for `ViewModel` objects, shows where it breaks, and then shows how the platform and AndroidX keep and clear the real store.
 
+## Build it naive
+
+The rebuild is in the module `samples/config-changes`, in plain Kotlin. It has small stand-ins for the platform types. `Configuration` has two of the fields of the real class:
+
+<Snippet file="config-changes/src/main/kotlin/FakeActivityThread.kt" region="config" />
+
+An `Activity` has a token, a configuration, `onCreate` and `onDestroy`:
+
+<Snippet file="config-changes/src/main/kotlin/FakeActivityThread.kt" region="activity" />
+
+The real `ActivityThread` keeps one record for each activity in the map `mActivities`. The key of the map is the token of the activity[^activitythread-447]. `FakeActivityThread` also keeps a map from each token to the `Activity` object of the token. `relaunch` calls `onDestroy` on the old object. Then it creates a new object on the same token, with the new configuration. `finish` calls `onDestroy` and removes the token:
+
+<Snippet file="config-changes/src/main/kotlin/FakeActivityThread.kt" region="thread" />
+
+A test checks the relaunch. After `relaunch`, the old object is destroyed. The new object is a different object, with the same token and the new configuration.
+
+### A ViewModel in a field
+
+The `ViewModel` stand-in counts the calls to `onCleared`. `CounterViewModel` adds a counter:
+
+<Snippet file="config-changes/src/main/kotlin/NaiveViewModelStore.kt" region="viewmodel" />
+
+`FieldActivity` creates its `CounterViewModel` in a field. Its `onCreate` adds 1 to the counter:
+
+<Snippet file="config-changes/src/main/kotlin/NaiveViewModelStore.kt" region="problem" />
+
+The tests use two configurations, `day` and `night`. The store of the next step is one object for the whole JVM, and all tests share the JVM. Thus each test first empties the store, as in a new process:
+
+<Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="setup" />
+
+The test relaunches a `FieldActivity` with the `night` configuration. The new object has a new `ViewModel`, and the counter is 1 again:
+
+<Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="problem" />
+
+A field lives only as long as its `Activity` object. This is the problem of the chapter, in the rebuild.
+
+### A store for the process
+
+The naive fix keeps the `ViewModel` outside the `Activity` object. `NaiveViewModelStore` is one map for the whole process. The key of the map is the class name of the `Activity`:
+
+<Snippet file="config-changes/src/main/kotlin/NaiveViewModelStore.kt" region="store" />
+
+`StoreActivity` gets its `CounterViewModel` from the store in `onCreate`:
+
+<Snippet file="config-changes/src/main/kotlin/NaiveViewModelStore.kt" region="store-activity" />
+
+Now the new object finds the `ViewModel` of the old object. After one relaunch, the counter is 2:
+
+<Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="relaunch" />
+
 [^runtime-changes]: Handle configuration changes: [https://developer.android.com/guide/topics/resources/runtime-changes](https://developer.android.com/guide/topics/resources/runtime-changes)
 [^runtime-activity-recreation]: Handle configuration changes, "Activity recreation": [https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation](https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation)
 [^compose-state-in-composables]: State and Jetpack Compose, "State in composables": [https://developer.android.com/develop/ui/compose/state#state-in-composables](https://developer.android.com/develop/ui/compose/state#state-in-composables)
 [^viewmodel-lifecycle]: ViewModel overview, "The lifecycle of a ViewModel": [https://developer.android.com/topic/libraries/architecture/viewmodel#lifecycle](https://developer.android.com/topic/libraries/architecture/viewmodel#lifecycle)
+[^activitythread-447]: ActivityThread.java, line 447: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#447](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#447)
