@@ -1,0 +1,396 @@
+---
+title: "Coroutines from continuations"
+section: Concurrency
+sidebar:
+  order: 2
+checked:
+  android: 17
+  aosp: android-17.0.0_r1
+  libraries: { kotlin: "2.4.21", kotlinx.coroutines: "1.11.0" }
+  emulator: { image: "system-images;android-37.0;google_apis;arm64-v8a", revision: 8 }
+sources:
+  - https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html
+  - https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html
+  - https://developer.android.com/kotlin/coroutines
+  - https://developer.android.com/kotlin/coroutines/coroutines-adv
+  - https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt
+  - https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/ContinuationInterceptor.kt
+  - https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt
+  - https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/intrinsics/IntrinsicsJvm.kt
+  - https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt
+  - https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/SafeContinuationJvm.kt
+  - https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md
+  - https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/CoroutineTransformerMethodVisitor.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuation.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/AbstractCoroutine.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineStart.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/intrinsics/Cancellable.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Delay.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/Dispatchers.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/internal/MainDispatchers.kt
+  - https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/internal/FastServiceLoader.kt
+rebuild: true
+device: true
+drafted: ai
+edited_by: Gurpreet Singh
+---
+
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
+## The problem
+
+A network request on the main thread blocks the thread until the response comes. Then the OS cannot call `onDraw()`. The app freezes, and an Application Not Responding (ANR) dialog can show[^android-background-thread]. The [main thread chapter](/launch-path/main-thread/) shows the loop that the main thread runs.
+
+The Android docs use coroutines for this problem. A suspend function can call `withContext(Dispatchers.IO)`. Then the request runs on an I/O thread, and the function is main-safe: a call from the main thread does not block the updates of the UI. A coroutine on the main thread calls the function and suspends until the `withContext` block ends. Then the coroutine continues on the main thread, with the result of the request[^android-main-safety].
+
+Coroutines add two operations to call and return: suspend and resume. Suspend stops the current coroutine and saves its local variables. Resume continues the coroutine from the place where it stopped[^adv-manage]. The `suspend` keyword does not move a function to a background thread. A suspend function can run on the main thread[^adv-main-safety].
+
+Thus one function stops in the middle, and later the same function continues on the main thread, with its local variables. Kotlin implements each suspend function as a state machine, because a state machine needs no special support from the runtime[^spec-state-machine]. This chapter builds such a state machine by hand. Then it shows what the state machine alone does not do: send each resume back to the main thread.
+
+## Build it naive
+
+The rebuild is a coroutine written by hand, in plain Kotlin, in the module `samples/coroutines`. It does not use the `suspend` keyword or kotlinx.coroutines. Two fake loops act as the main thread and an I/O thread.
+
+The compiler gives each suspend function an extra parameter, a continuation[^spec-continuation]. `Continuation<in T>` is the interface of a continuation after a suspension point. It has a context and the function `resumeWith`[^continuation-13]. `resumeWith` gives the result of the last suspension point to the coroutine, and the coroutine continues[^spec-continuation]. The rebuild has a smaller stand-in, `Cont`, with only `resume`:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="cont" />
+
+The compiler also changes the return type of a suspend function to `Any?`. If the function has its result, it returns the result. If it suspends, it returns the marker `COROUTINE_SUSPENDED`[^spec-cps]. The rebuild has its own marker:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="marker" />
+
+`FakeLoop` acts as a thread with a message loop. It keeps a queue of blocks. `runAll()` runs the blocks in order. While a block runs, `currentLoop` is that loop. No real thread runs, so a test sets the order of the loops:
+
+<Snippet file="coroutines/src/main/kotlin/FakeLoop.kt" region="loop" />
+
+The rebuild has two loops: `main` for the UI and `io` for the network requests:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="loops" />
+
+`fetchUser` is the suspension point. It posts the request to `io` and returns `SUSPENDED` at once. Later, the `io` loop calls `cont.resume` with the user:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="fetch" />
+
+`LoadAndShow` is the state machine of the suspend function in its comment. The compiler splits a suspend function into steps. Each step, except the last step, ends with a suspension point. The field `label` holds the step that the next call of the state machine runs. Before the suspension point, the code sets `label` to the next step. If the call at the suspension point returns `COROUTINE_SUSPENDED`, the caller also returns `COROUTINE_SUSPENDED`. On resume, the state machine runs again, and `label` makes it jump to the next step[^codegen-state-machine].
+
+Step 1 runs in a new call of `resume`, so it does not have the local variables of step 0. Thus, before a suspension point, the compiler saves the live local variables into fields of the continuation. After the resume, it reads them back. The codegen doc of the Kotlin compiler calls this "spilling"[^codegen-spilling]. The arguments of a suspend function are local variables, so the compiler spills them too[^codegen-parameters]. In the rebuild, the field `userId` holds the spilled argument:
+
+<Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="state-machine" />
+
+`start` stores the argument and calls `resume(Unit)`. The library function `startCoroutine` also starts a coroutine with `resume(Unit)`[^continuation-112]. The first step of the state machine does not use this value[^codegen-startcoroutine].
+
+A test drains `main`, `io` and `main` again. It checks that `show` gets `42` and the user. Thus the spilled `userId` lives across the suspension point:
+
+<Snippet file="coroutines/src/test/kotlin/NaiveContinuationTest.kt" region="spill" />
+
+## Where it breaks
+
+The Kotlin spec says that in a typical UI app, the updates of the UI should run on a special UI thread[^spec-interception]. `show` is the UI step of `LoadAndShow`, so it must run on `main`. The breaking test records the loop of each call of `show`:
+
+<Snippet file="coroutines/src/test/kotlin/NaiveContinuationTest.kt" region="flaw" />
+
+1. The first drain of `main` runs step 0. `fetchUser` posts the request to `io` and returns `SUSPENDED`. Then `resume` returns, and `main` is free.
+2. The drain of `io` runs the request. The request calls `resume` on `LoadAndShow` directly, so step 1 runs on `io`. Thus `show` runs on `io`.
+3. The last drain of `main` runs no block.
+
+The test passes, so the flaw occurs: the UI step runs on the loop of the callback, not on `main`.
+
+The Kotlin standard library documents the same flaw. The intrinsic `suspendCoroutineUninterceptedOrReturn` gives a suspend function its continuation[^intrinsics-16]. A call of `resumeWith` on this continuation resumes the coroutine directly in the thread of the caller. The call does not go through the `ContinuationInterceptor` of the coroutine context[^intrinsics-29]. The Kotlin docs show this behavior with `Dispatchers.Unconfined`. After `delay(500)`, an unconfined coroutine continues on the thread `kotlinx.coroutines.DefaultExecutor`, the thread that `delay` uses[^docs-unconfined].
+
+The state machine does not choose its thread. Some other part must move each resume to the correct loop.
+
+## The real thing
+
+### The compiler makes the state machine
+
+The Kotlin spec describes the same transformation as the rebuild. Each suspend function gets an extra `Continuation` parameter, and its return type changes to `Any?`. The function returns its result, or `COROUTINE_SUSPENDED` if it suspends[^spec-cps]. The compiler makes each suspend lambda a continuation class. The class has fields for the local variables of the lambda and an integer field for the current step[^spec-state-machine].
+
+The codegen doc gives the details of the JVM code:
+
+- The state machine switches on `label`. Before each suspension point, it sets `label` to the next step. If the call at the suspension point returns `COROUTINE_SUSPENDED`, the function also returns `COROUTINE_SUSPENDED`. Each suspend function in the call stack returns, up to the coroutine builder[^codegen-state-machine].
+- At run time, the return type is `Any?` (`java.lang.Object`), because the function returns its result or the marker[^codegen-cps].
+- Before a suspension point, the compiler spills the live local variables into fields. After the resume, it reads them back. It does not spill the dead variables. It writes `null` into the field of a reference that is not necessary any more, so that the GC can collect the object[^codegen-spilling].
+- A named suspend function keeps its state machine in the function itself. It keeps its state, `label` and the spilled variables, in a separate continuation object[^codegen-suspend-functions].
+
+The Android docs say that a suspend copies the current stack frame and saves it for later[^adv-manage]. This is a simplification. The JVM code saves only the live local variables, in the fields of the continuation[^codegen-spilling].
+
+<GoDeeper title="The JVM pass that makes the state machine">
+
+`CoroutineTransformerMethodVisitor` is the JVM pass that finds the suspension points and makes the state machine[^codegen-suspend-markers]. At the start of the method, it adds a `tableswitch` on the `label` field of the continuation[^ctmv-323]. It names each field for a spilled variable with the first letter of the type descriptor, `$` and an index[^ctmv-1578][^codegen-spilled-naming]. For example, `L$0` is a field for a reference, and `I$0` is a field for an `int`[^codegen-spilled-naming]. Before a suspension point, the pass can write `null` into a reference field `L$<index>`[^ctmv-1045].
+
+</GoDeeper>
+
+### `BaseContinuationImpl` runs the state machine
+
+A resume of a compiled coroutine calls `BaseContinuationImpl.resumeWith`, and `resumeWith` calls `invokeSuspend`, which runs the state machine[^codegen-cps]. If `invokeSuspend` returns `COROUTINE_SUSPENDED`, `resumeWith` returns. If not, `resumeWith` gives the result to the completion, the continuation of the caller. If the completion is also a `BaseContinuationImpl`, the loop continues with the completion. Thus one resume continues each caller in turn, until a function suspends again or the top completion gets the result. A loop does this work, not a recursion[^continuationimpl-22][^codegen-cps].
+
+### The interceptor chooses the thread
+
+The rebuild needs a part between the callback and the state machine. In Kotlin, this part is the continuation interceptor. An interceptor intercepts the coroutine between suspension points. Usually, it wraps the continuation of the coroutine in another continuation. Thus an app can control where its code runs, for example on the UI thread[^spec-interception].
+
+`ContinuationInterceptor` is an element of the coroutine context[^continuationinterceptor-20]. Its `interceptContinuation` returns a continuation that wraps the original continuation, and thus it intercepts all resumes. The framework keeps the result for each original continuation[^continuationinterceptor-27].
+
+The function `intercepted()` does the wrap:
+
+- The continuation class of a named suspend function extends `ContinuationImpl`[^continuationimpl-98]. The class of a suspend lambda extends `SuspendLambda`, a subclass of `ContinuationImpl`[^continuationimpl-156]. On a `ContinuationImpl`, `intercepted()` asks the interceptor of the context one time and keeps the result in a field[^continuationimpl-108].
+- On each other continuation, `intercepted()` returns the continuation unchanged[^intrinsicsjvm-171].
+
+The codegen doc shows an interceptor that resumes each continuation on a new thread. If the example does not call `intercepted()`, the coroutine stays on the thread that resumes it[^codegen-interception]. This is the flaw of the rebuild.
+
+### Each suspension point resumes the intercepted continuation
+
+A suspend function gets its own continuation from the intrinsic `suspendCoroutineUninterceptedOrReturn`. If the block of the intrinsic returns `COROUTINE_SUSPENDED`, the function suspends. Later, some code must resume the continuation[^intrinsics-16][^spec-intrinsics]. `suspendCoroutine` and `suspendCancellableCoroutine` intercept this continuation before they give it to their block:
+
+- `suspendCoroutine` wraps `c.intercepted()` in a `SafeContinuation`[^continuation-142].
+- `suspendCancellableCoroutine` wraps `uCont.intercepted()` in a `CancellableContinuationImpl`[^cancellablecontinuation-429]. Code uses this function to wait for the result of a single-shot callback API[^cancellablecontinuation-328].
+
+Thus a callback does not resume the state machine directly. The resume goes through the wrapper of the interceptor.
+
+The start of a coroutine also goes through the interceptor. `startCoroutine` calls `createCoroutineUnintercepted(completion).intercepted().resume(Unit)`[^continuation-112]. If code calls `resume(Unit)` on the unintercepted continuation, the coroutine starts at once in the call stack of the caller. If code calls `resume(Unit)` on the intercepted continuation, the coroutine and its completion run in the context that the interceptor sets[^intrinsicsjvm-108].
+
+kotlinx.coroutines starts a coroutine in the same way. `launch` makes a `StandaloneCoroutine` as the completion and calls `coroutine.start`[^builders-200]. With the default start, `CoroutineStart.DEFAULT`, `start` calls `startCoroutineCancellable`[^abstractcoroutine-124][^coroutinestart-356]. `startCoroutineCancellable` creates the coroutine unintercepted, intercepts it, and resumes it with `Unit`[^cancellable-15].
+
+<GoDeeper title="When a suspension point does not suspend">
+
+The block of `suspendCoroutine` can call `resume` at once, in the same stack frame, before the suspend function returns[^continuation-132]. Then the function does not suspend. It returns the value, not `COROUTINE_SUSPENDED`[^intrinsics-16]. Each wrapper makes this decision with one atomic field:
+
+- `SafeContinuation` starts as `UNDECIDED`[^safecontinuation-20]. If `resumeWith` comes first, `SafeContinuation` stores the result. Then `getOrThrow` returns the value, and the function does not suspend. If `getOrThrow` comes first, it returns `COROUTINE_SUSPENDED`. Then a later `resumeWith` calls the wrapped continuation. A second resume throws "Already resumed"[^safecontinuation-35][^safecontinuation-50].
+- `CancellableContinuationImpl` has the decisions `UNDECIDED`, `SUSPENDED` and `RESUMED`. The first call of `trySuspend` or `tryResume` wins[^cancellablecontinuationimpl-52]. `getResult` returns `COROUTINE_SUSPENDED` only if `trySuspend` wins[^cancellablecontinuationimpl-290]. If the resume comes first, the resume does not dispatch. If the resume comes later, it dispatches[^cancellablecontinuationimpl-467].
+
+The codegen doc shows a resume inside the block of `suspendCoroutineUninterceptedOrReturn`, with no `SafeContinuation`. The result is undefined behavior. `SafeContinuation` prevents this problem[^codegen-safecontinuation].
+
+</GoDeeper>
+
+### `CoroutineDispatcher` posts the resume
+
+In kotlinx.coroutines, the interceptor is the dispatcher. The dispatcher in the coroutine context decides which thread or threads run the coroutine[^docs-dispatchers]. All coroutines run in a dispatcher, also the coroutines on the main thread. The dispatcher resumes them[^adv-main-safety].
+
+`CoroutineDispatcher` is a `ContinuationInterceptor`[^coroutinedispatcher-60]. Its `interceptContinuation` wraps each continuation in a `DispatchedContinuation`[^coroutinedispatcher-281]. `DispatchedContinuation.resumeWith` asks the dispatcher if a dispatch is necessary:
+
+1. It calls `isDispatchNeeded` on the dispatcher.
+2. If `isDispatchNeeded` returns true, it stores the result of the suspension point. Then it gives itself, as a `Runnable`, to `dispatch`[^dispatchedcontinuation-188][^dispatchedcontinuation-252]. `dispatch` can return before the `Runnable` runs[^coroutinedispatcher-41].
+3. Later, a thread of the dispatcher calls `DispatchedTask.run`. `run` takes the stored result and calls `resume` on the wrapped continuation[^dispatchedtask-77]. Thus the state machine continues on the thread of the dispatcher.
+
+If no dispatch is necessary, for example for `Dispatchers.Unconfined`, or for `Dispatchers.Main.immediate` on the main thread, the coroutine resumes on the current thread. An event loop prevents a stack overflow[^coroutinedispatcher-41][^dispatchedcontinuation-188].
+
+A `CancellableContinuationImpl` dispatches in another way. Its `resumeWith` calls `dispatchResume`[^cancellablecontinuationimpl-358][^cancellablecontinuationimpl-493]. If the coroutine already suspended, `dispatchResume` calls `DispatchedTask.dispatch`[^cancellablecontinuationimpl-467]. If `isDispatchNeeded` returns true, `DispatchedTask.dispatch` gives the `CancellableContinuationImpl` itself, as the `Runnable`, to the dispatcher of its `DispatchedContinuation`[^dispatchedtask-136]. Then `DispatchedTask.run` resumes the continuation that the `DispatchedContinuation` wraps[^dispatchedtask-77].
+
+### `Dispatchers.Main` posts to the main `Looper`
+
+On Android, `Dispatchers.Main` is a `HandlerContext`. `AndroidDispatcherFactory` makes it around an asynchronous `Handler` of the main `Looper`[^handlerdispatcher-48]. `HandlerContext.dispatch` calls `handler.post(block)`[^handlerdispatcher-133]. Thus each dispatch to `Dispatchers.Main` is one message in the queue of the main `Looper`. The [main thread chapter](/launch-path/main-thread/) explains the queue and the asynchronous messages.
+
+`HandlerContext.isDispatchNeeded` returns true, unless the dispatcher is `immediate` and the current `Looper` is the `Looper` of the `Handler`[^handlerdispatcher-129]. Thus `Dispatchers.Main` posts each resume that goes through `isDispatchNeeded`, also a resume that comes from the main thread.
+
+`HandlerContext` also implements `Delay`[^handlerdispatcher-110]. `delay` asks the `Delay` of the context to schedule the resume[^delay-121]. If the `ContinuationInterceptor` of the context implements `Delay`, it is the `Delay` of the context[^delay-149]. `HandlerContext.scheduleResumeAfterDelay` posts the resume with `handler.postDelayed`[^handlerdispatcher-139].
+
+<GoDeeper title="How Dispatchers.Main finds HandlerContext">
+
+`Dispatchers.Main` is a `@JvmStatic` property. Its value is `MainDispatcherLoader.dispatcher`[^dispatchers-18]. `MainDispatcherLoader` creates the dispatcher one time. If the system property `kotlinx.coroutines.fast.service.loader` is true, which is the default, it gets the factories from `FastServiceLoader`. If not, it uses `ServiceLoader`. Then it uses the factory with the highest `loadPriority`[^maindispatchers-13].
+
+`FastServiceLoader` detects Android if the class `android.os.Build` is present[^fastserviceloader-13]. On Android, it creates `kotlinx.coroutines.android.AndroidDispatcherFactory` by its class name. It adds `TestMainDispatcherFactory` only if that class is present[^fastserviceloader-48]. `AndroidDispatcherFactory` creates a `HandlerContext` around `Looper.getMainLooper()`[^handlerdispatcher-48]. On API level 28 and higher, it makes the asynchronous `Handler` with `Handler.createAsync`, through reflection[^handlerdispatcher-80].
+
+The main dispatcher prints its name as `Dispatchers.Main`[^handlerdispatcher-163][^maincoroutinedispatcher-64]. Prompt 3 of "Try it" shows this name.
+
+</GoDeeper>
+
+### `withContext` goes back to the dispatcher of the caller
+
+`withContext` gets the continuation of its caller, `uCont`. If the new context has a new dispatcher, `withContext` makes a `DispatchedCoroutine`. It starts the block on the new dispatcher with `startCoroutineCancellable`[^builders-472]. Then it returns `getResult()`: `COROUTINE_SUSPENDED`, or the value if the block already ended[^builders-591]. When the block ends, `afterResume` resumes the caller through `uCont.intercepted()`[^builders-585]. The interceptor of `uCont` is the dispatcher of the caller. Thus the caller goes back to its own dispatcher, for example `Dispatchers.Main`. This is how `withContext(Dispatchers.IO)` makes a suspend function main-safe[^android-main-safety].
+
+## Mental model
+
+A suspend function is a state machine. The compiler gives it a continuation parameter and the return type `Any?`. A continuation object keeps `label` and the spilled local variables. At a suspension point, the function gives a continuation to a callback and returns `COROUTINE_SUSPENDED`. Each caller returns too, and the thread goes back to its loop. Later, the callback calls `resume`. The continuation of the callback does not call the state machine directly. It goes through the wrapper of the interceptor of the coroutine context. On `Dispatchers.Main`, the wrapper is a `DispatchedContinuation`. The resume posts a `Runnable` to the `Handler` of the main `Looper`: the `DispatchedContinuation`, or the `CancellableContinuationImpl` of `suspendCancellableCoroutine`. Then the main `Looper` runs the message, and the state machine continues at `label` on the main thread. Without the wrapper, as in the rebuild, the state machine continues on the thread of the callback.
+
+```mermaid
+sequenceDiagram
+  participant M as Main thread
+  participant SM as State machine
+  participant IO as I/O thread
+  participant DC as DispatchedContinuation or CancellableContinuationImpl
+  M->>SM: resume(Unit) runs step 0
+  SM->>IO: the callback gets the intercepted continuation
+  SM-->>M: COROUTINE_SUSPENDED, label is 1
+  IO->>DC: resumeWith(user)
+  DC->>M: handler.post(this)
+  M->>SM: DispatchedTask.run calls resume(user), step 1 runs
+```
+
+## Try it
+
+### 1. Resume on the main loop
+
+Do in the rebuild what an interceptor does. In `LoadAndShow.resume`, change the call of `fetchUser` to `result = fetchUser(userId, Cont { user -> main.post { resume(user) } })`. The new `Cont` posts each resume to `main`, as `DispatchedContinuation` gives itself to its dispatcher. From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :coroutines:test
+```
+
+The breaking test fails, because `show` now runs on `main`. The other tests pass. The spill test also passes, because the last drain of `main` runs `show` with the user and the spilled `userId`. The Gradle output includes these lines:
+
+```
+NaiveContinuationTest > naiveContinuation_resumesOnCallbackLoop_notMainLoop() FAILED
+    org.opentest4j.AssertionFailedError at NaiveContinuationTest.kt:56
+
+5 tests completed, 1 failed
+```
+
+### 2. Call delay from Java
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the `coroutines` flavor of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installCoroutinesRelease
+```
+
+The flavor adds one activity, `CoroutinesActivity`. The activity is in Java and has no Kotlin code, but the flavor depends on kotlinx-coroutines-android 1.11.0. The activity does these steps in `onCreate`:
+
+1. It gives the main `Looper` a `Printer` with `setMessageLogging`. The `Printer` logs only the lines that contain `HandlerContext` or `DispatchedContinuation`.
+2. It calls the suspend function `delay` from Java: `DelayKt.delay(500L, cont)`. `cont` is an object of a Java class that implements `kotlin.coroutines.Continuation` by hand. It has no state machine. Its context is `Dispatchers.getMain()`. It logs each call of `resumeWith` and the name of its thread.
+3. It logs the return value of `delay`.
+
+Clear the log, start the activity, and read the log after one second:
+
+```sh
+adb logcat -c
+adb shell am start -S -W -n io.github.imgurpreetsk.afp.launchapp.coroutines/io.github.imgurpreetsk.afp.launchapp.CoroutinesActivity
+sleep 1
+adb logcat -d -s Coroutines
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I Coroutines: delay returned COROUTINE_SUSPENDED
+… D Coroutines: >>>>> Dispatching to Handler (android.os.Handler) {…} …HandlerContext…: 0
+… I Coroutines: cont resumeWith(kotlin.Unit) on main
+… I Coroutines: cont2 resumeWith(kotlin.Unit) on worker
+… D Coroutines: <<<<< Finished to Handler (android.os.Handler) {…} …HandlerContext…
+… D Coroutines: >>>>> Dispatching to Handler (android.os.Handler) {…} DispatchedContinuation[Dispatchers.Main, …]: 0
+… I Coroutines: cont2 resumeWith(kotlin.Unit) on main
+… D Coroutines: <<<<< Finished to Handler (android.os.Handler) {…} DispatchedContinuation[Dispatchers.Main, …]
+```
+
+Each log line starts with the date, the time, the PID and the thread ID. The block shows them as `…`. Prompt 3 explains the lines with `cont2`.
+
+- From Java, the suspend function `delay` is a plain method. It has an extra `Continuation` parameter, and its return type is `Object`[^spec-cps][^codegen-cps]. It suspended, so it returned the marker at once, and `onCreate` ended. The marker is a value of the enum `CoroutineSingletons`, so it prints its name[^intrinsics-57].
+- About 500 ms later, the main `Looper` runs one message. The [main thread chapter](/launch-path/main-thread/) explains the `>>>>> Dispatching to` and `<<<<< Finished to` lines. The `Runnable` of this message is the lambda of `HandlerContext.scheduleResumeAfterDelay`, which `handler.postDelayed` posted[^handlerdispatcher-139]. The class name of the lambda contains `HandlerContext`.
+- In that message, `cont` logs `resumeWith(kotlin.Unit)` on the thread `main`. Thus the resume after `delay` is one message of the main queue. `HandlerContext` posted it, because it is the `ContinuationInterceptor` of the context and implements `Delay`[^delay-149][^handlerdispatcher-110].
+
+### 3. Resume from a worker thread
+
+When `cont` resumes, it starts a thread with the name `worker` and waits until the thread ends. The thread calls `resumeWith(Unit.INSTANCE)` on a second plain continuation, `cont2`. Then a second `worker` thread calls `resumeWith(Unit.INSTANCE)` on `Dispatchers.getMain().interceptContinuation(cont2)`. `cont2` also logs the name of its thread.
+
+Run the commands of prompt 2 again:
+
+```sh
+samples/gradlew -p samples :launch-app:installCoroutinesRelease
+adb logcat -c
+adb shell am start -S -W -n io.github.imgurpreetsk.afp.launchapp.coroutines/io.github.imgurpreetsk.afp.launchapp.CoroutinesActivity
+sleep 1
+adb logcat -d -s Coroutines
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I Coroutines: delay returned COROUTINE_SUSPENDED
+… D Coroutines: >>>>> Dispatching to Handler (android.os.Handler) {…} …HandlerContext…: 0
+… I Coroutines: cont resumeWith(kotlin.Unit) on main
+… I Coroutines: cont2 resumeWith(kotlin.Unit) on worker
+… D Coroutines: <<<<< Finished to Handler (android.os.Handler) {…} …HandlerContext…
+… D Coroutines: >>>>> Dispatching to Handler (android.os.Handler) {…} DispatchedContinuation[Dispatchers.Main, …]: 0
+… I Coroutines: cont2 resumeWith(kotlin.Unit) on main
+… D Coroutines: <<<<< Finished to Handler (android.os.Handler) {…} DispatchedContinuation[Dispatchers.Main, …]
+```
+
+- The first `cont2` line shows the thread `worker`. This line comes before the `<<<<< Finished to` line of the message of `cont`, because the main thread waits in that message until the worker ends. No interceptor wraps `cont2`, so `resumeWith` runs on the worker, the thread of the caller, not in a message of the main `Looper`. This is the flaw of the rebuild on a real device[^intrinsics-29].
+- The intercepted continuation does not run on the worker. `interceptContinuation` returned a `DispatchedContinuation`[^coroutinedispatcher-281]. `Dispatchers.Main` is not `immediate`, so `isDispatchNeeded` returned true[^handlerdispatcher-48][^handlerdispatcher-110][^handlerdispatcher-129]. Thus `resumeWith` gave the `DispatchedContinuation` to `HandlerContext.dispatch`[^dispatchedcontinuation-188][^dispatchedcontinuation-252], and `dispatch` called `handler.post`[^handlerdispatcher-133].
+- The main `Looper` runs this message after the message of `cont` ends. The log shows the `DispatchedContinuation` as the `Runnable` of the message. Its `toString` prints the dispatcher and the wrapped continuation[^dispatchedcontinuation-248]. The main dispatcher prints its name as `Dispatchers.Main`[^handlerdispatcher-163][^maincoroutinedispatcher-64].
+- In that message, `DispatchedTask.run` resumes `cont2`[^dispatchedtask-77]. Thus the second `cont2` line shows the thread `main`.
+
+[^android-background-thread]: Kotlin coroutines on Android, "Executing in a background thread": [https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread](https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread)
+[^android-main-safety]: Kotlin coroutines on Android, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety](https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety)
+[^adv-manage]: Improve app performance with Kotlin coroutines, "Manage long-running tasks": [https://developer.android.com/kotlin/coroutines/coroutines-adv#manage](https://developer.android.com/kotlin/coroutines/coroutines-adv#manage)
+[^adv-main-safety]: Improve app performance with Kotlin coroutines, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines/coroutines-adv#main-safety](https://developer.android.com/kotlin/coroutines/coroutines-adv#main-safety)
+[^spec-state-machine]: Kotlin specification, "Coroutine state machine": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#coroutine-state-machine](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#coroutine-state-machine)
+[^spec-continuation]: Kotlin specification, "kotlin.coroutines.Continuation": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#kotlin.coroutines.continuationt](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#kotlin.coroutines.continuationt)
+[^continuation-13]: Continuation.kt, lines 13–26: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L13-L26](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L13-L26)
+[^spec-cps]: Kotlin specification, "Continuation Passing Style": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#continuation-passing-style](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#continuation-passing-style)
+[^codegen-state-machine]: coroutines-codegen.md, "State-Machine": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#state-machine](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#state-machine)
+[^codegen-spilling]: coroutines-codegen.md, "Variables Spilling": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#variables-spilling](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#variables-spilling)
+[^codegen-parameters]: coroutines-codegen.md, "JVM: Parameters": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#jvm-parameters](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#jvm-parameters)
+[^continuation-112]: Continuation.kt, lines 112–116: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L112-L116](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L112-L116)
+[^codegen-startcoroutine]: coroutines-codegen.md, "startCoroutine": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#startcoroutine](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#startcoroutine)
+[^spec-interception]: Kotlin specification, "Continuation interception": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#continuation-interception](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#continuation-interception)
+[^intrinsics-16]: Intrinsics.kt, lines 16–25: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L16-L25](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L16-L25)
+[^intrinsics-29]: Intrinsics.kt, lines 29–32: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L29-L32](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L29-L32)
+[^docs-unconfined]: Coroutine context and dispatchers, "Unconfined vs confined dispatcher": [https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html#unconfined-vs-confined-dispatcher](https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html#unconfined-vs-confined-dispatcher)
+[^codegen-cps]: coroutines-codegen.md, "Continuation Passing Style": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#continuation-passing-style](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#continuation-passing-style)
+[^codegen-suspend-functions]: coroutines-codegen.md, "Suspend Functions": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#suspend-functions](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#suspend-functions)
+[^codegen-suspend-markers]: coroutines-codegen.md, "JVM: Suspend Markers": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#jvm-suspend-markers](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#jvm-suspend-markers)
+[^ctmv-323]: CoroutineTransformerMethodVisitor.kt, lines 323–341: [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/CoroutineTransformerMethodVisitor.kt#L323-L341](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/CoroutineTransformerMethodVisitor.kt#L323-L341)
+[^ctmv-1578]: CoroutineTransformerMethodVisitor.kt, line 1578: [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/CoroutineTransformerMethodVisitor.kt#L1578](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/CoroutineTransformerMethodVisitor.kt#L1578)
+[^codegen-spilled-naming]: coroutines-codegen.md, "Spilled Variables Naming": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#spilled-variables-naming](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#spilled-variables-naming)
+[^ctmv-1045]: CoroutineTransformerMethodVisitor.kt, lines 1045–1057: [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/CoroutineTransformerMethodVisitor.kt#L1045-L1057](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/CoroutineTransformerMethodVisitor.kt#L1045-L1057)
+[^continuationimpl-22]: ContinuationImpl.kt, lines 22–52: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L22-L52](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L22-L52)
+[^continuationinterceptor-20]: ContinuationInterceptor.kt, line 20: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/ContinuationInterceptor.kt#L20](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/ContinuationInterceptor.kt#L20)
+[^continuationinterceptor-27]: ContinuationInterceptor.kt, lines 27–37: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/ContinuationInterceptor.kt#L27-L37](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/ContinuationInterceptor.kt#L27-L37)
+[^continuationimpl-98]: ContinuationImpl.kt, lines 98–102: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L98-L102](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L98-L102)
+[^continuationimpl-156]: ContinuationImpl.kt, lines 156–160: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L156-L160](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L156-L160)
+[^continuationimpl-108]: ContinuationImpl.kt, lines 108–114: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L108-L114](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L108-L114)
+[^intrinsicsjvm-171]: IntrinsicsJvm.kt, lines 171–182: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/intrinsics/IntrinsicsJvm.kt#L171-L182](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/intrinsics/IntrinsicsJvm.kt#L171-L182)
+[^codegen-interception]: coroutines-codegen.md, "Interception": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#interception](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#interception)
+[^spec-intrinsics]: Kotlin specification, "Coroutine intrinsics": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#coroutine-intrinsics](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#coroutine-intrinsics)
+[^continuation-142]: Continuation.kt, lines 142–149: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L142-L149](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L142-L149)
+[^cancellablecontinuation-429]: CancellableContinuation.kt, lines 429–444: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L429-L444](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L429-L444)
+[^cancellablecontinuation-328]: CancellableContinuation.kt, lines 328–330: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L328-L330](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L328-L330)
+[^intrinsicsjvm-108]: IntrinsicsJvm.kt, lines 108–117: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/intrinsics/IntrinsicsJvm.kt#L108-L117](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/intrinsics/IntrinsicsJvm.kt#L108-L117)
+[^builders-200]: Builders.common.kt, lines 200–211: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L200-L211](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L200-L211)
+[^abstractcoroutine-124]: AbstractCoroutine.kt, lines 124–135: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/AbstractCoroutine.kt#L124-L135](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/AbstractCoroutine.kt#L124-L135)
+[^coroutinestart-356]: CoroutineStart.kt, lines 356–362: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineStart.kt#L356-L362](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineStart.kt#L356-L362)
+[^cancellable-15]: Cancellable.kt, lines 15–27: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/intrinsics/Cancellable.kt#L15-L27](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/intrinsics/Cancellable.kt#L15-L27)
+[^continuation-132]: Continuation.kt, lines 132–139: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L132-L139](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L132-L139)
+[^safecontinuation-20]: SafeContinuationJvm.kt, lines 20–26: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/SafeContinuationJvm.kt#L20-L26](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/SafeContinuationJvm.kt#L20-L26)
+[^safecontinuation-35]: SafeContinuationJvm.kt, lines 35–47: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/SafeContinuationJvm.kt#L35-L47](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/SafeContinuationJvm.kt#L35-L47)
+[^safecontinuation-50]: SafeContinuationJvm.kt, lines 50–61: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/SafeContinuationJvm.kt#L50-L61](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/jvm/src/kotlin/coroutines/SafeContinuationJvm.kt#L50-L61)
+[^cancellablecontinuationimpl-52]: CancellableContinuationImpl.kt, lines 52–69: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L52-L69](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L52-L69)
+[^cancellablecontinuationimpl-290]: CancellableContinuationImpl.kt, lines 290–316: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L290-L316](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L290-L316)
+[^cancellablecontinuationimpl-467]: CancellableContinuationImpl.kt, lines 467–471: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L467-L471](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L467-L471)
+[^codegen-safecontinuation]: coroutines-codegen.md, "SafeContinuation": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#safecontinuation](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#safecontinuation)
+[^docs-dispatchers]: Coroutine context and dispatchers, "Dispatchers and threads": [https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html#dispatchers-and-threads](https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html#dispatchers-and-threads)
+[^coroutinedispatcher-60]: CoroutineDispatcher.kt, lines 60–61: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L60-L61](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L60-L61)
+[^coroutinedispatcher-281]: CoroutineDispatcher.kt, lines 281–282: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L281-L282](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L281-L282)
+[^dispatchedcontinuation-188]: DispatchedContinuation.kt, lines 188–201: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L188-L201](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L188-L201)
+[^dispatchedcontinuation-252]: DispatchedContinuation.kt, lines 252–266: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L252-L266](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L252-L266)
+[^coroutinedispatcher-41]: CoroutineDispatcher.kt, lines 41–55: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L41-L55](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L41-L55)
+[^dispatchedtask-77]: DispatchedTask.kt, lines 77–103: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt#L77-L103](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt#L77-L103)
+[^cancellablecontinuationimpl-358]: CancellableContinuationImpl.kt, lines 358–359: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L358-L359](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L358-L359)
+[^cancellablecontinuationimpl-493]: CancellableContinuationImpl.kt, lines 493–506: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L493-L506](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L493-L506)
+[^dispatchedtask-136]: DispatchedTask.kt, lines 136–154: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt#L136-L154](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt#L136-L154)
+[^handlerdispatcher-48]: HandlerDispatcher.kt, lines 48–59: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L48-L59](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L48-L59)
+[^handlerdispatcher-133]: HandlerDispatcher.kt, lines 133–137: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L133-L137](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L133-L137)
+[^handlerdispatcher-129]: HandlerDispatcher.kt, lines 129–131: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L129-L131](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L129-L131)
+[^handlerdispatcher-110]: HandlerDispatcher.kt, lines 110–127: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L110-L127](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L110-L127)
+[^delay-121]: Delay.kt, lines 121–129: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Delay.kt#L121-L129](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Delay.kt#L121-L129)
+[^delay-149]: Delay.kt, line 149: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Delay.kt#L149](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Delay.kt#L149)
+[^handlerdispatcher-139]: HandlerDispatcher.kt, lines 139–148: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L139-L148](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L139-L148)
+[^dispatchers-18]: Dispatchers.kt, lines 18–19: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/Dispatchers.kt#L18-L19](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/Dispatchers.kt#L18-L19)
+[^maindispatchers-13]: MainDispatchers.kt, lines 13–40: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/internal/MainDispatchers.kt#L13-L40](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/internal/MainDispatchers.kt#L13-L40)
+[^fastserviceloader-13]: FastServiceLoader.kt, line 13: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/internal/FastServiceLoader.kt#L13](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/internal/FastServiceLoader.kt#L13)
+[^fastserviceloader-48]: FastServiceLoader.kt, lines 48–75: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/internal/FastServiceLoader.kt#L48-L75](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/src/internal/FastServiceLoader.kt#L48-L75)
+[^handlerdispatcher-80]: HandlerDispatcher.kt, lines 80–90: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L80-L90](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L80-L90)
+[^handlerdispatcher-163]: HandlerDispatcher.kt, lines 163–166: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L163-L166](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L163-L166)
+[^maincoroutinedispatcher-64]: MainCoroutineDispatcher.kt, lines 64–72: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L64-L72](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L64-L72)
+[^builders-472]: Builders.common.kt, lines 472–505: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L472-L505](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L472-L505)
+[^builders-591]: Builders.common.kt, lines 591–598: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L591-L598](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L591-L598)
+[^builders-585]: Builders.common.kt, lines 585–589: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L585-L589](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L585-L589)
+[^intrinsics-57]: Intrinsics.kt, lines 57–64: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L57-L64](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L57-L64)
+[^dispatchedcontinuation-248]: DispatchedContinuation.kt, lines 248–249: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L248-L249](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L248-L249)
