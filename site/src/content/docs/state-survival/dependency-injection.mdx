@@ -132,7 +132,7 @@ The Hilt docs give a warning for fragments: each fragment instance gets a new in
 
 A scoped object stays in memory until its component ends[^hilt-component-scopes]. Thus an `@ActivityRetainedScoped` object does not survive process death. To keep the input of the user after process death, also put it in the saved state. The [Process death & saved state chapter](/state-survival/process-death/) shows how.
 
-At build time, Dagger builds and validates the graph. It makes sure that each dependency has a binding and that the graph has no cycles. Then it generates the classes that create the objects at run time[^hilt-define-bindings]. Hilt supports only activities that extend `ComponentActivity`[^hilt-android-classes]. The next sections show that Hilt uses the `ViewModelStore` and the `OnContextAvailableListener` of `ComponentActivity`.
+At build time, Dagger builds and validates the graph. It makes sure that each dependency has a binding and that the graph has no cycles. Then it generates the classes that create the objects at run time[^hilt-define-bindings]. Hilt supports only activities that extend `ComponentActivity`[^hilt-android-classes]. The next sections show that Hilt keeps the retained component in the `ViewModelStore` of `ComponentActivity`. The Go deeper box "how Hilt injects an activity" shows that Hilt also uses the `OnContextAvailableListener` of `ComponentActivity`.
 
 ### The application component
 
