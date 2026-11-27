@@ -42,7 +42,7 @@ Unidirectional data flow (UDF) adds a direction to this rule. State flows in one
 
 State always exists. Events occur, and each event changes the state[^state-production].
 
-The UI must not change the UI state directly, unless the UI is the only source of that data. Otherwise, the app gets more than one source of truth for the same data, and the data becomes inconsistent. An immutable UI state object prevents this error, because the UI cannot change the object that it gets[^ui-layer-immutability].
+The UI must not change the UI state directly, unless the UI is the only source of that data. Otherwise, the app gets more than one source of truth for the same data, and the data becomes inconsistent. An immutable UI state object helps to prevent this error, because the UI cannot change the object that it gets[^ui-layer-immutability].
 
 The Compose guide also says that immutable values prevent concurrency problems, because no other thread can change the state that a composable gets[^compose-events]. But the state holder still writes its own state. If two writers update the state at the same time, the write itself can lose an update. Immutable values do not prevent this loss.
 
