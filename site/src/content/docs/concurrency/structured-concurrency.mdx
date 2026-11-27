@@ -93,6 +93,34 @@ The next test records the tick before and after `naiveDelay(3)`. At the launch, 
 
 Other tests check that `launch` adds the child job to the children of the job of the scope. They also check that a block that returns ends with no failure, and that a block that throws ends with its exception in `failure`. A test also checks that `cancel` on the root job cancels a child and a grandchild.
 
+## Where it breaks
+
+The rebuild has two flaws. The tree does not connect a child to its parent, and the delay does not watch the job. Three breaking tests show the flaws. Each breaking test passes, so each flaw occurs.
+
+### A failure stays in the child
+
+Child A fails at tick 1. Child B wakes at tick 2 and at tick 3. Each time, if its job is not cancelled, B adds 1 to a counter:
+
+<Snippet file="structured-concurrency/src/test/kotlin/NaiveJobTest.kt" region="child-failure" />
+
+At tick 3, `a.failure` holds the exception, the counter is 2, and the root job is not cancelled. The completion continuation of `launch` keeps the failure in the child and tells no other job. In the real tree, the failure of A cancels the parent, and the parent cancels B[^job-18].
+
+### The parent completes before its child
+
+The block of the parent launches child C and then returns. C wakes at tick 5:
+
+<Snippet file="structured-concurrency/src/test/kotlin/NaiveJobTest.kt" region="parent-completion" />
+
+At tick 1, the parent is complete, but C is not complete. The completion continuation of `launch` marks a job complete when the block of that job ends. It does not look at the children of the job. A real job waits in the Completing state until each child completes[^job-67].
+
+### A cancelled coroutine still resumes
+
+The test cancels the job at tick 1. At that time, `naiveDelay(10)` suspends the coroutine of the job:
+
+<Snippet file="structured-concurrency/src/test/kotlin/NaiveJobTest.kt" region="cancelled-delay" />
+
+The job is cancelled, but the line after `naiveDelay` still runs, at tick 10. In `naiveDelay`, only the task of the loop holds the continuation. No code connects the continuation to the job. Thus `cancel` marks the job, but the coroutine stays suspended until the task resumes it. The kotlinx.coroutines guide states the same for each custom suspend function that uses `suspendCoroutine`: such a function does not react to cancellation[^suspension-points].
+
 [^coroutinescope-581]: CoroutineScope.kt, lines 581–584: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584)
 [^coroutinescope-231]: CoroutineScope.kt, lines 231–241: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241)
 [^coroutinescope-565]: CoroutineScope.kt, lines 565–570: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570)
@@ -101,3 +129,4 @@ Other tests check that `launch` adds the child job to the children of the job of
 [^job-18]: Job.kt, lines 18–22: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Job.kt#L18-L22](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Job.kt#L18-L22)
 [^job-67]: Job.kt, lines 67–73: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Job.kt#L67-L73](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Job.kt#L67-L73)
 [^cancellation-cooperative]: Cancellation and timeouts, "Make coroutines react to cancellation": [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/docs/topics/cancellation-and-timeouts.md#make-coroutines-react-to-cancellation-idcancellation-is-cooperative](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/docs/topics/cancellation-and-timeouts.md#make-coroutines-react-to-cancellation-idcancellation-is-cooperative)
+[^suspension-points]: Cancellation and timeouts, "Suspension points and cancellation": [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/docs/topics/cancellation-and-timeouts.md#suspension-points-and-cancellation](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/docs/topics/cancellation-and-timeouts.md#suspension-points-and-cancellation)
