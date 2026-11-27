@@ -112,8 +112,28 @@ Now the new object finds the `ViewModel` of the old object. After one relaunch, 
 
 <Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="relaunch" />
 
+## Where it breaks
+
+No code removes an entry from the store. The store cannot tell a relaunch from a finish, because it gets only the `Activity` object, and its key is only the class name. Two breaking tests show the flaw.
+
+The first test launches a `StoreActivity` and finishes it. After the finish, the store still holds the `ViewModel`, and nothing called `onCleared`:
+
+<Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="leak" />
+
+When the owner of a real store destroys a `ViewModel`, the `ViewModel` calls `onCleared`. There, the `ViewModel` can stop its work[^viewmodel-clear-dependencies]. Its `viewModelScope` is a `CoroutineScope` that the library cancels when it clears the `ViewModel`[^viewmodel-207]. With the naive store, the `ViewModel` stays in memory after the finish, and nothing cancels its `viewModelScope`.
+
+The second test launches two `StoreActivity` objects on two tokens. Both objects get the same `ViewModel` object:
+
+<Snippet file="config-changes/src/test/kotlin/NaiveViewModelStoreTest.kt" region="share" />
+
+The real `ActivityThread` keeps a separate record for each token[^activitythread-447]. Thus two activities of one class are two separate screens. With the naive store, they share one counter.
+
+Both tests pass, so both flaws occur. A correct store needs two facts that the naive store does not have: the activity of each `ViewModel`, and the reason for each destroy.
+
 [^runtime-changes]: Handle configuration changes: [https://developer.android.com/guide/topics/resources/runtime-changes](https://developer.android.com/guide/topics/resources/runtime-changes)
 [^runtime-activity-recreation]: Handle configuration changes, "Activity recreation": [https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation](https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation)
 [^compose-state-in-composables]: State and Jetpack Compose, "State in composables": [https://developer.android.com/develop/ui/compose/state#state-in-composables](https://developer.android.com/develop/ui/compose/state#state-in-composables)
 [^viewmodel-lifecycle]: ViewModel overview, "The lifecycle of a ViewModel": [https://developer.android.com/topic/libraries/architecture/viewmodel#lifecycle](https://developer.android.com/topic/libraries/architecture/viewmodel#lifecycle)
 [^activitythread-447]: ActivityThread.java, line 447: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#447](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#447)
+[^viewmodel-clear-dependencies]: ViewModel overview, "Clearing ViewModel dependencies": [https://developer.android.com/topic/libraries/architecture/viewmodel#clear-dependencies](https://developer.android.com/topic/libraries/architecture/viewmodel#clear-dependencies)
+[^viewmodel-207]: lifecycle-viewmodel ViewModel.kt, lines 207–231: [https://android.googlesource.com/platform/frameworks/support/+/a01f1a6c29523dd9b046b7f2a383d7d24559e316/lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/ViewModel.kt#207](https://android.googlesource.com/platform/frameworks/support/+/a01f1a6c29523dd9b046b7f2a383d7d24559e316/lifecycle/lifecycle-viewmodel/src/commonMain/kotlin/androidx/lifecycle/ViewModel.kt#207)
