@@ -174,9 +174,9 @@ JobScheduler expects `onStartJob` and `onStopJob` of a `JobService` to return in
 
 ### A Java thread is a Linux thread
 
-The app moves slow work to other threads. `Thread.start()` calls `nativeCreate`, a native method that Android adds[^thread-1430][^thread-1550]. In ART, `nativeCreate` calls `Thread::CreateNativeThread`[^java-lang-thread-89]. This method calls `pthread_create` with a detached attribute and a stack size[^art-thread-1008]. Thus each Java thread is a Linux thread. Prompt 2 of "Try it" lists the threads of the launch app, each with its thread ID (TID).
+The app moves slow work to other threads. `Thread.start()` calls `nativeCreate`, a native method that Android adds[^thread-1430][^thread-1550]. In ART, `nativeCreate` calls `Thread::CreateNativeThread`[^java-lang-thread-89]. This method calls `pthread_create` with a detached attribute and a stack size[^art-thread-1008]. Thus each thread that `Thread.start()` creates is a Linux thread. Prompt 2 of "Try it" lists the threads of the launch app, each with its thread ID (TID).
 
-Before the call, `FixStackSize` adds 1 MB to the requested or default stack size[^art-thread-775]. Thus the stack of each Java thread is larger than 1 MB. The new thread sets its name and its niceness, and then calls the `run()` method of its `java.lang.Thread`. When `run()` returns, the thread ends[^art-thread-685][^art-thread-745].
+Before the call, `FixStackSize` adds 1 MB to the requested or default stack size[^art-thread-775]. Thus the stack of each thread that `Thread.start()` creates is larger than 1 MB. The new thread sets its name and its niceness, and then calls the `run()` method of its `java.lang.Thread`. When `run()` returns, the thread ends[^art-thread-685][^art-thread-745].
 
 <GoDeeper title="Java priority and niceness">
 
