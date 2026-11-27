@@ -123,7 +123,7 @@ The saved state goes to `system_server` in a Binder call, so its size has a limi
 
 <GoDeeper title="the Binder buffer of the receiver">
 
-Each process maps one buffer to receive Binder transactions. Its size is `BINDER_VM_SIZE`, 1 MB minus two pages[^processstate-48][^processstate-624]. The receiver of a call holds the data of the call in its buffer. At the save, the receiver is `system_server`. At the relaunch, the receiver is the new app process. Before the relaunch, `tryRealStartActivityInner` logs "Transaction too large" if the extras of the intent and the saved state together are more than 200,000 bytes[^activitytasksupervisor-1033][^activitytasksupervisor-1156].
+Each process maps one buffer to receive Binder transactions. Its size is `BINDER_VM_SIZE`, 1 MB minus two pages[^processstate-48][^processstate-624]. The receiver of a call holds the data of the call in its buffer. At the save, the receiver is `system_server`. At the relaunch, the receiver is the new app process. Before the relaunch, `tryRealStartActivityInner` logs "Transaction too large" if the `getSize` value of the extras of the intent plus the `getSize` value of the saved state is more than 200,000[^activitytasksupervisor-1033][^activitytasksupervisor-1156].
 
 </GoDeeper>
 
