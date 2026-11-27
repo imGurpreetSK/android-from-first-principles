@@ -39,6 +39,13 @@ android {
             // The baseline of the chapter is Android 17 (API level 37).
             targetSdk = 37
         }
+        // The app of the dependency-injection chapter. Its manifest replaces the AppComponentFactory of the app.
+        create("dependencyInjection") {
+            dimension = "chapter"
+            applicationIdSuffix = ".dependencyInjection"
+            // The baseline of the chapter is Android 17 (API level 37).
+            targetSdk = 37
+        }
     }
 }
 
