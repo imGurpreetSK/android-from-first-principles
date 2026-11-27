@@ -118,7 +118,7 @@ If `emit` throws an exception, `SafeCollector` keeps the exception as the contex
 
 ### `StateFlow` is hot
 
-A shared flow is hot, because its active instance exists independently of its collectors. All collectors get all emitted values. A `flow { }` flow is cold, and it starts separately for each collector[^sharedflow-11]. A shared flow never completes, so a `collect` call on it never returns normally[^sharedflow-16].
+A shared flow is hot, because its active instance exists independently of its collectors. All collectors get all emitted values. A `flow { }` flow is cold, and it starts separately for each collector[^sharedflow-11]. A shared flow never completes, so a `collect` call on it never returns normally[^sharedflow-16]. An active collector of a shared flow is a subscriber[^sharedflow-16].
 
 A `StateFlow` is a `SharedFlow` with one value. It is hot for the same reason[^stateflow-11]. It never completes[^stateflow-15]. A `collect` call does not run producer code, and a new collector first gets the last state[^stateflow-doc]. `NaiveStateFlow` of the rebuild acts the same way.
 
@@ -174,7 +174,7 @@ A shared flow keeps a number of the most recent values in its replay cache[^shar
 
 ### `stateIn` and `shareIn` share one run
 
-`shareIn` makes a cold flow hot. It takes a `CoroutineScope` that shares the flow, the number of values to replay to each new collector, and a start policy[^stateflow-doc-sharein]. `stateIn` converts any flow to a `StateFlow`[^stateflow-doc].
+`shareIn` makes a cold flow hot. It takes a `CoroutineScope` that shares the flow, the number of values to replay to each new subscriber, and a start policy[^stateflow-doc-sharein]. `stateIn` converts any flow to a `StateFlow`[^stateflow-doc].
 
 Both operators share the emissions of one run of the upstream flow with all subscribers[^share-14][^share-241]. `stateIn` makes a `MutableStateFlow` with the initial value. Then it launches one coroutine in the scope[^share-303]. This coroutine collects the upstream flow into the state flow:
 
