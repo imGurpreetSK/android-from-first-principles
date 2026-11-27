@@ -54,6 +54,14 @@ android {
             // The baseline of the chapter is Android 17 (API level 37).
             targetSdk = 37
         }
+        // The app of the threads-and-anr chapter. Its device prompts run installThreadsAndAnrRelease.
+        create("threadsAndAnr") {
+            dimension = "chapter"
+            // The suffix lets the flavor install next to launchPath.
+            applicationIdSuffix = ".threadsAndAnr"
+            // The baseline of the chapter is Android 17 (API level 37).
+            targetSdk = 37
+        }
     }
 }
 
