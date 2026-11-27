@@ -211,7 +211,7 @@ The guarantee needs a `CoroutineDispatcher`. A custom `ContinuationInterceptor` 
 
 ### Cancellation is cooperative
 
-All the suspend functions of kotlinx.coroutines use `suspendCancellableCoroutine`, so they react to cancellation. A custom suspend function that uses `suspendCoroutine` does not react, as `naiveDelay` shows[^suspension-points].
+All the suspend functions of kotlinx.coroutines react to cancellation. A custom suspend function that uses `suspendCoroutine` does not react, as `naiveDelay` shows[^suspension-points].
 
 If a coroutine does not suspend for a long time, it does not stop at a cancellation, unless it checks for cancellation. `isActive` is false after the cancellation, `ensureActive` throws a `CancellationException`, and `yield` suspends and checks[^check-explicitly].
 
