@@ -7,7 +7,7 @@
         <activity
             android:name=".MainActivity"
             tools:node="remove" />
-        <!-- Back moves the task of this activity to the background only if the home screen started it with its MAIN/LAUNCHER intent. -->
+        <!-- By default, Back moves the task of this activity to the background only if the home process started it with its MAIN/LAUNCHER intent. -->
         <activity
             android:name=".ProcessDeathActivity"
             android:exported="true">
