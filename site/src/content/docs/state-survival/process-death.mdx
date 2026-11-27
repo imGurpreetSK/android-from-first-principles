@@ -161,7 +161,7 @@ Since Android 17, the system sets memory limits for apps from the total RAM of t
 
 `adb shell am kill <package>` calls `killBackgroundProcesses`. Its help text says that it kills all background processes of the app[^activitymanagershellcommand-2186][^activitymanagershellcommand-5187]. `killBackgroundProcesses` asks `ProcessList` to kill the processes of the package whose oom adj is `SERVICE_ADJ` (500) or higher[^activitymanagerservice-4346]. `ProcessList` skips each process with a lower oom adj[^processlist-3220]. Thus `am kill` does not kill a foreground app. If the caller does not hold `KILL_ALL_BACKGROUND_PROCESSES`, it can kill only the processes of its own app[^activitymanagerservice-4322]. The shell holds this permission[^shell-manifest-176]. Prompt 2 of "Try it" uses `am kill` to kill the launch app in the background.
 
-Since Android 14, `killBackgroundProcesses()` can kill only the background processes of the app that calls it[^android-14-kill]. Some later builds of Android 13 also have this rule, for example the AOSP tag `android-13.0.0_r84`[^activitymanagerservice-13-3842]. The shell holds `KILL_ALL_BACKGROUND_PROCESSES`, so `am kill` can still kill the process of a different app.
+Since Android 14, `killBackgroundProcesses()` can kill only the background processes of the app that calls it[^android-14-kill]. Some later builds of Android 13 also have this rule, for example the AOSP tag `android-13.0.0_r84`[^activitymanagerservice-13-3842]. On Android 17, the shell holds `KILL_ALL_BACKGROUND_PROCESSES`, so `am kill` can still kill the process of a different app.
 
 ### The record outlives the process
 
