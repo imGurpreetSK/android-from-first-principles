@@ -1,3 +1,4 @@
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
@@ -24,6 +25,20 @@ class ContainersTest {
         val activity = FakeActivity(appContainer)
         activity.onCreate()
         assertSame(appContainer.userRepository, activity.loginViewModel.userRepository)
+    }
+    // endregion
+
+    // region flaw
+    @Test
+    fun screenContainer_losesLoginData_whenActivityIsRecreated() {
+        val activity = FakeActivity(appContainer)
+        activity.onCreate()
+        activity.loginData.username = "alice"
+
+        val recreated = activity.recreate()
+
+        assertNotSame(activity.loginData, recreated.loginData)
+        assertEquals("", recreated.loginData.username)
     }
     // endregion
 }
