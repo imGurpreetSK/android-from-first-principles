@@ -213,6 +213,23 @@ In Navigation 3, the app owns the back stack. A `NavBackStack` is a mutable list
 
 The `contentKey` of a `NavEntry` identifies its content and the state of its decorators. Entries with the same `contentKey` share content and decorator state[^naventry-28]. By default, the `contentKey` comes from the key: it is the string of the key and its class[^naventry-100]. Thus two keys with the same string and class share one state, as in the rebuild. To keep two entries of one destination apart, the app must give them different keys. Navigation 2 is different: it gives each entry its own UUID[^navbackstackentry-65].
 
+## Mental model
+
+Two kinds of back stack work together. The platform keeps a task, a stack of activities. Inside an activity, AndroidX keeps a stack of handlers for each priority, and Navigation keeps a stack of entries. Back goes to one callback: the top callback of the focused window. The window sends this callback to `system_server` before Back comes. If an AndroidX handler is enabled, the AndroidX callback is on the window, and the newest enabled handler gets Back. For example, the `NavHost` handler pops the top `NavBackStackEntry`. Navigation then clears the `ViewModelStore` of that entry by its id, not by its route. If no handler is enabled, the default callback of the `Activity` gets Back. Then `system_server` finishes the activity. If the activity is the root that the home app launched with a main intent, `system_server` moves the task to the back instead.
+
+```mermaid
+flowchart TD
+  back["Back: gesture or Back key"] --> top["Top callback of the focused window"]
+  top -->|"one or more AndroidX handlers enabled"| ax["NavigationEventDispatcher: newest enabled handler, overlay first"]
+  ax --> app["BackHandler: code of the app"]
+  ax --> nav["NavHost handler: pop the top NavBackStackEntry"]
+  nav --> clear["Clear the ViewModelStore of the entry id"]
+  top -->|"no handler enabled"| def["Default callback of the Activity"]
+  def --> acc["system_server: ActivityClientController.onBackPressed"]
+  acc -->|"root, launched by home, main intent"| move["Move the task to the back"]
+  acc -->|"otherwise"| finish["Finish the activity: pop it from the task"]
+```
+
 [^tasks-intro]: Tasks and the back stack: [https://developer.android.com/guide/components/activities/tasks-and-back-stack](https://developer.android.com/guide/components/activities/tasks-and-back-stack)
 [^tasks-life-cycle]: Tasks and the back stack, "Lifecycle of a task and its back stack": [https://developer.android.com/guide/components/activities/tasks-and-back-stack#life-cycle](https://developer.android.com/guide/components/activities/tasks-and-back-stack#life-cycle)
 [^tasks-multiple-instances]: Tasks and the back stack, "Multiple activity instances": [https://developer.android.com/guide/components/activities/tasks-and-back-stack#multiple-instances](https://developer.android.com/guide/components/activities/tasks-and-back-stack#multiple-instances)
