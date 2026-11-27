@@ -33,4 +33,19 @@ class NaiveBackStackTest {
         stack.navigate("detail")
         assertNull(stack.topState)
     }
+
+    // region flaw
+    @Test
+    fun naiveBackStack_losesState_whenSameRouteIsTwiceOnStack() {
+        stack.navigate("list")
+        stack.navigate("detail")
+        stack.topState = 40
+        // A "related item" link opens a second detail screen on top of the first.
+        stack.navigate("detail")
+        stack.topState = 0
+        stack.back()
+        assertEquals("detail", stack.top)
+        assertNull(stack.topState)
+    }
+    // endregion
 }
