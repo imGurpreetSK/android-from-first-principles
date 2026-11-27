@@ -51,7 +51,7 @@ A network request on the main thread blocks the thread until the response comes.
 
 The Android docs use coroutines for this problem. A suspend function can call `withContext(Dispatchers.IO)`. Then the request runs on an I/O thread, and the function is main-safe: a call from the main thread does not block the updates of the UI. A coroutine on the main thread calls the function and suspends until the `withContext` block ends. Then the coroutine continues on the main thread, with the result of the request[^android-main-safety].
 
-Coroutines add two operations to call and return: suspend and resume. Suspend stops the current coroutine and saves all its local variables. Resume continues the coroutine from the place where it stopped[^adv-manage]. The `suspend` keyword does not move a function to a background thread. A suspend function can run on the main thread[^adv-main-safety].
+Coroutines add two operations to call and return: suspend and resume. Suspend stops the current coroutine and saves its local variables. Resume continues the coroutine from the place where it stopped[^adv-manage]. The `suspend` keyword does not move a function to a background thread. A suspend function can run on the main thread[^adv-main-safety].
 
 Thus one function stops in the middle, and later the same function continues on the main thread, with its local variables. Kotlin implements each suspend function as a state machine, because a state machine needs no special support from the runtime[^spec-state-machine]. This chapter builds such a state machine by hand. Then it shows what the state machine alone does not do: send each resume back to the main thread.
 
