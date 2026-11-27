@@ -230,6 +230,176 @@ sequenceDiagram
   S->>S: log ANR in, dump the stacks, dialog or bg anr kill
 ```
 
+## Try it
+
+### 1. Give each touch a deadline
+
+Give the rebuild the fix of the real dispatcher. Change `NaiveInputDispatcher`:
+
+1. Add a list of deadlines. In `send`, add a deadline for the touch: the current time plus `DEFAULT_INPUT_DISPATCHING_TIMEOUT`. Then call `clock.at` with the deadline, so that the dispatcher checks the deadlines at that time.
+2. In the `onFinish` action of `send`, remove the deadline of the touch.
+3. In the check, if the current time is at the earliest deadline or after it, add the time to `anrs`. Then clear the list, so that the dispatcher reports the window one time.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :threads-and-anr:test
+```
+
+Both breaking tests fail, because the flaw is gone. The window does not finish the first tap, so its deadline passes at t=5000. The first breaking test now gets the ANRs `[5000]`, and the second gets `[5000, 15000]`. The four other tests pass, because no deadline passes in them. The Gradle output includes these lines:
+
+```
+NaiveInputDispatcherTest > naiveDispatcher_reportsAnrAt15000_whenSecondTapComesAt10000() FAILED
+    org.opentest4j.AssertionFailedError at NaiveInputDispatcherTest.kt:73
+
+NaiveInputDispatcherTest > naiveDispatcher_reportsNoAnr_whenWindowNeverFinishesTheOnlyEvent() FAILED
+    org.opentest4j.AssertionFailedError at NaiveInputDispatcherTest.kt:59
+
+6 tests completed, 2 failed
+```
+
+The real dispatcher does the same work with one sorted set for all windows, `AnrTracker`, and one check, `processAnrsLocked`[^anrtracker-44][^inputdispatcher-1143].
+
+### 2. List the threads of the launch app
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the `threadsAndAnr` flavor of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installThreadsAndAnrRelease
+```
+
+The flavor has one activity, `AnrActivity`. In `onCreate`, the activity starts `Executors.newFixedThreadPool(2)` with two short tasks. It also starts a `HandlerThread` with the name `worker` and the priority `THREAD_PRIORITY_BACKGROUND`. Its content is one `TextView`. A click on the `TextView` makes the main thread sleep for 30 s.
+
+Read the multiplier of the system timeouts:
+
+```sh
+adb shell getprop ro.hw_timeout_multiplier
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+…
+```
+
+If the output is a number, it multiplies the 5 s input timeout[^iinputconstants-23].
+
+Start the app:
+
+```sh
+adb shell am start -W -n io.github.imgurpreetsk.afp.launchapp.threadsAndAnr/io.github.imgurpreetsk.afp.launchapp.AnrActivity
+```
+
+List the threads of the app:
+
+```sh
+adb shell 'ps -T -o TID,NI,CMD -p $(pidof io.github.imgurpreetsk.afp.launchapp.threadsAndAnr)'
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+  TID  NI CMD
+    … -10 …
+…
+    …   … Signal Catcher
+…
+    …   0 pool-…-thread-1
+    …   0 pool-…-thread-2
+    …  10 worker
+…
+```
+
+In the block, a line `…` stands for lines that the block leaves out. `-T` shows the threads, `-p` selects the process, and `-o` selects the fields[^ps-61]. `TID` is the thread ID, `NI` is the niceness, and `CMD` is the thread name from `/proc/TID/stat`[^ps-326]. Each line is one Linux thread of the process:
+
+- The thread whose TID is the PID of the process is the main thread. It shows NI -10, because `OomAdjuster` boosts it while the app is the top app. If the device uses FIFO scheduling for the UI, `OomAdjuster` does not set this niceness[^oomadjuster-2386].
+- `Signal Catcher` is the ART thread that writes the stack dump of an ANR[^signal-catcher-229].
+- `pool-…-thread-1` and `pool-…-thread-2` are the two workers of the pool. The default thread factory gives them these names and `NORM_PRIORITY`[^executors-584]. `NORM_PRIORITY` maps to niceness 0[^palette-android-44]. After their tasks, the workers wait in `workQueue.take()`[^threadpoolexecutor-1011].
+- `worker` is the `HandlerThread`. It shows NI 10, because its `run()` calls `Process.setThreadPriority` with `THREAD_PRIORITY_BACKGROUND`[^handlerthread-129][^process-433].
+
+### 3. Get an ANR from a click, and read the trace
+
+Clear the log. Then tap the `TextView` one time, wait 10 s, and look for an ANR in the log:
+
+```sh
+adb logcat -c
+adb shell input tap 500 1000
+sleep 10
+adb shell 'logcat -d -s ActivityManager | grep "ANR in"'
+```
+
+{/* Edit step: make sure on the emulator of the checked stamp that the last command prints no line. */}
+
+The last command prints no line, although the click blocks the main thread. `View` posted the click as a message, so the touch events of the tap finished before `onClick` ran[^view-18511][^view-21709]. The dispatcher has no unfinished event, so no deadline passes.
+
+While the main thread still sleeps, tap again. Wait 10 s, and read the log again, with the three lines after the match:
+
+```sh
+adb shell input tap 500 1000
+sleep 10
+adb shell 'logcat -d -s ActivityManager | grep -A 3 "ANR in"'
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… E ActivityManager: ANR in io.github.imgurpreetsk.afp.launchapp.threadsAndAnr (io.github.imgurpreetsk.afp.launchapp.threadsAndAnr/io.github.imgurpreetsk.afp.launchapp.AnrActivity)
+… E ActivityManager: PID: …
+… E ActivityManager: Reason: … is not responding. Waited …ms for MotionEvent…
+… E ActivityManager: …
+```
+
+- `ProcessErrorStateRecord` writes the first three lines[^processerrorstaterecord-536]. The name of the activity comes from `ActivityRecord`[^activityrecord-6819].
+- The reason comes from `onAnrLocked` of the dispatcher[^inputdispatcher-6792]. The wait is about 5000 ms times the multiplier of prompt 2. It counts from the delivery of the second tap, and no later event came. This is the deadline for each event that the rebuild does not have. If the multiplier is more than 1, the ANR comes later. Then wait, and run the last command again.
+- The emulator also shows the ANR dialog. The app shows an activity, so the ANR is not silent[^processerrorstaterecord-863][^processerrorstaterecord-800].
+
+Only the owner of an ANR file can read it[^stacktracesdumphelper-542]. Thus restart adbd as root, and list the files in `/data/anr`. Prompt 2 of the [main-thread chapter](/launch-path/main-thread/) shows how to make sure that the image allows `adb root`.
+
+```sh
+adb root
+adb shell ls /data/anr
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+anr_…
+```
+
+The name of the file is `anr_` and the date and time[^stacktracesdumphelper-74][^stacktracesdumphelper-542]. In the next commands, put the name of the file in place of `<file>`. Print the header of each process dump, and the stack of the first thread with the name `main`:
+
+```sh
+adb shell 'grep -- "----- pid" /data/anr/<file>'
+adb shell 'grep -m 1 -A 30 "^\"main\"" /data/anr/<file>'
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+----- pid … at … -----
+…
+"main" … Sleeping
+…
+  at java.lang.Thread.sleep(Native method)
+…
+  at io.github.imgurpreetsk.afp.launchapp.AnrActivity.onClick(AnrActivity.java:…)
+  at android.view.View.performClick(View.java:…)
+…
+  at android.os.Handler.handleCallback(Handler.java:…)
+…
+  at android.os.Looper.loopOnce(Looper.java:…)
+…
+```
+
+- The Signal Catcher of ART writes the header `----- pid … at … -----` on `SIGQUIT`[^signal-catcher-128]. `system_server` puts the app first in the list of processes to dump, so the first header is the header of the app[^processerrorstaterecord-484]. `-m 1` stops `grep` at the first match. Thus the `main` thread of the output is the main thread of the app.
+- The main thread sleeps in `Thread.sleep`. `AnrActivity.onClick` calls it, under `View.performClick`, `Handler.handleCallback` and `Looper.loopOnce`. Thus the stack shows that the click ran as a message of the main loop and blocked it.
+
+At the end, stop the app:
+
+```sh
+adb shell am force-stop io.github.imgurpreetsk.afp.launchapp.threadsAndAnr
+```
+
 [^responsive]: Keep your app responsive: [https://developer.android.com/topic/performance/anrs/keep-your-app-responsive](https://developer.android.com/topic/performance/anrs/keep-your-app-responsive)
 [^responsive-triggers]: Keep your app responsive, "ANR triggers": [https://developer.android.com/topic/performance/anrs/keep-your-app-responsive#anr-triggers](https://developer.android.com/topic/performance/anrs/keep-your-app-responsive#anr-triggers)
 [^activitythread-2754]: ActivityThread.java, lines 2754–2761: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2754](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2754)
@@ -343,3 +513,5 @@ sequenceDiagram
 [^process-433]: Process.java, lines 433–441: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Process.java#433](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Process.java#433)
 [^oomadjuster-2386]: OomAdjuster.java, lines 2386–2408: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/psc/OomAdjuster.java#2386](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/psc/OomAdjuster.java#2386)
 [^process-481]: Process.java, lines 481–485: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Process.java#481](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Process.java#481)
+[^ps-61]: ps.c, lines 61–84: [https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#61](https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#61)
+[^ps-326]: ps.c, lines 326–356: [https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#326](https://android.googlesource.com/platform/external/toybox/+/refs/tags/android-17.0.0_r1/toys/posix/ps.c#326)
