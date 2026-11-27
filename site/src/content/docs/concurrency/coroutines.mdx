@@ -181,6 +181,8 @@ In kotlinx.coroutines, the interceptor is the dispatcher. The dispatcher in the 
 
 If no dispatch is necessary, for example for `Dispatchers.Unconfined`, or for `Dispatchers.Main.immediate` on the main thread, the coroutine resumes on the current thread. An event loop prevents a stack overflow[^coroutinedispatcher-41][^dispatchedcontinuation-188].
 
+A `CancellableContinuationImpl` dispatches in another way. Its `resumeWith` calls `dispatchResume`[^cancellablecontinuationimpl-358][^cancellablecontinuationimpl-493]. If the coroutine already suspended, `dispatchResume` calls `DispatchedTask.dispatch`[^cancellablecontinuationimpl-467]. If `isDispatchNeeded` returns true, `DispatchedTask.dispatch` gives the `CancellableContinuationImpl` itself, as the `Runnable`, to the dispatcher of its `DispatchedContinuation`[^dispatchedtask-136]. Then `DispatchedTask.run` resumes the continuation that the `DispatchedContinuation` wraps[^dispatchedtask-77].
+
 ### `Dispatchers.Main` posts to the main `Looper`
 
 On Android, `Dispatchers.Main` is a `HandlerContext`. `AndroidDispatcherFactory` makes it around an asynchronous `Handler` of the main `Looper`[^handlerdispatcher-48]. `HandlerContext.dispatch` calls `handler.post(block)`[^handlerdispatcher-133]. Thus each resume on `Dispatchers.Main` is one message in the queue of the main `Looper`. The [main thread chapter](/launch-path/main-thread/) explains the queue and the asynchronous messages.
@@ -205,14 +207,14 @@ The main dispatcher prints its name as `Dispatchers.Main`[^handlerdispatcher-163
 
 ## Mental model
 
-A suspend function is a state machine. The compiler gives it a continuation parameter and the return type `Any?`. A continuation object keeps `label` and the spilled local variables. At a suspension point, the function gives a continuation to a callback and returns `COROUTINE_SUSPENDED`. Each caller returns too, and the thread goes back to its loop. Later, the callback calls `resume`. The continuation of the callback does not call the state machine directly. It calls the wrapper of the interceptor of the coroutine context. On `Dispatchers.Main`, the wrapper is a `DispatchedContinuation`. Its `resumeWith` posts the `DispatchedContinuation` to the `Handler` of the main `Looper`. Then the main `Looper` runs the message, and the state machine continues at `label` on the main thread. Without the wrapper, as in the rebuild, the state machine continues on the thread of the callback.
+A suspend function is a state machine. The compiler gives it a continuation parameter and the return type `Any?`. A continuation object keeps `label` and the spilled local variables. At a suspension point, the function gives a continuation to a callback and returns `COROUTINE_SUSPENDED`. Each caller returns too, and the thread goes back to its loop. Later, the callback calls `resume`. The continuation of the callback does not call the state machine directly. It goes through the wrapper of the interceptor of the coroutine context. On `Dispatchers.Main`, the wrapper is a `DispatchedContinuation`. The resume posts a `Runnable` to the `Handler` of the main `Looper`: the `DispatchedContinuation`, or the `CancellableContinuationImpl` of `suspendCancellableCoroutine`. Then the main `Looper` runs the message, and the state machine continues at `label` on the main thread. Without the wrapper, as in the rebuild, the state machine continues on the thread of the callback.
 
 ```mermaid
 sequenceDiagram
   participant M as Main thread
   participant SM as State machine
   participant IO as I/O thread
-  participant DC as DispatchedContinuation
+  participant DC as DispatchedContinuation or CancellableContinuationImpl
   M->>SM: resume(Unit) runs step 0
   SM->>IO: the callback gets the intercepted continuation
   SM-->>M: COROUTINE_SUSPENDED, label is 1
@@ -368,6 +370,9 @@ adb logcat -d -s Coroutines
 [^dispatchedcontinuation-188]: DispatchedContinuation.kt, lines 188–201: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L188-L201](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L188-L201)
 [^coroutinedispatcher-41]: CoroutineDispatcher.kt, lines 41–55: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L41-L55](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L41-L55)
 [^dispatchedtask-77]: DispatchedTask.kt, lines 77–103: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt#L77-L103](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt#L77-L103)
+[^cancellablecontinuationimpl-358]: CancellableContinuationImpl.kt, lines 358–359: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L358-L359](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L358-L359)
+[^cancellablecontinuationimpl-493]: CancellableContinuationImpl.kt, lines 493–506: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L493-L506](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CancellableContinuationImpl.kt#L493-L506)
+[^dispatchedtask-136]: DispatchedTask.kt, lines 136–154: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt#L136-L154](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedTask.kt#L136-L154)
 [^handlerdispatcher-48]: HandlerDispatcher.kt, lines 48–59: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L48-L59](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L48-L59)
 [^handlerdispatcher-133]: HandlerDispatcher.kt, lines 133–137: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L133-L137](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L133-L137)
 [^handlerdispatcher-129]: HandlerDispatcher.kt, lines 129–131: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L129-L131](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/ui/kotlinx-coroutines-android/src/HandlerDispatcher.kt#L129-L131)
