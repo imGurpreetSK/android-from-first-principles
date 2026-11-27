@@ -93,7 +93,7 @@ Entry format, one or two lines:
 
 2026-11-14: A staff reviewer copied an ignored file into the worktree for one check. The reviewer brief says "Do not edit files". Rule: If a fact checker, staff reviewer or validator needs an extra file for a check, copy the files of the check to a new directory in the session scratch directory. Add the extra file there, and run the check there. To copy `node_modules`, obey the `node_modules` entry. Do not add files to the worktree.
 
-2026-11-14: A writer ran `git ls-remote --tags` with a broad pattern and got 42 lines. `git ls-remote` matches each pattern as a glob against the full ref name, or against the part after a `/`. Rule: Give `git ls-remote` the exact tag name, for example `git ls-remote --tags <url> android-16.0.0_r1`.
+2026-11-14: A writer ran `git ls-remote --tags` with a broad pattern and got 42 lines. `git ls-remote` matches each pattern as a glob against the full ref name, or against the part after a `/`. On 2026-11-26, a staff reviewer had to find the newest tags. The reviewer ran `git ls-remote --tags` with no tag name and saved the output to a file. This entry did not cover that case. Rule: To check one tag, give `git ls-remote` the exact tag name, for example `git ls-remote --tags <url> android-16.0.0_r1`. To find the newest tag of a release, write the full output of `git ls-remote --tags <url>` to a file from a script, and search the file.
 
 2026-11-14: A writer ran `curl -s -o /dev/null -w … <url1> <url2> <url3>`. The `-o` option applies only to the first URL, so curl printed 746 KB of pages. Rule: Give curl one URL in each call, or one `-o` for each URL.
 
