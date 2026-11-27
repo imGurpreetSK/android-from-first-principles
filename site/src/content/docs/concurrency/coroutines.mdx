@@ -79,7 +79,7 @@ The rebuild has two loops: `main` for the UI and `io` for the network requests:
 
 <Snippet file="coroutines/src/main/kotlin/NaiveContinuation.kt" region="fetch" />
 
-`LoadAndShow` is the state machine of the suspend function in its comment. The compiler splits a suspend function into steps. Each step, except the last step, ends with a suspending call. The field `label` holds the step that the next call of the state machine runs. Before the suspending call, the code sets `label` to the next step. If the call returns `COROUTINE_SUSPENDED`, the caller also returns `COROUTINE_SUSPENDED`. On resume, the state machine runs again, and `label` makes it jump to the next step[^codegen-state-machine].
+`LoadAndShow` is the state machine of the suspend function in its comment. The compiler splits a suspend function into steps. Each step, except the last step, ends with a suspension point. The field `label` holds the step that the next call of the state machine runs. Before the suspension point, the code sets `label` to the next step. If the call at the suspension point returns `COROUTINE_SUSPENDED`, the caller also returns `COROUTINE_SUSPENDED`. On resume, the state machine runs again, and `label` makes it jump to the next step[^codegen-state-machine].
 
 Step 1 runs in a new call of `resume`, so it does not have the local variables of step 0. Thus, before a suspension point, the compiler saves the live local variables into fields of the continuation. After the resume, it reads them back. The codegen doc of the Kotlin compiler calls this "spilling"[^codegen-spilling]. The arguments of a suspend function are local variables, so the compiler spills them too[^codegen-parameters]. In the rebuild, the field `userId` holds the spilled argument:
 
@@ -115,7 +115,7 @@ The Kotlin spec describes the same transformation as the rebuild. Each suspend f
 
 The codegen doc gives the details of the JVM code:
 
-- The state machine switches on `label`. Before each suspending call, it sets `label` to the next step. If the call returns `COROUTINE_SUSPENDED`, the function also returns `COROUTINE_SUSPENDED`. Each suspend function in the call stack returns, up to the coroutine builder[^codegen-state-machine].
+- The state machine switches on `label`. Before each suspension point, it sets `label` to the next step. If the call at the suspension point returns `COROUTINE_SUSPENDED`, the function also returns `COROUTINE_SUSPENDED`. Each suspend function in the call stack returns, up to the coroutine builder[^codegen-state-machine].
 - At run time, the return type is `Any?` (`java.lang.Object`), because the function returns its result or the marker[^codegen-cps].
 - Before a suspension point, the compiler spills the live local variables into fields. After the resume, it reads them back. It does not spill the dead variables. It writes `null` into the field of a reference that is not necessary any more, so that the GC can collect the object[^codegen-spilling].
 - A named suspend function keeps its state machine in the function itself. It keeps its state, `label` and the spilled variables, in a separate continuation object[^codegen-suspend-functions].
