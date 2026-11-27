@@ -43,4 +43,17 @@ class NaiveContinuationTest {
         assertEquals(listOf(42 to User("user 42")), shown)
     }
     // endregion
+
+    // region flaw
+    @Test
+    fun naiveContinuation_resumesOnCallbackLoop_notMainLoop() {
+        val showLoops = mutableListOf<FakeLoop?>()
+        val machine = LoadAndShow { _, _ -> showLoops += currentLoop }
+        main.post { machine.start(42) }
+        main.runAll() // Step 0 runs on main. It suspends at fetchUser.
+        io.runAll() // io resumes the continuation with the user. Step 1 runs at once, on io.
+        main.runAll() // show already ran, so main runs nothing.
+        assertEquals(listOf(io), showLoops)
+    }
+    // endregion
 }
