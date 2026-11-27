@@ -63,6 +63,36 @@ Cancellation also needs help from the code in the coroutine. Cancellation is coo
 
 This chapter builds a job tree, shows where it breaks, and then shows how kotlinx.coroutines and androidx.lifecycle make the real tree.
 
+## Build it naive
+
+The rebuild is in the module `samples/structured-concurrency`, in plain Kotlin. For coroutines, it uses only `kotlin.coroutines` of the Kotlin standard library, not kotlinx.coroutines. It has three parts: a fake loop, a job tree and a delay.
+
+A breaking test must be deterministic, so the rebuild has no threads and no real time. `FakeLoop` has a virtual clock, `now`. `schedule` adds a task for a tick. `advanceTo` runs each task whose tick is not after the given tick, in the order of the ticks. Before each task, it sets the clock to the tick of the task. At the end, it sets the clock to the given tick. Only the test calls `advanceTo`:
+
+<Snippet file="structured-concurrency/src/main/kotlin/FakeLoop.kt" region="loop" />
+
+`NaiveJob` is one node of the tree. It keeps a list of its children. `cancel` marks the job and calls `cancel` on each child. Thus a cancellation goes down the tree. `failure` keeps the exception of the block of the job, and `isCompleted` is true after the block ends:
+
+<Snippet file="structured-concurrency/src/main/kotlin/NaiveJob.kt" region="job" />
+
+`NaiveScope` holds a job and the loop. `launch` makes a child job and adds it to the children of the job of the scope. Then `launch` starts the block as a coroutine with `startCoroutine`. The receiver of the block is a new `NaiveScope` with the child job, so a `launch` in the block makes a grandchild. The last argument of `startCoroutine` is the completion continuation. When the block ends, this continuation keeps the exception of the block in `failure`, and it marks the child complete:
+
+<Snippet file="structured-concurrency/src/main/kotlin/NaiveJob.kt" region="scope" />
+
+`naiveDelay` suspends the coroutine with `suspendCoroutine`. In the block of `suspendCoroutine`, it schedules a task on the loop. The task resumes the coroutine at the tick `now + ticks`:
+
+<Snippet file="structured-concurrency/src/main/kotlin/NaiveJob.kt" region="delay" />
+
+Each test makes a loop, a root job and a scope:
+
+<Snippet file="structured-concurrency/src/test/kotlin/NaiveJobTest.kt" region="setup" />
+
+The next test records the tick before and after `naiveDelay(3)`. At the launch, the block runs up to `naiveDelay` and records tick 0. At tick 2, the block has not resumed. At tick 3, the loop resumes the block, and the block records tick 3:
+
+<Snippet file="structured-concurrency/src/test/kotlin/NaiveJobTest.kt" region="resume" />
+
+Other tests check that `launch` adds the child job to the children of the job of the scope. They also check that a block that returns ends with no failure, and that a block that throws ends with its exception in `failure`. A test also checks that `cancel` on the root job cancels a child and a grandchild.
+
 [^coroutinescope-581]: CoroutineScope.kt, lines 581–584: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L581-L584)
 [^coroutinescope-231]: CoroutineScope.kt, lines 231–241: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L231-L241)
 [^coroutinescope-565]: CoroutineScope.kt, lines 565–570: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L565-L570)
