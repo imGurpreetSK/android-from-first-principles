@@ -139,7 +139,7 @@ The [first-frame chapter](/launch-path/first-frame/) shows that the main thread 
 
 `deliverInputEvent` passes each event through the input stages of the window[^viewrootimpl-11293]. After the last stage, `finishInputEvent` tells the receiver that the event is finished[^viewrootimpl-7970][^viewrootimpl-11347]. This is the finish signal that the dispatcher waits for. While a long message blocks the main thread, the app finishes no event, and the deadline of the oldest event passes.
 
-A tap does not call `onClick` inside its touch events. On `ACTION_UP`, `View` posts a `PerformClick` runnable. A comment gives the reason: other visual state of the view can update before the click actions start[^view-18511]. `post` adds the runnable to the message queue of the UI thread[^view-21709]. Later, the main thread runs `PerformClick`, which calls `performClickInternal`[^view-32178]. Thus the touch events of the tap finish before `onClick` runs. If `onClick` then blocks the main thread, the dispatcher has no unfinished event. The ANR comes only after a later input event, when the deadline of that event passes. Prompt 3 of "Try it" shows this.
+A tap does not call `onClick` inside its touch events. On `ACTION_UP`, `View` posts a `PerformClick` runnable. A comment gives the reason: other visual state of the view can update before the click actions start[^view-18511]. `post` adds the runnable to the message queue of the main thread[^view-21709]. Later, the main thread runs `PerformClick`, which calls `performClickInternal`[^view-32178]. Thus the touch events of the tap finish before `onClick` runs. If `onClick` then blocks the main thread, the dispatcher has no unfinished event. The ANR comes only after a later input event, when the deadline of that event passes. Prompt 3 of "Try it" shows this.
 
 ### system_server reports the ANR
 
@@ -206,7 +206,7 @@ A `ScheduledThreadPoolExecutor` can run a task again and again. After each run, 
 
 `Process.setThreadPriority` takes a Linux niceness, not a Java priority[^process-1392]. `THREAD_PRIORITY_DEFAULT` is 0[^process-410]. `THREAD_PRIORITY_BACKGROUND` is 10. A comment says that a thread with this priority has less chance to slow down the user interface[^process-433].
 
-The system also changes the niceness of the main thread. When the process of an app becomes the top app, `OomAdjuster` boosts its UI thread: the thread whose TID is the PID of the process. If the process does not use FIFO scheduling for the UI, `OomAdjuster` sets the niceness of that thread to `THREAD_PRIORITY_TOP_APP_BOOST`, -10[^oomadjuster-2386][^process-481]. Prompt 2 of "Try it" shows the niceness of each thread.
+The system also changes the niceness of the main thread. When the process of an app becomes the top app, `OomAdjuster` boosts its main thread: the thread whose TID is the PID of the process. If the process does not use FIFO scheduling for the UI, `OomAdjuster` sets the niceness of that thread to `THREAD_PRIORITY_TOP_APP_BOOST`, -10[^oomadjuster-2386][^process-481]. Prompt 2 of "Try it" shows the niceness of each thread.
 
 ## Mental model
 
