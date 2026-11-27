@@ -144,7 +144,7 @@ Here is the breaking test with a `MutableStateFlow(0)`. Its collector runs on `D
 3. The write of 2 sets the slot to `PENDING`. The write of 3 finds the slot `PENDING`, and does nothing to it. The second write of 3 returns at once, because the value is equal.
 4. The task runs. The loop reads 3 and emits it. Then the slot is `PENDING`, so the loop reads 3 again. 3 is equal to the last emitted value, so the loop does not emit it. Then the collector suspends.
 
-The collector gets `[0, 3]`. Prompt 1 of "Try it" makes the rebuild do the same.
+The collector gets `[0, 3]`. Prompt 1 of "Try it" makes the rebuild do the same. If the collector runs on `Dispatchers.Main.immediate`, the result can be different[^dispatchedtask-136]. The Go deeper box below shows why.
 
 <GoDeeper title="how a resume reaches the queue of the collector">
 
