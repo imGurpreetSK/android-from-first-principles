@@ -197,7 +197,7 @@ A `Flow` is one function, `collect`. A cold flow, for example a `flow { }` flow,
 
 ```mermaid
 flowchart TD
-  cold["Cold flow: the block runs again for each collector"] -->|"stateIn: one coroutine collects it while WhileSubscribed emits START"| write["StateFlow setter: value = x"]
+  cold["Cold flow: the block runs again for each collector"] -->|"stateIn: one coroutine collects it from START until the next command of WhileSubscribed"| write["StateFlow setter: value = x"]
   write -->|"x is equal to the current value"| none["No notification"]
   write -->|"x is new"| slots["Write _state, then makePending on each slot: PENDING, or resume a suspended collector"]
   slots --> loop["Collect loop of each collector reads the newest _state"]
