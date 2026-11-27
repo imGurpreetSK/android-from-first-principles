@@ -141,7 +141,7 @@ Each app process has an oom adj value. A low value means that the process is imp
 
 `dumpsys activity lru` prints one line for each process. The line has a label for the oom adj[^processlist-4559]. Some labels are `fg` from 0, `vis` from 100, `svc` from 500, `prev` from 700 and `cch` from 900[^processlist-1143]. If the oom adj is above the start of its range, the label also shows the difference[^processlist-1120]. Prompt 2 of "Try it" reads these labels.
 
-Since Android 14, shortly after an app process goes into the cached state, the system does not allow background work in the process, until a component of the process becomes active again[^android-14-cached].
+Since Android 14, the system does not allow background work in an app process shortly after the process goes into the cached state. This rule stays until a component of the process becomes active again[^android-14-cached].
 
 ### lmkd kills from the top
 
