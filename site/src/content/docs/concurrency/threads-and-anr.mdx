@@ -53,6 +53,9 @@ drafted: ai
 edited_by: Gurpreet Singh
 ---
 
+import Snippet from '../../../components/Snippet.astro';
+import GoDeeper from '../../../components/GoDeeper.astro';
+
 ## The problem
 
 The [main-thread chapter](/launch-path/main-thread/) shows that the main thread of an app runs one message loop. The loop runs one message at a time. If one message runs for a long time, all later messages wait, also the input events.
@@ -65,6 +68,37 @@ So the app moves slow work, network access included, to other threads. The offic
 
 A thread pool keeps slow work away from the main thread. But how does the system find out that the main thread does not respond? The system times the work that it gives to the app. An input dispatch ANR occurs if the main thread does not respond to an input event in time[^diagnose-input]. This chapter builds a naive input dispatcher that times the events. Its breaking test shows an ANR that the dispatcher does not report. Then the chapter follows the real dispatcher, the threads and pools of the app, and the ANR report.
 
+## Build it naive
+
+The rebuild is an input dispatcher in plain Kotlin, in the module `samples/threads-and-anr`. It follows the ANR rule of the dispatcher of Android 10. It uses no threads and no real time.
+
+`FakeClock` is a fake clock and a scripted scheduler. `at` schedules an action at a time. `advanceTo` moves the time and runs each due action at its own time. Thus no test waits, and no thread runs:
+
+<Snippet file="threads-and-anr/src/main/kotlin/NaiveInputDispatcher.kt" region="clock" />
+
+`FakeWindow` stands in for a window and the main thread of its app. `receive` records each touch with its delivery time. The test gives the window one finish time for each touch, in order. At that time, the clock calls `onFinish`, the stand-in for the finish signal that the app sends back to the dispatcher. If a touch has no finish time, the window never finishes it. A main thread that a long task blocks acts the same way:
+
+<Snippet file="threads-and-anr/src/main/kotlin/NaiveInputDispatcher.kt" region="window" />
+
+`NaiveInputDispatcher` keeps two queues. `inbound` holds the touches that the window did not get. `waitQueue` holds the delivery time of each touch that the window did not finish. The dispatcher sends a touch at once, unless the oldest unfinished touch is 500 ms old or older. In that case, the touch waits, and the dispatcher starts its one timer of 5000 ms. When the window finishes a touch, a touch that waits can go. If the timer runs out while a touch waits, the dispatcher reports an ANR: it adds the time to `anrs`.
+
+<Snippet file="threads-and-anr/src/main/kotlin/NaiveInputDispatcher.kt" region="dispatcher" />
+
+Four tests check the normal cases:
+
+- A touch goes to the window at once if the window has no unfinished touch.
+- A touch goes at once if the oldest unfinished touch is 499 ms old.
+- If the oldest unfinished touch is 500 ms old, a new touch waits until the window finishes the oldest touch.
+- Each wait gets a new timer. Two touches wait one after the other. The second wait ends 5100 ms after the first wait starts, and the dispatcher reports no ANR.
+
+<GoDeeper title="the dispatcher of Android 10">
+
+In Android 10, `InputDispatcher.cpp` gives the two values in nanoseconds. `DEFAULT_INPUT_DISPATCHING_TIMEOUT` is 5 s[^inputdispatcher-10-74], and `STREAM_AHEAD_EVENT_TIMEOUT` is 0.5 s[^inputdispatcher-10-89]. A touch waits if the wait queue of the window is not empty, and the dispatcher delivered the head of the queue 500 ms ago or earlier[^inputdispatcher-10-1893]. A key event waits if the window has any unfinished event[^inputdispatcher-10-1862]. The rebuild models only touches.
+
+`startDispatchCycleLocked` records the delivery time of each event that it sends[^inputdispatcher-10-2201]. The timer starts in `handleTargetsNotReadyLocked`, when an event starts to wait for the window. The end of the timer is the current time plus the timeout[^inputdispatcher-10-1091]. If the current time reaches the end, the dispatcher calls `onANRLocked`[^inputdispatcher-10-1126]. Before the dispatcher handles a new event, it resets the timer[^inputdispatcher-10-383][^inputdispatcher-10-1188]. Thus each wait gets a new timer.
+
+</GoDeeper>
+
 [^responsive]: Keep your app responsive: [https://developer.android.com/topic/performance/anrs/keep-your-app-responsive](https://developer.android.com/topic/performance/anrs/keep-your-app-responsive)
 [^responsive-triggers]: Keep your app responsive, "ANR triggers": [https://developer.android.com/topic/performance/anrs/keep-your-app-responsive#anr-triggers](https://developer.android.com/topic/performance/anrs/keep-your-app-responsive#anr-triggers)
 [^activitythread-2754]: ActivityThread.java, lines 2754–2761: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2754](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2754)
@@ -75,3 +109,12 @@ A thread pool keeps slow work away from the main thread. But how does the system
 [^java-threads-create]: Asynchronous work with Java threads, "Create multiple threads": [https://developer.android.com/develop/background-work/background-tasks/asynchronous/java-threads#create-multiple](https://developer.android.com/develop/background-work/background-tasks/asynchronous/java-threads#create-multiple)
 [^java-threads-handlers]: Asynchronous work with Java threads, "Use handlers": [https://developer.android.com/develop/background-work/background-tasks/asynchronous/java-threads#use-handlers](https://developer.android.com/develop/background-work/background-tasks/asynchronous/java-threads#use-handlers)
 [^diagnose-input]: Diagnose and fix ANRs, "Input dispatch timeout": [https://developer.android.com/topic/performance/anrs/diagnose-and-fix-anrs#input-dispatch](https://developer.android.com/topic/performance/anrs/diagnose-and-fix-anrs#input-dispatch)
+[^inputdispatcher-10-74]: InputDispatcher.cpp at android-10.0.0_r1, line 74: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#74](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#74)
+[^inputdispatcher-10-89]: InputDispatcher.cpp at android-10.0.0_r1, line 89: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#89](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#89)
+[^inputdispatcher-10-1893]: InputDispatcher.cpp at android-10.0.0_r1, lines 1893–1898: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1893](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1893)
+[^inputdispatcher-10-1862]: InputDispatcher.cpp at android-10.0.0_r1, lines 1862–1879: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1862](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1862)
+[^inputdispatcher-10-2201]: InputDispatcher.cpp at android-10.0.0_r1, lines 2201–2204: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#2201](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#2201)
+[^inputdispatcher-10-1091]: InputDispatcher.cpp at android-10.0.0_r1, lines 1091–1109: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1091](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1091)
+[^inputdispatcher-10-1126]: InputDispatcher.cpp at android-10.0.0_r1, lines 1126–1128: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1126](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1126)
+[^inputdispatcher-10-383]: InputDispatcher.cpp at android-10.0.0_r1, lines 383–384: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#383](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#383)
+[^inputdispatcher-10-1188]: InputDispatcher.cpp at android-10.0.0_r1, lines 1188–1196: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1188](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-10.0.0_r1/services/inputflinger/InputDispatcher.cpp#1188)
