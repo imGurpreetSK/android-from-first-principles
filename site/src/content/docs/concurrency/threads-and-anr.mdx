@@ -210,7 +210,7 @@ The system also changes the niceness of the main thread. When the process of an 
 
 ## Mental model
 
-The main thread runs one message loop, so a long message blocks each input event after it. The system times the work that it gives to the app. The input dispatcher gives each event that it sends a deadline: the delivery time plus the dispatch timeout of the window, by default 5 s times the hardware multiplier. The deadline goes into one sorted set for all windows. The main thread finishes an event after the input stages of the window, and the finish signal erases the deadline. If the earliest deadline passes first, the dispatcher reports the window as unresponsive, also if no later event comes. Then `system_server` logs `ANR in`, dumps the stacks with the help of the Signal Catcher of ART, and shows the dialog or, for a silent ANR, kills the process. A click runs later as a message, so a slow `onClick` gets an ANR only after the next event. Services and broadcasts use the same timer pattern. To keep the main thread free, the app gives slow work to other threads. Each Java thread is a Linux thread with its own stack and niceness. Thus a pool creates a few threads one time, and its idle workers wait in the queue for the next task.
+The main thread runs one message loop, so a long message blocks each input event after it. The system times the work that it gives to the app. The input dispatcher gives each event that it sends a deadline: the delivery time plus the dispatch timeout of the window, by default 5 s times the hardware multiplier. The deadline goes into one sorted set for all windows. The main thread finishes an event after the input stages of the window, and the finish signal erases the deadline. If the earliest deadline passes first, the dispatcher reports the window as unresponsive, also if no later event comes. Then `system_server` dumps the stacks with the help of the Signal Catcher of ART, logs `ANR in`, and shows the dialog or, for a silent ANR, kills the process. A click runs later as a message, so a slow `onClick` gets an ANR only after the next event. Services and broadcasts use the same timer pattern. To keep the main thread free, the app gives slow work to other threads. Each Java thread is a Linux thread with its own stack and niceness. Thus a pool creates a few threads one time, and its idle workers wait in the queue for the next task.
 
 ```mermaid
 sequenceDiagram
@@ -227,7 +227,7 @@ sequenceDiagram
   D->>T: add the deadline
   D->>D: processAnrsLocked finds a deadline in the past
   D->>S: notifyWindowUnresponsive with the reason
-  S->>S: log ANR in, dump the stacks, dialog or bg anr kill
+  S->>S: dump the stacks, log ANR in, dialog or bg anr kill
 ```
 
 ## Try it
