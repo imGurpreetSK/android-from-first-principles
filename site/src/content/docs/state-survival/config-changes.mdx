@@ -214,6 +214,23 @@ On Back, the activity tells `system_server`[^activity-4383]. If no task organize
 
 Since Android 12, Back on a launcher activity at the root of its task moves the task to the background, and the activity does not finish. Other activities still finish on Back[^android-12-back]. Thus Back does not destroy such an activity, and nothing clears its `ViewModel` objects.
 
+## Mental model
+
+A configuration change is the diff of two `Configuration` objects. `system_server` compares the diff with the `configChanges` of the activity. If the activity handles each change, the same `Activity` object gets `onConfigurationChanged`. If not, `system_server` tells the app to relaunch the activity on its token. On the main thread, `ActivityThread` sets `isChangingConfigurations` on the old object, keeps the non-configuration instances of the old object in the record of the token, destroys the old object, and creates a new object on the same record. No other message runs between these steps. `ComponentActivity` puts its `ViewModelStore` into these instances, and the new object takes the store back. `ViewModelProvider` finds the same `ViewModel` in the store. On a destroy that is not a recreation, `ComponentActivity` clears the store. Each `ViewModel` then cancels its `viewModelScope` and calls `onCleared`. The hand-over is only in the memory of the app process.
+
+```mermaid
+flowchart TD
+  change["Configuration change"] --> decide["system_server: diff and configChanges of the activity"]
+  decide -->|"the activity handles each change"| same["Same Activity object: onConfigurationChanged"]
+  decide -->|"a change is not handled"| relaunch["ActivityRelaunchItem for the token"]
+  relaunch --> old["Old Activity object: isChangingConfigurations is true"]
+  old -->|"retainNonConfigurationInstances"| record["Record of the token: lastNonConfigurationInstances holds the ViewModelStore"]
+  record -->|"attach"| new["New Activity object: ensureViewModelStore"]
+  new --> get["ViewModelProvider: same ViewModel"]
+  finish["Finish, for example on Back"] --> clear["ON_DESTROY with isChangingConfigurations false: ViewModelStore.clear"]
+  clear --> cleared["ViewModel: viewModelScope canceled, then onCleared"]
+```
+
 [^runtime-changes]: Handle configuration changes: [https://developer.android.com/guide/topics/resources/runtime-changes](https://developer.android.com/guide/topics/resources/runtime-changes)
 [^runtime-activity-recreation]: Handle configuration changes, "Activity recreation": [https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation](https://developer.android.com/guide/topics/resources/runtime-changes#activity-recreation)
 [^compose-state-in-composables]: State and Jetpack Compose, "State in composables": [https://developer.android.com/develop/ui/compose/state#state-in-composables](https://developer.android.com/develop/ui/compose/state#state-in-composables)
