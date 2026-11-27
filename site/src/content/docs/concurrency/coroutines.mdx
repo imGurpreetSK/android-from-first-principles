@@ -221,6 +221,99 @@ sequenceDiagram
   M->>SM: DispatchedTask.run calls resume(user), step 1 runs
 ```
 
+## Try it
+
+### 1. Resume on the main loop
+
+Do in the rebuild what an interceptor does. In `LoadAndShow.resume`, change the call of `fetchUser` to `result = fetchUser(userId, Cont { user -> main.post { resume(user) } })`. The new `Cont` posts each resume to `main`, as `DispatchedContinuation` gives itself to its dispatcher. From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :coroutines:test
+```
+
+The breaking test fails, because `show` now runs on `main`. The other tests pass. The spill test also passes, because the last drain of `main` runs `show` with the user and the spilled `userId`. The Gradle output includes these lines:
+
+```
+NaiveContinuationTest > naiveContinuation_resumesOnCallbackLoop_notMainLoop() FAILED
+    org.opentest4j.AssertionFailedError at NaiveContinuationTest.kt:56
+
+5 tests completed, 1 failed
+```
+
+### 2. Call delay from Java
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the `coroutines` flavor of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installCoroutinesRelease
+```
+
+The flavor adds one activity, `CoroutinesActivity`. The activity is in Java and has no Kotlin code, but the flavor depends on kotlinx-coroutines-android 1.11.0. The activity does these steps in `onCreate`:
+
+1. It gives the main `Looper` a `Printer` with `setMessageLogging`. The `Printer` logs only the lines that contain `HandlerContext` or `DispatchedContinuation`.
+2. It calls the suspend function `delay` from Java: `DelayKt.delay(500L, cont)`. `cont` is an object of a Java class that implements `kotlin.coroutines.Continuation` by hand. It has no state machine. Its context is `Dispatchers.getMain()`. It logs each call of `resumeWith` and the name of its thread.
+3. It logs the return value of `delay`.
+
+Clear the log, start the activity, and read the log after one second:
+
+```sh
+adb logcat -c
+adb shell am start -S -W -n io.github.imgurpreetsk.afp.launchapp.coroutines/io.github.imgurpreetsk.afp.launchapp.CoroutinesActivity
+sleep 1
+adb logcat -d -s Coroutines
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I Coroutines: delay returned COROUTINE_SUSPENDED
+… D Coroutines: >>>>> Dispatching to Handler (android.os.Handler) {…} …HandlerContext…: 0
+… I Coroutines: cont resumeWith(kotlin.Unit) on main
+… I Coroutines: cont2 resumeWith(kotlin.Unit) on worker
+… D Coroutines: <<<<< Finished to Handler (android.os.Handler) {…} …HandlerContext…
+… D Coroutines: >>>>> Dispatching to Handler (android.os.Handler) {…} DispatchedContinuation[Dispatchers.Main, …]: 0
+… I Coroutines: cont2 resumeWith(kotlin.Unit) on main
+… D Coroutines: <<<<< Finished to Handler (android.os.Handler) {…} DispatchedContinuation[Dispatchers.Main, …]
+```
+
+Each log line starts with the date, the time, the PID and the thread ID. The block shows them as `…`. Prompt 3 explains the lines with `cont2`.
+
+- From Java, the suspend function `delay` is a plain method. It has an extra `Continuation` parameter, and its return type is `Object`[^spec-cps]. It suspended, so it returned the marker at once, and `onCreate` ended. The marker is a value of the enum `CoroutineSingletons`, so it prints its name[^intrinsics-57].
+- About 500 ms later, the main `Looper` runs one message. The [main thread chapter](/launch-path/main-thread/) explains the `>>>>> Dispatching to` and `<<<<< Finished to` lines. The `Runnable` of this message is the lambda of `HandlerContext.scheduleResumeAfterDelay`, which `handler.postDelayed` posted[^handlerdispatcher-139]. The class name of the lambda contains `HandlerContext`.
+- In that message, `cont` logs `resumeWith(kotlin.Unit)` on the thread `main`. Thus the resume after `delay` is one message of the main queue. `HandlerContext` posted it, because it is the `ContinuationInterceptor` of the context and implements `Delay`[^delay-149][^handlerdispatcher-110].
+
+### 3. Resume from a worker thread
+
+When `cont` resumes, it starts a thread with the name `worker` and waits until the thread ends. The thread calls `resumeWith(Unit.INSTANCE)` on a second plain continuation, `cont2`. Then a second `worker` thread calls `resumeWith(Unit.INSTANCE)` on `Dispatchers.getMain().interceptContinuation(cont2)`. `cont2` also logs the name of its thread.
+
+Run the commands of prompt 2 again:
+
+```sh
+samples/gradlew -p samples :launch-app:installCoroutinesRelease
+adb logcat -c
+adb shell am start -S -W -n io.github.imgurpreetsk.afp.launchapp.coroutines/io.github.imgurpreetsk.afp.launchapp.CoroutinesActivity
+sleep 1
+adb logcat -d -s Coroutines
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I Coroutines: delay returned COROUTINE_SUSPENDED
+… D Coroutines: >>>>> Dispatching to Handler (android.os.Handler) {…} …HandlerContext…: 0
+… I Coroutines: cont resumeWith(kotlin.Unit) on main
+… I Coroutines: cont2 resumeWith(kotlin.Unit) on worker
+… D Coroutines: <<<<< Finished to Handler (android.os.Handler) {…} …HandlerContext…
+… D Coroutines: >>>>> Dispatching to Handler (android.os.Handler) {…} DispatchedContinuation[Dispatchers.Main, …]: 0
+… I Coroutines: cont2 resumeWith(kotlin.Unit) on main
+… D Coroutines: <<<<< Finished to Handler (android.os.Handler) {…} DispatchedContinuation[Dispatchers.Main, …]
+```
+
+- The first `cont2` line shows the thread `worker`, inside the message of `cont`. No `Looper` message runs it. No interceptor wraps `cont2`, so `resumeWith` runs on the thread of the caller. This is the flaw of the rebuild on a real device[^intrinsics-29].
+- The intercepted continuation does not run on the worker. `interceptContinuation` returned a `DispatchedContinuation`[^coroutinedispatcher-281]. `Dispatchers.Main` is not `immediate`, so `isDispatchNeeded` returned true[^handlerdispatcher-48][^handlerdispatcher-110][^handlerdispatcher-129]. Thus `resumeWith` gave the `DispatchedContinuation` to `HandlerContext.dispatch`[^dispatchedcontinuation-188], and `dispatch` called `handler.post`[^handlerdispatcher-133].
+- The main `Looper` runs this message after the message of `cont` ends. The log shows the `DispatchedContinuation` as the `Runnable` of the message. Its `toString` prints the dispatcher and the wrapped continuation[^dispatchedcontinuation-248]. The main dispatcher prints its name as `Dispatchers.Main`[^handlerdispatcher-163][^maincoroutinedispatcher-64].
+- In that message, `DispatchedTask.run` resumes `cont2`[^dispatchedtask-77]. Thus the second `cont2` line shows the thread `main`.
+
 [^android-background-thread]: Kotlin coroutines on Android, "Executing in a background thread": [https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread](https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread)
 [^android-main-safety]: Kotlin coroutines on Android, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety](https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety)
 [^adv-manage]: Improve app performance with Kotlin coroutines, "Manage long-running tasks": [https://developer.android.com/kotlin/coroutines/coroutines-adv#manage](https://developer.android.com/kotlin/coroutines/coroutines-adv#manage)
@@ -292,3 +385,5 @@ sequenceDiagram
 [^builders-472]: Builders.common.kt, lines 472–505: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L472-L505](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L472-L505)
 [^builders-591]: Builders.common.kt, lines 591–598: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L591-L598](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L591-L598)
 [^builders-585]: Builders.common.kt, lines 585–589: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L585-L589](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/Builders.common.kt#L585-L589)
+[^intrinsics-57]: Intrinsics.kt, lines 57–64: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L57-L64](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L57-L64)
+[^dispatchedcontinuation-248]: DispatchedContinuation.kt, lines 248–249: [https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L248-L249](https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/common/src/internal/DispatchedContinuation.kt#L248-L249)
