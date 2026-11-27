@@ -54,6 +54,21 @@ android {
             // The baseline of the chapter is Android 17 (API level 37).
             targetSdk = 37
         }
+        // The app of the threads-and-anr chapter. Its device prompts run installThreadsAndAnrRelease.
+        create("threadsAndAnr") {
+            dimension = "chapter"
+            // The suffix lets the flavor install next to launchPath.
+            applicationIdSuffix = ".threadsAndAnr"
+            // The baseline of the chapter is Android 17 (API level 37).
+            targetSdk = 37
+        }
+        // The app of the coroutines chapter. Its device prompts run installCoroutinesRelease.
+        create("coroutines") {
+            dimension = "chapter"
+            applicationIdSuffix = ".coroutines"
+            // The API level of the Android 17 baseline of the chapter.
+            targetSdk = 37
+        }
     }
 }
 
@@ -61,4 +76,7 @@ dependencies {
     // The versions of the checked stamp of the config-changes chapter.
     "configChangesImplementation"("androidx.activity:activity:1.13.0")
     "configChangesImplementation"("androidx.lifecycle:lifecycle-viewmodel:2.11.0")
+    // The versions of the checked stamp of the coroutines chapter. kotlinx-coroutines 1.11.0 asks for kotlin-stdlib 2.2.20, so the second line sets 2.4.21.
+    "coroutinesImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+    "coroutinesImplementation"("org.jetbrains.kotlin:kotlin-stdlib:2.4.21")
 }
