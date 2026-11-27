@@ -36,6 +36,8 @@ sources:
   - https://developer.android.com/tools/adb
   - https://developer.android.com/about/versions/11/behavior-changes-11
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/core/java/com/android/internal/os/ZygoteCommandBuffer.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/core/java/android/os/ZygoteProcess.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/core/java/com/android/internal/os/ZygoteConnection.java
   - https://developer.android.com/about/versions/16/behavior-changes-all
 rebuild: true
 device: true
@@ -128,6 +130,8 @@ The launch app has no process, so `system_server` asks the Zygote for one. In `s
 
 The client, `ZygoteProcess`, makes a list of arguments: `--runtime-args`, `--setuid`, `--setgid`, `--target-sdk-version`, `--nice-name` and the start class[^zygoteprocess-621][^zygoteprocess-640][^zygoteprocess-658][^zygoteprocess-769]. Before it sends the list, it rejects an argument that has a newline, a carriage return or a null character[^zygoteprocess-390]. Then it writes the number of arguments and the arguments, one on each line, to the socket. It reads the PID of the child from the socket[^zygoteprocess-404][^zygoteprocess-436].
 
+Since Android 15, `ZygoteProcess` rejects an argument that has a null character[^zygoteprocess-15-428].
+
 <GoDeeper title="other zygotes">
 
 `HostingRecord` records which zygote forks a process: the regular Zygote, the WebView Zygote or an app zygote[^hostingrecord-87]. `ProcessList` reads this choice. It calls `startWebView` for the WebView Zygote, `AppZygote.startProcess` for an app zygote and `Process.start` for the regular Zygote[^processlist-2635]. `Process.start` sends the request to `NATIVE_ZYGOTE_PROCESS` only if the flag `nativeFrameworkPrototype` is on and the policy flags have `ZYGOTE_POLICY_FLAG_NATIVE_PROCESS`[^process-795].
@@ -137,6 +141,8 @@ The client, `ZygoteProcess`, makes a list of arguments: `--runtime-args`, `--set
 ### The Zygote forks
 
 The loop of the Zygote, `runSelectLoop`, polls the `zygote` socket and each open session socket[^zygoteserver-394][^zygoteserver-486]. If a peer connects to the `zygote` socket, the loop accepts the peer. If a session socket has data, the loop calls `processCommand`[^zygoteserver-508]. The Zygote refuses a peer whose UID is not `SYSTEM_UID`, 1000[^zygoteconnection-96][^process-82].
+
+Since Android 15, the Zygote refuses a peer whose UID is not `SYSTEM_UID`[^zygoteconnection-15-96].
 
 `processCommand` reads and parses the arguments[^zygoteconnection-120]. The parser rejects a second copy of a critical argument, for example `--setuid`, "to make injection harder"[^zygotearguments-279][^zygotearguments-305]. Then `processCommand` applies the UID policy[^zygoteconnection-192]. On the usual path, it calls `ZygoteHooks.preFork` and then `Zygote.forkSimpleApps`[^zygoteconnection-283]. `preFork` stops the daemon threads of the runtime before the fork[^zygotehooks-188].
 
@@ -323,6 +329,7 @@ The output can have more lines, for example a line for the WebView Zygote[^zygot
 [^zygoteprocess-390]: ZygoteProcess.java, lines 390–402: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ZygoteProcess.java#390](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ZygoteProcess.java#390)
 [^zygoteprocess-404]: ZygoteProcess.java, lines 404–414: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ZygoteProcess.java#404](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ZygoteProcess.java#404)
 [^zygoteprocess-436]: ZygoteProcess.java, lines 436–444: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ZygoteProcess.java#436](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/ZygoteProcess.java#436)
+[^zygoteprocess-15-428]: ZygoteProcess.java at android-15.0.0_r1, lines 428–429: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/core/java/android/os/ZygoteProcess.java#428](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/core/java/android/os/ZygoteProcess.java#428)
 [^hostingrecord-87]: HostingRecord.java, lines 87–97: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/HostingRecord.java#87](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/HostingRecord.java#87)
 [^processlist-2635]: ProcessList.java, lines 2635–2679: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2635](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2635)
 [^zygoteserver-394]: ZygoteServer.java, lines 394–399: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteServer.java#394](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteServer.java#394)
@@ -330,6 +337,7 @@ The output can have more lines, for example a line for the WebView Zygote[^zygot
 [^zygoteserver-508]: ZygoteServer.java, lines 508–521: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteServer.java#508](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteServer.java#508)
 [^zygoteconnection-96]: ZygoteConnection.java, lines 96–98: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteConnection.java#96](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteConnection.java#96)
 [^process-82]: Process.java, line 82: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Process.java#82](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Process.java#82)
+[^zygoteconnection-15-96]: ZygoteConnection.java at android-15.0.0_r1, lines 96–98: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/core/java/com/android/internal/os/ZygoteConnection.java#96](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/core/java/com/android/internal/os/ZygoteConnection.java#96)
 [^zygoteconnection-120]: ZygoteConnection.java, lines 120–134: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteConnection.java#120](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteConnection.java#120)
 [^zygotearguments-279]: ZygoteArguments.java, lines 279–281: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteArguments.java#279](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteArguments.java#279)
 [^zygotearguments-305]: ZygoteArguments.java, lines 305–311: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteArguments.java#305](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/com/android/internal/os/ZygoteArguments.java#305)

@@ -45,8 +45,10 @@ sources:
   - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-11.0.0_r1/cmds/servicemanager/main.cpp
   - https://android.googlesource.com/platform/system/core/+/refs/tags/android-11.0.0_r1/rootdir/init.rc
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java
+  - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-12.0.0_r1/libs/binder/ProcessState.cpp
   - https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/binder/ProcessState.cpp
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-14.0.0_r1/core/java/android/app/IActivityManager.aidl
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r6/services/core/java/com/android/server/am/ProcessRecord.java
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r1/core/java/android/os/IBinder.java
 rebuild: true
 device: true
@@ -196,6 +198,8 @@ Then `attachApplicationLocked` does these steps:
 2. It calls `thread.bindApplication`[^ams-5451].
 3. It keeps the `IApplicationThread` in the `ProcessRecord`, in an `ApplicationThreadDeferred` wrapper[^ams-5501]. The field `mThread` of `ProcessRecord` holds this wrapper[^processrecord-161].
 
+Since the AOSP tag `android-15.0.0_r6` of Android 15, `ProcessRecord` keeps the `IApplicationThread` in an `ApplicationThreadDeferred` wrapper[^processrecord-15r6-154].
+
 In the app, `bindApplication` fills the service cache of `ServiceManager`[^activitythread-1482]. `initServiceCache` throws an exception if the cache is not empty[^servicemanager-java-361]. Then `bindApplication` sends the message `H.BIND_APPLICATION`[^activitythread-1543]. After `Application.onCreate`[^activitythread-8307], the app calls `finishAttachApplication` on the activity manager[^activitythread-8359].
 
 Since Android 14, `IActivityManager` has the synchronous method `finishAttachApplication`[^iactivitymanager-14-199].
@@ -236,7 +240,7 @@ The driver sends `BR_SPAWN_LOOPER` if no thread of the process waits for work, n
 
 libbinder gives each binder thread the name `<driver>:<pid>_<number>`. The number is in hex[^processstate-422] and starts at 1[^processstate-617]. Prompt 2 of "Try it" shows these threads.
 
-Since Android 13, the name of a binder thread starts with the name of the driver, `binder`[^processstate-13-369].
+Since Android 13, the name of a binder thread starts with the name of the driver, `binder`[^processstate-13-369]. Before Android 13, the name has the form `Binder:<pid>_<number>`, with a capital B[^processstate-12-335].
 
 If a thread waits for the reply to a call, and the thread that handles that call calls back into the process of the thread that waits, the thread that waits runs the new call[^ibinder-72][^binder-threading-nested].
 
@@ -464,6 +468,7 @@ The output includes these lines. In the block, a line `…` stands for lines tha
 [^systemserver-947]: SystemServer.java, lines 947–948: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#947](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/java/com/android/server/SystemServer.java#947)
 [^processstate-422]: ProcessState.cpp, lines 422–433: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#422](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#422)
 [^processstate-617]: ProcessState.cpp, line 617: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#617](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-17.0.0_r1/libs/binder/ProcessState.cpp#617)
+[^processstate-12-335]: ProcessState.cpp at android-12.0.0_r1, line 335: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-12.0.0_r1/libs/binder/ProcessState.cpp#335](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-12.0.0_r1/libs/binder/ProcessState.cpp#335)
 [^processstate-13-369]: ProcessState.cpp at android-13.0.0_r1, lines 369–380: [https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/binder/ProcessState.cpp#369](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/binder/ProcessState.cpp#369)
 [^ibinder-72]: IBinder.java, lines 72–78: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#72](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/IBinder.java#72)
 [^binder-threading-nested]: Binder threading model, "Nested transactions": [https://source.android.com/docs/core/architecture/ipc/binder-threading#nested](https://source.android.com/docs/core/architecture/ipc/binder-threading#nested)
@@ -482,6 +487,7 @@ The output includes these lines. In the block, a line `…` stands for lines tha
 [^cachedappoptimizer-12-104]: CachedAppOptimizer.java at android-12.0.0_r1, line 104: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#104](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#104)
 [^cachedappoptimizer-12-1358]: CachedAppOptimizer.java at android-12.0.0_r1, lines 1358–1361: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#1358](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.0.0_r1/services/core/java/com/android/server/am/CachedAppOptimizer.java#1358)
 [^ibinder-16-433]: IBinder.java at android-16.0.0_r1, lines 433–461: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r1/core/java/android/os/IBinder.java#433](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r1/core/java/android/os/IBinder.java#433)
+[^processrecord-15r6-154]: ProcessRecord.java at android-15.0.0_r6, line 154: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r6/services/core/java/com/android/server/am/ProcessRecord.java#154](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r6/services/core/java/com/android/server/am/ProcessRecord.java#154)
 [^ams-11642]: ActivityManagerService.java, lines 11642–11652: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11642](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11642)
 [^processlist-4680]: ProcessList.java, lines 4680–4698: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4680](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4680)
 [^processrecord-1504]: ProcessRecord.java, lines 1504–1546: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#1504](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessRecord.java#1504)

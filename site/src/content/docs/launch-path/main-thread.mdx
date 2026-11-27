@@ -24,11 +24,15 @@ sources:
   - https://developer.android.com/about/versions/17/behavior-changes-17
   - https://developer.android.com/about/versions/17/changes/messagequeue
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/core/java/android/os/Handler.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/os/Looper.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-14.0.0_r1/core/java/android/os/Looper.java
   - https://android.googlesource.com/platform/system/core/+/refs/tags/android-17.0.0_r1/debuggerd/debuggerd.cpp
   - https://android.googlesource.com/platform/packages/modules/adb/+/refs/tags/android-17.0.0_r1/daemon/main.cpp
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/View.java
   - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/MessageStack.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Build.java
+  - https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ClientTransactionHandler.java
 rebuild: true
 device: true
 drafted: ai
@@ -129,7 +133,7 @@ The turn is the same as in the rebuild. Only the sleep is different. `NaiveLoope
 
 If an app gives `setMessageLogging()` a `Printer`, `loopOnce()` prints `>>>>> Dispatching to` before each dispatch[^looper-255] and `<<<<< Finished to` after it[^looper-342].
 
-Since Android 17, if an app targets `CINNAMON_BUN` (Android 17) or higher, `loopOnce()` clears the interrupted state of the thread after each dispatch. Thus an interrupt in one message does not reach the next message[^looper-127][^looper-297].
+Since Android 17, if an app targets `CINNAMON_BUN` (API level 37)[^build-1314] or higher, `loopOnce()` clears the interrupted state of the thread after each dispatch. Thus an interrupt in one message does not reach the next message[^looper-127][^looper-297].
 
 ### A `Handler` puts a message into the queue
 
@@ -162,7 +166,7 @@ The binder object of the app is `ApplicationThread`, an `IApplicationThread.Stub
 `H.handleMessage()` runs each message on the main thread. It selects the work by `what`:
 
 - `BIND_APPLICATION` (110) calls `handleBindApplication()`[^activitythread-2616][^activitythread-2754].
-- `EXECUTE_TRANSACTION` (159) runs a `ClientTransaction` with the `TransactionExecutor`[^activitythread-2668][^activitythread-3026]. `ApplicationThread.scheduleTransaction()` gives each transaction from `system_server` to the `ActivityThread`[^activitythread-2394].
+- `EXECUTE_TRANSACTION` (159) runs a `ClientTransaction` with the `TransactionExecutor`[^activitythread-2668][^activitythread-3026]. `ApplicationThread.scheduleTransaction()` gives each transaction from `system_server` to the `ActivityThread`[^activitythread-2394]. `ActivityThread` is a subclass of `ClientTransactionHandler`[^activitythread-324]. `ClientTransactionHandler.scheduleTransaction()` calls `sendMessage(ActivityThread.H.EXECUTE_TRANSACTION, transaction)`[^cth-57].
 
 Thus the cold start of the app is a series of messages on one loop. Prompt 3 of "Try it" lists them.
 
@@ -356,6 +360,8 @@ This prompt needs the launch app and the root shell of prompt 2. If you did not 
 
 `loop()` reads a threshold for the slow dispatch log from a system property. It reads the property one time, when the loop starts[^looper-390]. `getThresholdOverride()` reads three properties. For one thread of one app, the property is `log.looper.<uid>.<thread name>.slow`. If none of the three properties has a value, the threshold is -1[^looper-404]. If the threshold is 0 or more, `loopOnce()` logs each dispatch that takes at least the threshold. Thus the threshold 0 logs each dispatch[^looper-267][^looper-338][^looper-460].
 
+Since Android 14, the threshold 0 logs each dispatch[^looper-14-181]. Before Android 14, the `Looper` uses the property only if its value is more than 0[^looper-13-179]. On these releases, set the property to 1. Then the `Looper` logs each dispatch that takes 1 ms or more[^looper-13-231][^looper-13-294].
+
 Get the UID of the launch app:
 
 ```sh
@@ -431,6 +437,7 @@ adb shell setprop log.looper.<uid>.main.slow -1
 [^looper-361]: Looper.java, line 361: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#361](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#361)
 [^looper-255]: Looper.java, lines 255–259: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#255](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#255)
 [^looper-342]: Looper.java, lines 342–344: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#342](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#342)
+[^build-1314]: Build.java, lines 1314–1318: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Build.java#1314](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Build.java#1314)
 [^looper-127]: Looper.java, lines 127–139: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#127](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#127)
 [^looper-297]: Looper.java, lines 297–301: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#297](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#297)
 [^handler-297]: Handler.java, lines 297–304: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#297](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Handler.java#297)
@@ -456,6 +463,8 @@ adb shell setprop log.looper.<uid>.main.slow -1
 [^activitythread-2668]: ActivityThread.java, line 2668: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2668](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2668)
 [^activitythread-3026]: ActivityThread.java, lines 3026–3036: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#3026](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#3026)
 [^activitythread-2394]: ActivityThread.java, lines 2394–2396: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2394](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2394)
+[^activitythread-324]: ActivityThread.java, line 324: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#324](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#324)
+[^cth-57]: ClientTransactionHandler.java, lines 57–60: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ClientTransactionHandler.java#57](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ClientTransactionHandler.java#57)
 [^pt-worker]: Processes and threads overview, "Worker threads": [https://developer.android.com/guide/components/processes-and-threads#WorkerThreads](https://developer.android.com/guide/components/processes-and-threads#WorkerThreads)
 [^activity-8339]: Activity.java, lines 8339–8345: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#8339](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/Activity.java#8339)
 [^view-21721]: View.java, lines 21721–21730: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/View.java#21721](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/view/View.java#21721)
@@ -526,5 +535,9 @@ adb shell setprop log.looper.<uid>.main.slow -1
 [^looper-267]: Looper.java, lines 267–274: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#267](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#267)
 [^looper-338]: Looper.java, lines 338–340: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#338](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#338)
 [^looper-460]: Looper.java, lines 460–478: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#460](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/os/Looper.java#460)
+[^looper-14-181]: Looper.java at android-14.0.0_r1, lines 181–188: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-14.0.0_r1/core/java/android/os/Looper.java#181](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-14.0.0_r1/core/java/android/os/Looper.java#181)
+[^looper-13-179]: Looper.java at android-13.0.0_r1, lines 179–184: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/os/Looper.java#179](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/os/Looper.java#179)
+[^looper-13-231]: Looper.java at android-13.0.0_r1, lines 231–232: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/os/Looper.java#231](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/os/Looper.java#231)
+[^looper-13-294]: Looper.java at android-13.0.0_r1, lines 294–305: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/os/Looper.java#294](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/os/Looper.java#294)
 [^activitythread-8276]: ActivityThread.java, line 8276: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8276](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#8276)
 [^activitythread-2673]: ActivityThread.java, line 2673: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2673](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2673)
