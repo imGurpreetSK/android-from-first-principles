@@ -112,7 +112,7 @@ The setter of `value` calls the same `updateState` with `null` as the expected v
 
 The KDoc of `StateFlow` has the pattern of the rebuild. `CounterModel` keeps a private `MutableStateFlow`, exposes it with `asStateFlow()`, and changes it with `update`. A comment calls the `update` call atomic and safe for concurrent use[^stateflow-29]. The state production guide uses the same pattern in a `ViewModel`[^state-production-stateflow].
 
-`asStateFlow()` wraps the `MutableStateFlow` in a `ReadonlyStateFlow`[^share-392]. `ReadonlyStateFlow` is a private class. It implements `StateFlow` and sends each call to the wrapped flow, but it does not implement `MutableStateFlow`[^share-410]. Thus the UI cannot cast the exposed flow back to `MutableStateFlow` and write the state. Only the state holder writes the state. In the rebuild, the private property `current` and the read-only property `state` do the same job.
+`asStateFlow()` wraps the `MutableStateFlow` in a `ReadonlyStateFlow`[^share-392]. `ReadonlyStateFlow` is a private class. It implements `StateFlow` and sends each `StateFlow` call to the wrapped flow, but it does not implement `MutableStateFlow`[^share-410]. Thus the UI cannot cast the exposed flow back to `MutableStateFlow` and write the state. Only the state holder writes the state. In the rebuild, the private property `current` and the read-only property `state` do the same job.
 
 ### Events go up as function calls
 
