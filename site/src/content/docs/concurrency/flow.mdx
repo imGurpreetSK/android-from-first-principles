@@ -41,9 +41,9 @@ A suspend function returns one value. A flow emits many values in sequence[^flow
 The [unidirectional data flow chapter](/state-survival/unidirectional-data-flow/) kept the UI state in a `StateFlow`, and the UI collected it. A `StateFlow` is a different kind of flow from the flow that the `flow` builder makes:
 
 - A flow from the `flow` builder is cold. Its producer code runs each time that code calls a terminal operator, for example `collect`, on the flow. If two collectors collect the flow, the data source fetches the data two times[^flow-doc-collect].
-- A `StateFlow` is hot. A `collect` call does not run producer code. A new collector first gets the last state, and then later states[^stateflow-doc].
+- A `StateFlow` is hot. A `collect` call does not run producer code. A new collector first gets the last value, and then later values[^stateflow-doc].
 
-A producer can write new states faster than a collector runs. Then the collector is behind. What does a state holder give to that collector: each old state in order, or only the newest state? This chapter builds a cold flow and a hot state holder in plain Kotlin. It shows how the state holder gives each old state to a collector that is behind. Then it shows how `StateFlow` of kotlinx.coroutines 1.11.0 gives the collector only the newest state.
+A producer can write new values faster than a collector runs. Then the collector is behind. What does a state holder give to that collector: each old value in order, or only the newest value? This chapter builds a cold flow and a hot state holder in plain Kotlin. It shows how the state holder gives each old value to a collector that is behind. Then it shows how `StateFlow` of kotlinx.coroutines 1.11.0 gives the collector only the newest value.
 
 ## Build it naive
 
@@ -120,7 +120,7 @@ If `emit` throws an exception, `SafeCollector` keeps the exception as the contex
 
 A shared flow is hot, because its active instance exists independently of its collectors. All collectors get all emitted values. A `flow { }` flow is cold, and it starts separately for each collector[^sharedflow-11]. A shared flow never completes, so a `collect` call on it never returns normally[^sharedflow-16]. An active collector of a shared flow is a subscriber[^sharedflow-16].
 
-A `StateFlow` is a `SharedFlow` with one value. It is hot for the same reason[^stateflow-11]. It never completes[^stateflow-15]. A `collect` call does not run producer code, and a new collector first gets the last state[^stateflow-doc]. `NaiveStateFlow` of the rebuild acts the same way.
+A `StateFlow` is a `SharedFlow` with one value. It is hot for the same reason[^stateflow-11]. It never completes[^stateflow-15]. A `collect` call does not run producer code, and a new collector first gets the last value[^stateflow-doc]. `NaiveStateFlow` of the rebuild acts the same way.
 
 But `StateFlow` has one more rule. It always conflates the updates of its value: a slow collector skips fast updates, but it always collects the most recent value[^stateflow-20]. The conflation uses `equals`. A state flow does not emit a value to a collector if the value is equal to the value that it emitted last[^stateflow-51]. A `StateFlow` acts as `distinctUntilChanged` on a `SharedFlow` with `replay = 1` and `onBufferOverflow = DROP_OLDEST`[^stateflow-65].
 
@@ -132,7 +132,7 @@ This code of `StateFlowImpl` fixes the flaw of the rebuild:
 2. If the new value is equal to the old value, `updateState` returns, and no collector gets a notification[^stateflow-332]. Otherwise, `updateState` writes the new value to `_state`[^stateflow-333].
 3. Then `makePending` runs on the slot of each collector[^stateflow-351].
 4. A slot holds one state, not a queue of values. The state is free, `NONE`, `PENDING` or a suspended collector[^stateflow-248][^stateflow-264]. If the slot is already `PENDING`, `makePending` does nothing[^stateflow-283]. If the slot is `NONE`, `makePending` sets it to `PENDING`[^stateflow-284]. If the collector is suspended, `makePending` sets the slot to `NONE` and resumes the collector[^stateflow-287]. `makePending` does not give the value to the collector.
-5. When the collector runs, its collect loop reads the newest value of `_state`. A comment in the loop says that the coroutine can wait for its dispatch, so the loop uses the most recent state[^stateflow-393]. The loop emits the value only if it differs from the value that it emitted last[^stateflow-400].
+5. When the collector runs, its collect loop reads the newest value of `_state`. A comment in the loop says that the coroutine can wait for its dispatch, so the loop uses the most recent value[^stateflow-393]. The loop emits the value only if it differs from the value that it emitted last[^stateflow-400].
 6. If the slot is `PENDING`, the loop sets it to `NONE` and runs again. If not, the collector suspends until the next `makePending`[^stateflow-405][^stateflow-298].
 
 The loop starts with the current value, with no wait[^stateflow-392]. Thus a new collector gets the current value first, as in the rebuild.
