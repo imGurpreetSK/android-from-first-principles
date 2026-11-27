@@ -248,7 +248,7 @@ Each coroutine is a `Job` in a tree. `launch` attaches the new job to the job of
 
 ```mermaid
 flowchart TD
-  owner["Owner ends: ViewModel cleared, Lifecycle DESTROYED or LaunchedEffect left the composition"] -->|"cancel"| scope["Job of the scope"]
+  owner["Owner ends: ViewModel cleared, Lifecycle DESTROYED or LaunchedEffect left the composition"] -->|"cancel"| scope["Job of the scope, or job of the LaunchedEffect coroutine"]
   scope -->|"cancellation goes down"| a["Job of coroutine A"]
   scope -->|"cancellation goes down"| b["Job of coroutine B"]
   a -->|"cancellation goes down"| c["Job of coroutine C"]
