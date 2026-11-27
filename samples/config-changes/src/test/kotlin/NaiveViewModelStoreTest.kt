@@ -47,4 +47,15 @@ class NaiveViewModelStoreTest {
         assertEquals(2, second.viewModel.count)
     }
     // endregion
+
+    // region leak
+    @Test
+    fun naiveStore_keepsViewModel_afterActivityFinishes() {
+        val thread = FakeActivityThread(day) { StoreActivity() }
+        val activity = thread.launch("a")
+        thread.finish("a")
+        assertTrue(activity.viewModel in NaiveViewModelStore.viewModels.values)
+        assertEquals(0, activity.viewModel.onClearedCalls)
+    }
+    // endregion
 }
