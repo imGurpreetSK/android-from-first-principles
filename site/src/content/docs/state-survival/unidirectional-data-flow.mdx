@@ -162,6 +162,49 @@ flowchart TD
   collect -->|"state down"| ui
 ```
 
+## Try it
+
+### 1. Make the write atomic
+
+Replace the plain write in `NaiveStore` with a compare-and-set loop, as `MutableStateFlow.update` does[^stateflow-229]:
+
+1. Change `current` to a `java.util.concurrent.atomic.AtomicReference`, with `initial` as its first value.
+2. In `update`, read the current value with `get`, run the transform on it, and call `compareAndSet(prev, next)`. If `compareAndSet` returns false, do these steps again.
+3. In `state`, `update` and `observe`, read the value with `get`.
+
+From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :unidirectional-data-flow:test
+```
+
+The breaking test fails, because the store does not lose the update now. The other three tests pass. The Gradle output includes these lines:
+
+```
+NaiveStoreTest > naiveStore_losesUpdate_whenTwoWritersInterleave() FAILED
+    org.opentest4j.AssertionFailedError at NaiveStoreTest.kt:59
+
+4 tests completed, 1 failed
+```
+
+The `compareAndSet` of writer B returns false, because writer A changed the value to 1. Then B runs its transform again on 1. The next prompt shows the second run.
+
+### 2. Count the runs of the transform
+
+Keep the change of prompt 1. In the breaking test, make these changes:
+
+1. Before `thread`, add `var runsOfB = 0`.
+2. In the transform of writer B, add `runsOfB++` as the first line.
+3. Replace `assertEquals(1, store.state)` with `assertEquals(2, store.state)` and `assertEquals(2, runsOfB)`.
+
+Run the tests of the rebuild again. All four tests pass. The Gradle output includes this line:
+
+```
+BUILD SUCCESSFUL in …
+```
+
+The store kept both updates. The transform of writer B ran two times: one time on 0, and one time on 1. `MutableStateFlow.update` also runs its function again after `compareAndSet` returns false[^stateflow-229]. Thus a counter or another side effect in the function of `update` can run more than one time[^stateflow-227].
+
 [^architecture-ssot]: Guide to app architecture, "Single source of truth": [https://developer.android.com/topic/architecture#single-source-of-truth](https://developer.android.com/topic/architecture#single-source-of-truth)
 [^architecture-udf]: Guide to app architecture, "Unidirectional data flow": [https://developer.android.com/topic/architecture#unidirectional-data-flow](https://developer.android.com/topic/architecture#unidirectional-data-flow)
 [^ui-layer-state-holders]: UI layer, "State holders": [https://developer.android.com/topic/architecture/ui-layer#state-holders](https://developer.android.com/topic/architecture/ui-layer#state-holders)
