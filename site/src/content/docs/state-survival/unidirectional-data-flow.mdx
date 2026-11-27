@@ -150,7 +150,7 @@ Do not make the UI observe the UI state while the UI is not on the screen. With 
 
 ## Mental model
 
-One state holder owns the UI state. The state holder keeps a private `MutableStateFlow` and exposes it as a read-only `StateFlow`, so the UI cannot write the state. The UI sends each event up as a function call. The state holder handles the event and writes the next state with `update`. `update` runs the function on the current value and writes the result with `compareAndSet`. If another writer changed the value first, `update` runs the function again on the new value. Thus no update is lost. The UI collects the state with `collectAsStateWithLifecycle`. The UI gets the current value first, and then each new value between `ON_START` and `ON_STOP`. An event that starts in the state holder also becomes state, so a configuration change does not lose it.
+One state holder owns the UI state. The state holder keeps a private `MutableStateFlow` and exposes it as a read-only `StateFlow`, so the UI cannot write the state. The UI sends each event up as a function call. The state holder handles the event and writes the next state with `update`. `update` runs the function on the current value and writes the result with `compareAndSet`. If another writer changed the value first, `update` runs the function again on the new value. Thus no update is lost. The UI collects the state with `collectAsStateWithLifecycle`. The UI gets the current value first. Then, between `ON_START` and `ON_STOP`, the UI gets the latest value. An event that starts in the state holder also becomes state, so a configuration change does not lose it.
 
 ```mermaid
 flowchart TD
@@ -158,7 +158,7 @@ flowchart TD
   holder -->|"handles the event"| update["update: read value, run the function, compareAndSet"]
   update -->|"false: another writer changed the value, run again"| update
   update -->|"true"| flow["Private MutableStateFlow holds the next state"]
-  flow -->|"asStateFlow: read-only StateFlow"| collect["collectAsStateWithLifecycle: StateFlow.value first, then each new value from ON_START to ON_STOP"]
+  flow -->|"asStateFlow: read-only StateFlow"| collect["collectAsStateWithLifecycle: StateFlow.value first, then the latest value from ON_START to ON_STOP"]
   collect -->|"state down"| ui
 ```
 
