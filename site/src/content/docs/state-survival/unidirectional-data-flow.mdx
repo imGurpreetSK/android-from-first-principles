@@ -116,7 +116,7 @@ The KDoc of `StateFlow` has the pattern of the rebuild. `CounterModel` keeps a p
 
 ### Events go up as function calls
 
-Usually, the `ViewModel` handles a user event with a function that the UI can call[^events]. If the event needs business logic, the `ViewModel` should handle it[^events-user]. In Compose, a composable takes state and exposes events. For example, `TextField` takes a `value`, and calls `onValueChange` to ask for a new value[^compose-udf-compose]. The update loop has three steps: an event, an update of the state, and the display of the state[^compose-udf]. The UI should never change state outside of an event handler[^compose-events].
+If a user event needs business logic, the `ViewModel` should handle it[^events-user]. Usually, the `ViewModel` exposes a function for the event, and the UI calls that function[^events]. In Compose, a composable takes state and exposes events. For example, `TextField` takes a `value`, and calls `onValueChange` to ask for a new value[^compose-udf-compose]. The update loop has three steps: an event, an update of the state, and the display of the state[^compose-udf]. The UI should never change state outside of an event handler[^compose-events].
 
 Keep related state in one UI state object. If two related values are in two streams, one stream can update while the other stream does not[^ui-layer-additional]. In the rebuild, `CounterUiState` is this object.
 
