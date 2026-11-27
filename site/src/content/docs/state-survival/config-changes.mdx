@@ -174,7 +174,7 @@ Since Android 17, if an app does not handle a configuration change, the system d
 
 The recreation runs in the app process. `handleRelaunchActivity` gets the record of the token from `mActivities`[^activitythread-6853]. It sets `mChangingConfigurations` of the old `Activity` object to true[^activitythread-6862]. `isChangingConfigurations` returns this field. It is true if the activity is destroyed so that it can be recreated with a new configuration[^activity-7513].
 
-Then `handleRelaunchActivityInner` pauses and stops the old object, and saves its state. It destroys the old object with `getNonConfigInstance` set to true. Then it calls `handleLaunchActivity` with the same record[^activitythread-6933]. Thus one method call destroys the old object and creates the new object. The Javadoc of `onRetainNonConfigurationInstance` states that a new object always comes immediately after the `onDestroy` of the old object, and that no messages run between them[^activity-3527].
+Then `handleRelaunchActivityInner` pauses the old object, if it is not paused. If the old object is not stopped, `handleRelaunchActivityInner` stops it and saves its state. It destroys the old object with `getNonConfigInstance` set to true. Then it calls `handleLaunchActivity` with the same record[^activitythread-6933]. Thus one method call destroys the old object and creates the new object. The Javadoc of `onRetainNonConfigurationInstance` states that a new object always comes immediately after the `onDestroy` of the old object, and that no messages run between them[^activity-3527].
 
 The hand-over is a field of the record:
 
