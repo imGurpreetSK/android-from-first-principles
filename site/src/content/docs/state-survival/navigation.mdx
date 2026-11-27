@@ -103,7 +103,7 @@ A task holds activities in the order in which they started. On Back, the system 
 Back does not always pop the top activity. `system_server` decides in `ActivityClientController.onBackPressed`:
 
 - A task organizer can handle Back on the root activity of a task[^activityclientcontroller-1970].
-- If `shouldMoveTaskToBack` is true, the system moves the task to the back[^activityclientcontroller-1978].
+- If `shouldMoveTaskToBack` is true, the system moves the task to the background[^activityclientcontroller-1978].
 - Otherwise, `system_server` asks the activity to finish. This is the default[^activityclientcontroller-1984]. The activity then calls `finishAfterTransition`[^activity-4318].
 
 By default, `shouldMoveTaskToBack` is true only if all these conditions are true:
@@ -137,7 +137,7 @@ Each window has an `OnBackInvokedDispatcher`. An app registers each `OnBackInvok
 
 `WindowOnBackInvokedDispatcher` keeps the callbacks in a `TreeMap`. The key of the map is the priority, and each value is a list of callbacks[^windowonbackinvokeddispatcher-106]. The top callback is the last callback in the list of the highest priority[^windowonbackinvokeddispatcher-492]. If a new callback becomes the top callback and the window is attached, the dispatcher sends it to `system_server` at once[^windowonbackinvokeddispatcher-229][^windowonbackinvokeddispatcher-460]. If the window is not attached, the dispatcher sends the top callback when the window attaches[^windowonbackinvokeddispatcher-148]. Thus `system_server` knows the top callback before Back comes.
 
-Each activity also registers a callback. If the callback model is on, `Activity.onCreate` registers `onBackInvoked` as the default back behavior[^activity-1922]. The registration uses `PRIORITY_SYSTEM`[^windowonbackinvokeddispatcher-349]. `PRIORITY_SYSTEM` is -1, and it is hidden. If the callback that gets Back has this priority, the system plays its own back animation[^onbackinvokeddispatcher-62]. `onBackInvoked` tells `system_server` about Back with `ActivityClient.onBackPressed`[^activity-4383]. Then `ActivityClientController` asks the activity to finish or moves the task to the back, as the previous section shows.
+Each activity also registers a callback. If the callback model is on, `Activity.onCreate` registers `onBackInvoked` as the default back behavior[^activity-1922]. The registration uses `PRIORITY_SYSTEM`[^windowonbackinvokeddispatcher-349]. `PRIORITY_SYSTEM` is -1, and it is hidden. If the callback that gets Back has this priority, the system plays its own back animation[^onbackinvokeddispatcher-62]. `onBackInvoked` tells `system_server` about Back with `ActivityClient.onBackPressed`[^activity-4383]. Then `ActivityClientController` asks the activity to finish or moves the task to the background, as the previous section shows.
 
 If the activity sets `android:enableOnBackInvokedCallback`, the value of the activity decides if the callback model is on. If not, the value of the application decides[^windowonbackinvokeddispatcher-791]. If the manifest does not set the attribute, the parser sets it to true for apps that target API level 36 or higher[^parsingpackageutils-2461]. The launch app targets API level 37, so its `MainActivity` registers the default callback. Prompt 2 of "Try it" shows this callback.
 
@@ -215,7 +215,7 @@ The `contentKey` of a `NavEntry` identifies its content and the state of its dec
 
 ## Mental model
 
-Two kinds of back stack work together. The platform keeps a task, a stack of activities. Inside an activity, AndroidX keeps a stack of handlers for each priority, and Navigation keeps a stack of entries. Back goes to one callback: the top callback of the focused window. The window sends this callback to `system_server` before Back comes. If an AndroidX handler is enabled, the AndroidX callback is on the window, and the newest enabled handler gets Back. For example, the `NavHost` handler pops the top `NavBackStackEntry`. Navigation then clears the `ViewModelStore` of that entry by its id, not by its route. If no handler is enabled, the default callback of the `Activity` gets Back. Then `system_server` asks the activity to finish. If the activity is the root that the home app launched with a main intent, `system_server` moves the task to the back instead.
+Two kinds of back stack work together. The platform keeps a task, a stack of activities. Inside an activity, AndroidX keeps a stack of handlers for each priority, and Navigation keeps a stack of entries. Back goes to one callback: the top callback of the focused window. The window sends this callback to `system_server` before Back comes. If an AndroidX handler is enabled, the AndroidX callback is on the window, and the newest enabled handler gets Back. For example, the `NavHost` handler pops the top `NavBackStackEntry`. Navigation then clears the `ViewModelStore` of that entry by its id, not by its route. If no handler is enabled, the default callback of the `Activity` gets Back. Then `system_server` asks the activity to finish. If the activity is the root that the home app launched with a main intent, `system_server` moves the task to the background instead.
 
 ```mermaid
 flowchart TD
@@ -226,7 +226,7 @@ flowchart TD
   nav --> clear["Clear the ViewModelStore of the entry id"]
   top -->|"no handler enabled"| def["Default callback of the Activity"]
   def --> acc["system_server: ActivityClientController.onBackPressed"]
-  acc -->|"root, launched by home, main intent"| move["Move the task to the back"]
+  acc -->|"root, launched by home, main intent"| move["Move the task to the background"]
   acc -->|"otherwise"| finish["Finish the activity: pop it from the task"]
 ```
 
@@ -364,7 +364,7 @@ The blocks show the hash codes, the task IDs, the PID and the times as `…`.
 
 - `ViewRootImpl` catches each Back key and calls the top callback[^viewrootimpl-8232][^viewrootimpl-8271]. The top callback is the default callback, and it calls `ActivityClient.onBackPressed`[^activity-4383].
 - First Back: the top instance is not the root of the task, so `shouldMoveTaskToBack` is false[^activityclientcontroller-2000]. `system_server` asks the activity to finish[^activityclientcontroller-1984], and the task has one `ActivityRecord` again.
-- Second Back: the root is the top activity of the task. The home app launched it with a main intent. Thus `system_server` moves the task to the back and does not finish the activity[^activityclientcontroller-2021][^activityclientcontroller-1978]. The task keeps its `ActivityRecord`, and the process of the app stays.
+- Second Back: the root is the top activity of the task. The home app launched it with a main intent. Thus `system_server` moves the task to the background and does not finish the activity[^activityclientcontroller-2021][^activityclientcontroller-1978]. The task keeps its `ActivityRecord`, and the process of the app stays.
 - The last `am start` finds the task and brings it to the front. The start returns `START_TASK_TO_FRONT` and starts no new activity[^activitystarter-2588]. The [first frame chapter](/launch-path/first-frame/) explains the other lines of `am start -W`.
 
 [^tasks-intro]: Tasks and the back stack: [https://developer.android.com/guide/components/activities/tasks-and-back-stack](https://developer.android.com/guide/components/activities/tasks-and-back-stack)
