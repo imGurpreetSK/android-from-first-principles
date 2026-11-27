@@ -41,3 +41,19 @@ device: true
 drafted: ai
 edited_by: Gurpreet Singh
 ---
+
+## The problem
+
+A network request on the main thread blocks the thread until the response comes. Then the OS cannot call `onDraw()`. The app freezes, and an Application Not Responding (ANR) dialog can show[^android-background-thread]. The [main thread chapter](/launch-path/main-thread/) shows the loop that the main thread runs.
+
+The Android docs use coroutines for this problem. A suspend function can call `withContext(Dispatchers.IO)`. Then the request runs on an I/O thread, and the function is main-safe: a call from the main thread does not block the updates of the UI. A coroutine on the main thread calls the function and suspends until the `withContext` block ends. Then the coroutine continues on the main thread, with the result of the request[^android-main-safety].
+
+Coroutines add two operations to call and return: suspend and resume. Suspend stops the current coroutine and saves all its local variables. Resume continues the coroutine from the place where it stopped[^adv-manage]. The `suspend` keyword does not move a function to a background thread. A suspend function can run on the main thread[^adv-main-safety].
+
+Thus one function stops in the middle, and later the same function continues on the main thread, with its local variables. Kotlin implements each suspend function as a state machine, because a state machine needs no special support from the runtime[^spec-state-machine]. This chapter builds such a state machine by hand. Then it shows what the state machine alone does not do: send each resume back to the main thread.
+
+[^android-background-thread]: Kotlin coroutines on Android, "Executing in a background thread": [https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread](https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread)
+[^android-main-safety]: Kotlin coroutines on Android, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety](https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety)
+[^adv-manage]: Improve app performance with Kotlin coroutines, "Manage long-running tasks": [https://developer.android.com/kotlin/coroutines/coroutines-adv#manage](https://developer.android.com/kotlin/coroutines/coroutines-adv#manage)
+[^adv-main-safety]: Improve app performance with Kotlin coroutines, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines/coroutines-adv#main-safety](https://developer.android.com/kotlin/coroutines/coroutines-adv#main-safety)
+[^spec-state-machine]: Kotlin specification, "Coroutine state machine": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#coroutine-state-machine](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#coroutine-state-machine)
