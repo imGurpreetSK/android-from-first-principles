@@ -208,6 +208,28 @@ A `ScheduledThreadPoolExecutor` can run a task again and again. After each run, 
 
 The system also changes the niceness of the main thread. When the process of an app becomes the top app, `OomAdjuster` boosts its UI thread: the thread whose TID is the PID of the process. If the process does not use FIFO scheduling for the UI, `OomAdjuster` sets the niceness of that thread to `THREAD_PRIORITY_TOP_APP_BOOST`, -10[^oomadjuster-2386][^process-481]. Prompt 2 of "Try it" shows the niceness of each thread.
 
+## Mental model
+
+The main thread runs one message loop, so a long message blocks each input event after it. The system times the work that it gives to the app. The input dispatcher gives each event that it sends a deadline: the delivery time plus 5 s times the hardware multiplier. The deadline goes into one sorted set for all windows. The main thread finishes an event after the input stages of the window, and the finish signal erases the deadline. If the earliest deadline passes first, the dispatcher reports the window as unresponsive, also if no later event comes. Then `system_server` logs `ANR in`, dumps the stacks with the help of the Signal Catcher of ART, and shows the dialog or, for a silent ANR, kills the process. A click runs later as a message, so a slow `onClick` gets an ANR only after the next event. Services and broadcasts use the same timer pattern. To keep the main thread free, the app gives slow work to other threads. Each Java thread is a Linux thread with its own stack and niceness. Thus a pool creates a few threads one time, and its idle workers wait in the queue for the next task.
+
+```mermaid
+sequenceDiagram
+  participant D as Input dispatcher
+  participant T as ANR tracker
+  participant M as Main thread of the app
+  participant S as system_server
+  D->>M: event, deadline is delivery time plus 5 s
+  D->>T: add the deadline
+  M->>D: finish signal after the input stages
+  D->>T: erase the deadline
+  Note over M: a long message blocks the loop
+  D->>M: next event, with a new deadline
+  D->>T: add the deadline
+  D->>D: processAnrsLocked finds a deadline in the past
+  D->>S: notifyWindowUnresponsive with the reason
+  S->>S: log ANR in, dump the stacks, dialog or bg anr kill
+```
+
 [^responsive]: Keep your app responsive: [https://developer.android.com/topic/performance/anrs/keep-your-app-responsive](https://developer.android.com/topic/performance/anrs/keep-your-app-responsive)
 [^responsive-triggers]: Keep your app responsive, "ANR triggers": [https://developer.android.com/topic/performance/anrs/keep-your-app-responsive#anr-triggers](https://developer.android.com/topic/performance/anrs/keep-your-app-responsive#anr-triggers)
 [^activitythread-2754]: ActivityThread.java, lines 2754–2761: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2754](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/core/java/android/app/ActivityThread.java#2754)
