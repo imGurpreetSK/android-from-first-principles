@@ -90,6 +90,22 @@ A test drains `main`, `io` and `main` again. It checks that `show` gets `42` and
 
 <Snippet file="coroutines/src/test/kotlin/NaiveContinuationTest.kt" region="spill" />
 
+## Where it breaks
+
+The Kotlin spec says that in a typical UI app, the updates of the UI should run on a special UI thread[^spec-interception]. `show` is the UI step of `LoadAndShow`, so it must run on `main`. The breaking test records the loop of each call of `show`:
+
+<Snippet file="coroutines/src/test/kotlin/NaiveContinuationTest.kt" region="flaw" />
+
+1. The first drain of `main` runs step 0. `fetchUser` posts the request to `io` and returns `SUSPENDED`. Then `resume` returns, and `main` is free.
+2. The drain of `io` runs the request. The request calls `resume` on `LoadAndShow` directly, so step 1 runs on `io`. Thus `show` runs on `io`.
+3. The last drain of `main` runs no block.
+
+The test passes, so the flaw occurs: the UI step runs on the loop of the callback, not on `main`.
+
+The Kotlin standard library documents the same flaw. The intrinsic `suspendCoroutineUninterceptedOrReturn` gives a suspend function its continuation[^intrinsics-16]. A call of `resumeWith` on this continuation resumes the coroutine directly in the thread of the caller. The call does not go through the `ContinuationInterceptor` of the coroutine context[^intrinsics-29]. The Kotlin docs show this behavior with `Dispatchers.Unconfined`. After `delay(500)`, an unconfined coroutine continues on the thread `kotlinx.coroutines.DefaultExecutor`, the thread that `delay` uses[^docs-unconfined].
+
+The state machine does not choose its thread. Some other part must move each resume to the correct loop.
+
 [^android-background-thread]: Kotlin coroutines on Android, "Executing in a background thread": [https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread](https://developer.android.com/kotlin/coroutines#executing-in-a-background-thread)
 [^android-main-safety]: Kotlin coroutines on Android, "Use coroutines for main-safety": [https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety](https://developer.android.com/kotlin/coroutines#use-coroutines-for-main-safety)
 [^adv-manage]: Improve app performance with Kotlin coroutines, "Manage long-running tasks": [https://developer.android.com/kotlin/coroutines/coroutines-adv#manage](https://developer.android.com/kotlin/coroutines/coroutines-adv#manage)
@@ -103,3 +119,7 @@ A test drains `main`, `io` and `main` again. It checks that `show` gets `42` and
 [^codegen-parameters]: coroutines-codegen.md, "JVM: Parameters": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#jvm-parameters](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#jvm-parameters)
 [^continuation-112]: Continuation.kt, lines 112–116: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L112-L116](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/Continuation.kt#L112-L116)
 [^codegen-startcoroutine]: coroutines-codegen.md, "startCoroutine": [https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#startcoroutine](https://github.com/JetBrains/kotlin/blob/v2.4.21/compiler/backend/src/org/jetbrains/kotlin/codegen/coroutines/coroutines-codegen.md#startcoroutine)
+[^spec-interception]: Kotlin specification, "Continuation interception": [https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#continuation-interception](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#continuation-interception)
+[^intrinsics-16]: Intrinsics.kt, lines 16–25: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L16-L25](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L16-L25)
+[^intrinsics-29]: Intrinsics.kt, lines 29–32: [https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L29-L32](https://github.com/JetBrains/kotlin/blob/v2.4.21/libraries/stdlib/src/kotlin/coroutines/intrinsics/Intrinsics.kt#L29-L32)
+[^docs-unconfined]: Coroutine context and dispatchers, "Unconfined vs confined dispatcher": [https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html#unconfined-vs-confined-dispatcher](https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html#unconfined-vs-confined-dispatcher)
