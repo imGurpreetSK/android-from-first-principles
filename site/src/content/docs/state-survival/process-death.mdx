@@ -222,6 +222,160 @@ sequenceDiagram
   P2->>SS: next stop, the Bundle has each provider and each key that no component consumed
 ```
 
+## Try it
+
+### 1. Keep the state that no component consumed
+
+Change `performSave` in `NaiveSavedStateRegistry`. Start from the restored state that no component consumed, and then add the state of each provider. The state of a provider replaces the old state of its key, as in `SavedStateRegistryImpl.performSave`[^savedstateregistryimpl-124]. From the repo root, run the tests of the rebuild:
+
+```sh
+samples/gradlew -p samples :process-death:test
+```
+
+The breaking test fails, because B now gets its count back in process 3. The other tests pass. The Gradle output includes these lines:
+
+```
+ProcessDeathTest > naiveRegistry_losesUnconsumedState_afterSecondProcessDeath() FAILED
+    org.opentest4j.AssertionFailedError at ProcessDeathTest.kt:41
+
+9 tests completed, 1 failed
+```
+
+### 2. Kill the launch app in the background
+
+Start an emulator with the system image of the checked stamp. From the repo root, install the release build of the `processDeath` flavor of the launch app:
+
+```sh
+samples/gradlew -p samples :launch-app:installProcessDeathRelease
+```
+
+The flavor has the app name "Process death" and one activity, `ProcessDeathActivity`. The activity writes each step to the log with the tag `ProcessDeath`. `onSaveInstanceState` puts the PID of the process into the `Bundle` and into a static field. `onCreate` logs three values: the PID of the process, the PID in `savedInstanceState` and the PID in the static field.
+
+Stop the app, clear the log and start the activity with its launcher intent:
+
+```sh
+adb shell am force-stop io.github.imgurpreetsk.afp.launchapp.processDeath
+adb logcat -c
+adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n io.github.imgurpreetsk.afp.launchapp.processDeath/io.github.imgurpreetsk.afp.launchapp.ProcessDeathActivity
+```
+
+Print the LRU line of the process:
+
+```sh
+adb shell dumpsys activity -p io.github.imgurpreetsk.afp.launchapp.processDeath lru
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+ACTIVITY MANAGER LRU PROCESSES (dumpsys activity lru)
+  Activities:
+  #…: fg       … … …:io.github.imgurpreetsk.afp.launchapp.processDeath/… act:…
+```
+
+The option `-p` limits the list to the processes of the package[^activitymanagerservice-11430][^processlist-4608]. The label `fg` shows the oom adj 0 of the foreground app[^processlist-1143][^constants-160]. After the label come the process state, a summary of the capabilities and the process[^processlist-4559].
+
+Try to kill the process while the app is in the foreground:
+
+```sh
+adb shell am kill io.github.imgurpreetsk.afp.launchapp.processDeath
+adb shell pidof io.github.imgurpreetsk.afp.launchapp.processDeath
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+…
+```
+
+`pidof` prints the PID of the process, so the process is alive. `am kill` skips each process with an oom adj below 500[^activitymanagerservice-4346][^processlist-3220]. Write down the PID.
+
+Press Home. Print the LRU line again, kill the process, and read the log of the activity:
+
+```sh
+adb shell input keyevent KEYCODE_HOME
+adb shell dumpsys activity -p io.github.imgurpreetsk.afp.launchapp.processDeath lru
+adb shell am kill io.github.imgurpreetsk.afp.launchapp.processDeath
+adb shell pidof io.github.imgurpreetsk.afp.launchapp.processDeath
+adb logcat -d -s ProcessDeath
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+ACTIVITY MANAGER LRU PROCESSES (dumpsys activity lru)
+  Activities:
+  #…: prev     … … …:io.github.imgurpreetsk.afp.launchapp.processDeath/… act:…
+… I ProcessDeath: onCreate pid=… savedPid=none staticPid=0
+… I ProcessDeath: onStop
+… I ProcessDeath: onSaveInstanceState pid=…
+```
+
+Each log line starts with the date, the time, the PID and the thread ID. The block shows them as `…`.
+
+- After Home, the label is `prev`. The app is the previous app, with the oom adj 700[^constants-92]. If the oom adj is above 700, the label also shows the difference[^processlist-1120]. After a maximum time, the process moves to the cached range, and the label is `cch`[^oomadjuster-661][^processlist-1143].
+- `pidof` prints nothing, so `am kill` killed the process. Its oom adj was 500 or higher[^activitymanagerservice-4346].
+- The log has `onStop` and then `onSaveInstanceState`, because the app targets API level 37[^activitythread-6366][^activitythread-851]. The save came at the Home press, before the kill. The log has no `onDestroy` line.
+
+### 3. Find the Bundle in system_server
+
+Do this prompt after prompt 2, while no process of the app exists. Print the saved state of the record of the activity:
+
+```sh
+adb shell "dumpsys activity -p io.github.imgurpreetsk.afp.launchapp.processDeath activities | grep mHaveState"
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+mHaveState=true mIcicle=Bundle[…]
+```
+
+`ActivityRecord` prints `mHaveState` and `mIcicle`, and the dump skips the records of other packages[^activityrecord-1094][^activityrecord-1217]. No process of the app exists, but `system_server` keeps the record and its `Bundle`, because the record has saved state[^activityrecord-4350].
+
+Start the activity again, read the log, and print the saved state of the record again:
+
+```sh
+adb logcat -c
+adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n io.github.imgurpreetsk.afp.launchapp.processDeath/io.github.imgurpreetsk.afp.launchapp.ProcessDeathActivity
+adb shell "logcat -d -s ActivityManager:I ProcessDeath:I | grep -i processdeath"
+adb shell "dumpsys activity -p io.github.imgurpreetsk.afp.launchapp.processDeath activities | grep mHaveState"
+```
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I ActivityManager: Start proc …:io.github.imgurpreetsk.afp.launchapp.processDeath/… for …
+… I ProcessDeath: onCreate pid=… savedPid=… staticPid=0
+mHaveState=false mIcicle=null
+```
+
+- `Start proc` shows that `system_server` started a new process. The line has the PID and the name of the new process[^processlist-2994]. No process of the activity existed, so `startSpecificActivity` asked for one[^activitytasksupervisor-1171].
+- `savedPid` is the PID that `pidof` printed in prompt 2. The `Bundle` came from the old process, through `system_server`, in the `LaunchActivityItem`[^activitytasksupervisor-1050][^activitythread-4556]. `pid` is the PID of the new process.
+- `staticPid` is 0. The old process set the static field, but the new process starts with the default value. The `Bundle` survived the process death, and the memory of the old process did not.
+- After the resume, the record has no saved state, because `activityResumedLocked` dropped it[^activityrecord-6260].
+
+Then do prompt 2 and this prompt again, with Back in place of Home. Back moves the task to the background only if the home screen started the activity[^activityclientcontroller-2021]. Thus start the activity from its icon:
+
+1. Run `adb shell am force-stop io.github.imgurpreetsk.afp.launchapp.processDeath` and `adb logcat -c`.
+2. In the emulator, tap the icon "Process death" on the home screen.
+3. Run `adb shell input keyevent KEYCODE_BACK`.
+4. Run the `am kill`, `pidof` and `logcat` commands of prompt 2. Then run the first command of this prompt.
+
+The result is the same as with Home. The log has `onStop` and `onSaveInstanceState`, and the record has `mHaveState=true`. Back moved the root launcher activity and its task to the background[^android-12-back].
+
+Do the four steps again, but in step 2, run the `am start` command of prompt 2. The shell started the activity, not the home screen, so Back finishes the activity[^activityclientcontroller-1960]. The log has these lines:
+
+{/* Edit step: capture this output on the emulator of the checked stamp. */}
+
+```
+… I ProcessDeath: onCreate pid=… savedPid=none staticPid=0
+… I ProcessDeath: onStop
+… I ProcessDeath: onDestroy
+```
+
+The log has no `onSaveInstanceState` line, because an activity that finishes saves no state[^activitythread-6366]. The `grep mHaveState` command prints nothing, because the record is gone.
+
 [^process-lifecycle]: Processes and app lifecycle: [https://developer.android.com/guide/components/activities/process-lifecycle](https://developer.android.com/guide/components/activities/process-lifecycle)
 [^activity-lifecycle-state]: The activity lifecycle, "Activity state and ejection from memory": [https://developer.android.com/guide/components/activities/activity-lifecycle#activity-state](https://developer.android.com/guide/components/activities/activity-lifecycle#activity-state)
 [^saving-states-system]: Save UI states, "System-initiated UI state dismissal": [https://developer.android.com/topic/libraries/architecture/saving-states#ui-dismissal-system](https://developer.android.com/topic/libraries/architecture/saving-states#ui-dismissal-system)
@@ -311,3 +465,7 @@ sequenceDiagram
 [^disposablesaveablestateregistry-43]: DisposableSaveableStateRegistry.android.kt, lines 43–52: [https://android.googlesource.com/platform/frameworks/support/+/5e0747401bf56b243e3b5141ae080dc9bc61d29c/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.android.kt#43](https://android.googlesource.com/platform/frameworks/support/+/5e0747401bf56b243e3b5141ae080dc9bc61d29c/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.android.kt#43)
 [^disposablesaveablestateregistry-69]: DisposableSaveableStateRegistry.android.kt, lines 69–96: [https://android.googlesource.com/platform/frameworks/support/+/5e0747401bf56b243e3b5141ae080dc9bc61d29c/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.android.kt#69](https://android.googlesource.com/platform/frameworks/support/+/5e0747401bf56b243e3b5141ae080dc9bc61d29c/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.android.kt#69)
 [^disposablesaveablestateregistry-115]: DisposableSaveableStateRegistry.android.kt, lines 115–142: [https://android.googlesource.com/platform/frameworks/support/+/5e0747401bf56b243e3b5141ae080dc9bc61d29c/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.android.kt#115](https://android.googlesource.com/platform/frameworks/support/+/5e0747401bf56b243e3b5141ae080dc9bc61d29c/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.android.kt#115)
+[^activitymanagerservice-11430]: ActivityManagerService.java, lines 11430–11438: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11430](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ActivityManagerService.java#11430)
+[^processlist-4608]: ProcessList.java, lines 4608–4644: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4608](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#4608)
+[^activityrecord-1217]: ActivityRecord.java, lines 1217–1219: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#1217](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/wm/ActivityRecord.java#1217)
+[^processlist-2994]: ProcessList.java, lines 2994–3013: [https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2994](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-17.0.0_r1/services/core/java/com/android/server/am/ProcessList.java#2994)
